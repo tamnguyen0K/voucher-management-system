@@ -1,0 +1,275 @@
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Location Info -->
+        <div class="card mb-4">
+            <img src="<%= location.imageUrl %>" class="card-img-top" alt="<%= location.name %>" style="height: 300px; object-fit: cover;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h1 class="card-title h2"><%= location.name %></h1>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="rating me-3">
+                                <% for (let i = 1; i <= 5; i++) { %>
+                                    <i class="fas fa-star <%= i <= averageRating ? 'text-warning' : 'text-muted' %>"></i>
+                                <% } %>
+                                <span class="ms-2"><%= averageRating %> (<%= reviewCount %> đánh giá)</span>
+                            </div>
+                            <span class="badge bg-secondary"><%= location.type %></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <p class="card-text"><%= location.description %></p>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-map-marker-alt me-2"></i>Địa chỉ:</h6>
+                        <p class="text-muted"><%= location.address %></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-user me-2"></i>Chủ sở hữu:</h6>
+                        <p class="text-muted"><%= location.owner.username %></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-comments me-2"></i>
+                    Đánh giá (<%= reviewCount %>)
+                </h5>
+                <% if (user) { %>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#reviewModal">
+                        <i class="fas fa-plus me-1"></i>Viết đánh giá
+                    </button>
+                <% } %>
+            </div>
+            <div class="card-body">
+                <% if (reviews && reviews.length > 0) { %>
+                    <% reviews.forEach(review => { %>
+                        <div class="review-item border-bottom pb-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-user-circle me-1"></i>
+                                        <%= review.user.username %>
+                                    </h6>
+                                    <div class="rating mb-2">
+                                        <% for (let i = 1; i <= 5; i++) { %>
+                                            <i class="fas fa-star <%= i <= review.rating ? 'text-warning' : 'text-muted' %>"></i>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    <%= new Date(review.createdAt).toLocaleDateString('vi-VN') %>
+                                </small>
+                            </div>
+                            <% if (review.comment) { %>
+                                <p class="mb-0"><%= review.comment %></p>
+                            <% } %>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="text-center py-4">
+                        <i class="fas fa-comment-slash fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá!</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Vouchers Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-percent me-2"></i>
+                    Voucher khả dụng
+                </h5>
+            </div>
+            <div class="card-body">
+                <% if (vouchers && vouchers.length > 0) { %>
+                    <% vouchers.forEach(voucher => { %>
+                        <div class="voucher-item border rounded p-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="text-success mb-1">
+                                        <i class="fas fa-ticket-alt me-1"></i>
+                                        <%= voucher.code %>
+                                    </h6>
+                                    <span class="badge bg-success">Giảm <%= voucher.discountPct %>%</span>
+                                </div>
+                            </div>
+                            
+                            <% if (voucher.conditions) { %>
+                                <p class="small text-muted mb-2">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <%= voucher.conditions %>
+                                </p>
+                            <% } %>
+                            
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    Còn lại <%= voucher.quantityRemaining %> voucher
+                                </small>
+                                <div class="progress" style="height: 4px;">
+                                    <div class="progress-bar bg-success" style="width: <%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    HSD: <%= new Date(voucher.endDate).toLocaleDateString('vi-VN') %>
+                                </small>
+                            </div>
+                            
+                            <% if (user) { %>
+                                <form action="/vouchers/<%= voucher._id %>/claim" method="POST">
+                                    <button type="submit" class="btn btn-success btn-sm w-100">
+                                        <i class="fas fa-gift me-1"></i>Claim voucher
+                                    </button>
+                                </form>
+                            <% } else { %>
+                                <a href="/auth" class="btn btn-outline-success btn-sm w-100">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Đăng nhập để claim
+                                </a>
+                            <% } %>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="text-center py-3">
+                        <i class="fas fa-percent fa-2x text-muted mb-2"></i>
+                        <p class="text-muted small">Chưa có voucher nào</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-grid gap-2">
+            <a href="/locations" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-1"></i>Quay lại danh sách
+            </a>
+            <a href="/vouchers" class="btn btn-outline-success">
+                <i class="fas fa-percent me-1"></i>Xem tất cả voucher
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<% if (user) { %>
+<div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-star me-2"></i>Viết đánh giá
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/locations/<%= location._id %>/reviews" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Đánh giá:</label>
+                        <div class="rating-input">
+                            <input type="hidden" name="rating" id="ratingValue" value="5" required>
+                            <div class="stars">
+                                <% for (let i = 1; i <= 5; i++) { %>
+                                    <i class="fas fa-star star-rating" data-rating="<%= i %>"></i>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Nhận xét (tùy chọn):</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Chia sẻ trải nghiệm của bạn..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-1"></i>Gửi đánh giá
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<% } %>
+
+<script>
+// Rating stars interaction
+document.addEventListener('DOMContentLoaded', function() {
+    const stars = document.querySelectorAll('.star-rating');
+    const ratingInput = document.getElementById('ratingValue');
+    
+    stars.forEach((star, index) => {
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.dataset.rating);
+            ratingInput.value = rating;
+            
+            stars.forEach((s, i) => {
+                if (i < rating) {
+                    s.classList.add('text-warning');
+                    s.classList.remove('text-muted');
+                } else {
+                    s.classList.add('text-muted');
+                    s.classList.remove('text-warning');
+                }
+            });
+        });
+        
+        star.addEventListener('mouseenter', function() {
+            const rating = parseInt(this.dataset.rating);
+            stars.forEach((s, i) => {
+                if (i < rating) {
+                    s.classList.add('text-warning');
+                    s.classList.remove('text-muted');
+                } else {
+                    s.classList.add('text-muted');
+                    s.classList.remove('text-warning');
+                }
+            });
+        });
+    });
+    
+    document.querySelector('.rating-input').addEventListener('mouseleave', function() {
+        const rating = parseInt(ratingInput.value);
+        stars.forEach((s, i) => {
+            if (i < rating) {
+                s.classList.add('text-warning');
+                s.classList.remove('text-muted');
+            } else {
+                s.classList.add('text-muted');
+                s.classList.remove('text-warning');
+            }
+        });
+    });
+});
+</script>
+
+<style>
+.star-rating {
+    cursor: pointer;
+    font-size: 1.5rem;
+    margin-right: 0.25rem;
+    transition: color 0.2s;
+}
+
+.star-rating:hover {
+    transform: scale(1.1);
+}
+
+.rating-input .stars {
+    display: flex;
+    gap: 0.25rem;
+}
+</style>

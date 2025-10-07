@@ -1,0 +1,202 @@
+
+<div class="row">
+    <div class="col-lg-4">
+        <!-- Profile Info -->
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <div class="profile-avatar mb-3">
+                    <i class="fas fa-user-circle fa-4x text-primary"></i>
+                </div>
+                <h4 class="card-title"><%= user.username %></h4>
+                <p class="text-muted mb-3">
+                    <i class="fas fa-envelope me-1"></i>
+                    <%= user.email %>
+                </p>
+                <span class="badge bg-primary fs-6">
+                    <i class="fas fa-user-tag me-1"></i>
+                    <%= user.role === 'admin' ? 'Quản trị viên' : user.role === 'owner' ? 'Chủ quán' : 'Người dùng' %>
+                </span>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Thao tác nhanh
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/locations" class="btn btn-outline-primary">
+                        <i class="fas fa-map-marker-alt me-1"></i>Khám phá địa điểm
+                    </a>
+                    <a href="/vouchers" class="btn btn-outline-success">
+                        <i class="fas fa-percent me-1"></i>Xem voucher
+                    </a>
+                    <% if (user.role === 'owner') { %>
+                        <a href="/owner/dashboard" class="btn btn-outline-warning">
+                            <i class="fas fa-store me-1"></i>Dashboard Owner
+                        </a>
+                    <% } %>
+                    <% if (user.role === 'admin') { %>
+                        <a href="/admin/dashboard" class="btn btn-outline-danger">
+                            <i class="fas fa-cog me-1"></i>Dashboard Admin
+                        </a>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <!-- My Reviews -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-star me-2"></i>
+                    Đánh giá của tôi (<%= reviews ? reviews.length : 0 %>)
+                </h5>
+            </div>
+            <div class="card-body">
+                <% if (reviews && reviews.length > 0) { %>
+                    <% reviews.forEach(review => { %>
+                        <div class="review-item border-bottom pb-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">
+                                        <a href="/locations/<%= review.location._id %>" class="text-decoration-none">
+                                            <%= review.location.name %>
+                                        </a>
+                                    </h6>
+                                    <div class="rating mb-2">
+                                        <% for (let i = 1; i <= 5; i++) { %>
+                                            <i class="fas fa-star <%= i <= review.rating ? 'text-warning' : 'text-muted' %>"></i>
+                                        <% } %>
+                                    </div>
+                                    <% if (review.comment) { %>
+                                        <p class="mb-0 text-muted"><%= review.comment %></p>
+                                    <% } %>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>
+                                        <%= new Date(review.createdAt).toLocaleDateString('vi-VN') %>
+                                    </small>
+                                    <div class="mt-2">
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editReviewModal<%= review._id %>">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <form action="/reviews/<%= review._id %>" method="POST" class="d-inline">
+                                            <input type="hidden" name="_method" value="DELETE">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Bạn có chắc muốn xóa đánh giá này?')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="text-center py-4">
+                        <i class="fas fa-star fa-2x text-muted mb-3"></i>
+                        <h5 class="text-muted">Chưa có đánh giá nào</h5>
+                        <p class="text-muted">Hãy khám phá các địa điểm và viết đánh giá đầu tiên!</p>
+                        <a href="/locations" class="btn btn-primary">
+                            <i class="fas fa-map-marker-alt me-1"></i>Khám phá ngay
+                        </a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Claimed Vouchers -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-gift me-2"></i>
+                    Voucher đã claim (<%= claimedVouchers ? claimedVouchers.length : 0 %>)
+                </h5>
+            </div>
+            <div class="card-body">
+                <% if (claimedVouchers && claimedVouchers.length > 0) { %>
+                    <% claimedVouchers.forEach(voucher => { %>
+                        <div class="voucher-item border rounded p-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="text-success mb-1">
+                                        <i class="fas fa-ticket-alt me-1"></i>
+                                        <%= voucher.code %>
+                                    </h6>
+                                    <p class="mb-0 text-muted">
+                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                        <%= voucher.location.name %>
+                                    </p>
+                                    <span class="badge bg-success">Giảm <%= voucher.discountPct %>%</span>
+                                </div>
+                                <button class="btn btn-sm btn-outline-success copy-voucher-code" data-code="<%= voucher.code %>">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="text-center py-4">
+                        <i class="fas fa-percent fa-2x text-muted mb-3"></i>
+                        <h5 class="text-muted">Chưa có voucher nào</h5>
+                        <p class="text-muted">Hãy claim voucher đầu tiên của bạn!</p>
+                        <a href="/vouchers" class="btn btn-success">
+                            <i class="fas fa-percent me-1"></i>Xem voucher
+                        </a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Review Modals -->
+<% if (reviews && reviews.length > 0) { %>
+    <% reviews.forEach(review => { %>
+        <div class="modal fade" id="editReviewModal<%= review._id %>" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-edit me-2"></i>Chỉnh sửa đánh giá
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form action="/reviews/<%= review._id %>" method="POST">
+                        <input type="hidden" name="_method" value="PUT">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Đánh giá:</label>
+                                <div class="rating-input">
+                                    <input type="hidden" name="rating" id="ratingValue_<%= review._id %>" value="<%= review.rating %>" required>
+                                    <div class="stars">
+                                        <% for (let i = 1; i <= 5; i++) { %>
+                                            <i class="fas fa-star star-rating <%= i <= review.rating ? 'text-warning' : 'text-muted' %>" data-rating="<%= i %>"></i>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="comment_<%= review._id %>" class="form-label">Nhận xét:</label>
+                                <textarea class="form-control" id="comment_<%= review._id %>" name="comment" rows="3"><%= review.comment || '' %></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Cập nhật
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    <% }) %>
+<% } %>

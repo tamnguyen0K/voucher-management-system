@@ -1,0 +1,173 @@
+
+<!-- Hero Section -->
+<div class="hero-section bg-primary text-white py-5 mb-5 rounded">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-3">
+            <i class="fas fa-ticket-alt me-3"></i>
+            Voucher Management System
+        </h1>
+        <p class="lead mb-4">Khám phá các địa điểm tuyệt vời và nhận voucher giảm giá hấp dẫn</p>
+        <div class="d-flex gap-3 justify-content-center">
+            <a href="/locations" class="btn btn-light btn-lg">
+                <i class="fas fa-map-marker-alt me-2"></i>Khám phá địa điểm
+            </a>
+            <a href="/vouchers" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-percent me-2"></i>Xem voucher
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Featured Locations -->
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3">
+            <i class="fas fa-star text-warning me-2"></i>
+            Địa điểm nổi bật
+        </h2>
+        <a href="/locations" class="btn btn-outline-primary">Xem tất cả</a>
+    </div>
+    
+    <% if (locations && locations.length > 0) { %>
+        <div class="row">
+            <% locations.forEach(location => { %>
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <img src="<%= location.imageUrl %>" class="card-img-top" alt="<%= location.name %>" style="height: 200px; object-fit: cover;">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title"><%= location.name %></h5>
+                            <p class="card-text text-muted flex-grow-1"><%= location.description.substring(0, 100) %>...</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-secondary"><%= location.type %></span>
+                                <div class="rating">
+                                    <% for (let i = 1; i <= 5; i++) { %>
+                                        <i class="fas fa-star <%= i <= location.rating ? 'text-warning' : 'text-muted' %>"></i>
+                                    <% } %>
+                                    <span class="ms-1 text-muted">(<%= location.rating %>)</span>
+                                </div>
+                            </div>
+                            <a href="/locations/<%= location._id %>" class="btn btn-primary mt-3">
+                                <i class="fas fa-eye me-1"></i>Xem chi tiết
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    <% } else { %>
+        <div class="text-center py-5">
+            <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">Chưa có địa điểm nào</h4>
+            <p class="text-muted">Hãy quay lại sau để xem các địa điểm mới!</p>
+        </div>
+    <% } %>
+</section>
+
+<!-- Active Vouchers -->
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3">
+            <i class="fas fa-percent text-success me-2"></i>
+            Voucher đang hoạt động
+        </h2>
+        <a href="/vouchers" class="btn btn-outline-success">Xem tất cả</a>
+    </div>
+    
+    <% if (vouchers && vouchers.length > 0) { %>
+        <div class="row">
+            <% vouchers.forEach(voucher => { %>
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm border-success">
+                        <div class="card-header bg-success text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-ticket-alt me-1"></i>
+                                    <%= voucher.code %>
+                                </h6>
+                                <span class="badge bg-light text-success">
+                                    -<%= voucher.discountPct %>%
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title text-success"><%= voucher.location.name %></h6>
+                            <% if (voucher.conditions) { %>
+                                <p class="card-text text-muted small flex-grow-1">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <%= voucher.conditions %>
+                                </p>
+                            <% } %>
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Còn lại <%= voucher.quantityRemaining %> voucher
+                                </small>
+                                <div class="progress mt-1" style="height: 5px;">
+                                    <div class="progress-bar bg-success" data-width="<%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>"></div>
+                                </div>
+                            </div>
+                            <% if (user) { %>
+                                <form action="/vouchers/<%= voucher._id %>/claim" method="POST" class="mt-auto">
+                                    <button type="submit" class="btn btn-success w-100">
+                                        <i class="fas fa-gift me-1"></i>Claim ngay
+                                    </button>
+                                </form>
+                            <% } else { %>
+                                <a href="/auth" class="btn btn-outline-success w-100">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Đăng nhập để claim
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    <% } else { %>
+        <div class="text-center py-5">
+            <i class="fas fa-percent fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">Chưa có voucher nào</h4>
+            <p class="text-muted">Hãy quay lại sau để xem các voucher mới!</p>
+        </div>
+    <% } %>
+</section>
+
+<!-- Features Section -->
+<section class="bg-light py-5 rounded">
+    <div class="container">
+        <h2 class="text-center mb-5">Tại sao chọn chúng tôi?</h2>
+        <div class="row">
+            <div class="col-md-4 text-center mb-4">
+                <div class="feature-icon bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                    <i class="fas fa-map-marker-alt fa-lg"></i>
+                </div>
+                <h4>Địa điểm đa dạng</h4>
+                <p class="text-muted">Khám phá nhiều địa điểm từ nhà hàng, cafe đến điểm du lịch</p>
+            </div>
+            <div class="col-md-4 text-center mb-4">
+                <div class="feature-icon bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                    <i class="fas fa-percent fa-lg"></i>
+                </div>
+                <h4>Voucher hấp dẫn</h4>
+                <p class="text-muted">Nhận ngay các voucher giảm giá từ 10% đến 50%</p>
+            </div>
+            <div class="col-md-4 text-center mb-4">
+                <div class="feature-icon bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                    <i class="fas fa-star fa-lg"></i>
+                </div>
+                <h4>Đánh giá thực tế</h4>
+                <p class="text-muted">Xem đánh giá từ người dùng thực tế để đưa ra quyết định</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+// Apply progress bar widths from data attributes
+document.addEventListener('DOMContentLoaded', function() {
+    const progressBars = document.querySelectorAll('.progress-bar[data-width]');
+    progressBars.forEach(bar => {
+        const width = bar.getAttribute('data-width');
+        bar.style.width = width + '%';
+    });
+});
+</script>

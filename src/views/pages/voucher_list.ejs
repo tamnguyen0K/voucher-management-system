@@ -1,0 +1,173 @@
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2">
+        <i class="fas fa-percent text-success me-2"></i>
+        Danh sách Voucher
+    </h1>
+    <div class="d-flex gap-2">
+        <span class="badge bg-success fs-6">
+            <i class="fas fa-ticket-alt me-1"></i>
+            <%= vouchers ? vouchers.length : 0 %> voucher đang hoạt động
+        </span>
+    </div>
+</div>
+
+<% if (vouchers && vouchers.length > 0) { %>
+    <div class="row">
+        <% vouchers.forEach(voucher => { %>
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm border-success">
+                    <div class="card-header bg-success text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-ticket-alt me-1"></i>
+                                <%= voucher.code %>
+                            </h6>
+                            <span class="badge bg-light text-success fs-6">
+                                -<%= voucher.discountPct %>%
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="text-center mb-3">
+                            <img src="<%= voucher.location.imageUrl %>" class="rounded" alt="<%= voucher.location.name %>" style="width: 100%; height: 120px; object-fit: cover;">
+                        </div>
+                        
+                        <h6 class="card-title text-success">
+                            <i class="fas fa-map-marker-alt me-1"></i>
+                            <%= voucher.location.name %>
+                        </h6>
+                        
+                        <div class="mb-2">
+                            <span class="badge bg-secondary"><%= voucher.location.type %></span>
+                        </div>
+                        
+                        <% if (voucher.conditions) { %>
+                            <p class="card-text text-muted small flex-grow-1">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <%= voucher.conditions %>
+                            </p>
+                        <% } %>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small class="text-muted">
+                                    <i class="fas fa-gift me-1"></i>
+                                    Đã claim: <%= voucher.quantityClaimed %>/<%= voucher.quantityTotal %>
+                                </small>
+                                <small class="text-muted">
+                                    Còn lại: <%= voucher.quantityRemaining %>
+                                </small>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-success" style="width: <%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-calendar-plus me-1"></i>Bắt đầu
+                                    </small>
+                                    <small class="fw-bold">
+                                        <%= new Date(voucher.startDate).toLocaleDateString('vi-VN') %>
+                                    </small>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-calendar-times me-1"></i>Hết hạn
+                                    </small>
+                                    <small class="fw-bold text-danger">
+                                        <%= new Date(voucher.endDate).toLocaleDateString('vi-VN') %>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-auto">
+                            <div class="d-grid gap-2">
+                                <% if (user) { %>
+                                    <form action="/vouchers/<%= voucher._id %>/claim" method="POST">
+                                        <button type="submit" class="btn btn-success w-100">
+                                            <i class="fas fa-gift me-1"></i>Claim ngay
+                                        </button>
+                                    </form>
+                                <% } else { %>
+                                    <a href="/auth" class="btn btn-outline-success w-100">
+                                        <i class="fas fa-sign-in-alt me-1"></i>Đăng nhập để claim
+                                    </a>
+                                <% } %>
+                                
+                                <a href="/locations/<%= voucher.location._id %>" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i>Xem địa điểm
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+<% } else { %>
+    <div class="text-center py-5">
+        <div class="card border-0">
+            <div class="card-body">
+                <i class="fas fa-percent fa-4x text-muted mb-4"></i>
+                <h3 class="text-muted mb-3">Chưa có voucher nào</h3>
+                <p class="text-muted mb-4">Hiện tại không có voucher nào đang hoạt động. Hãy quay lại sau!</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <a href="/locations" class="btn btn-primary">
+                        <i class="fas fa-map-marker-alt me-1"></i>Khám phá địa điểm
+                    </a>
+                    <a href="/" class="btn btn-outline-primary">
+                        <i class="fas fa-home me-1"></i>Về trang chủ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+<% } %>
+
+<!-- Quick Actions -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    Mẹo sử dụng voucher
+                </h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-check-circle text-success me-2 mt-1"></i>
+                            <div>
+                                <h6>Đọc điều kiện</h6>
+                                <p class="small text-muted mb-0">Luôn đọc kỹ điều kiện sử dụng voucher trước khi claim</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-clock text-warning me-2 mt-1"></i>
+                            <div>
+                                <h6>Kiểm tra hạn sử dụng</h6>
+                                <p class="small text-muted mb-0">Voucher có thời hạn, hãy sử dụng trước khi hết hạn</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-user text-info me-2 mt-1"></i>
+                            <div>
+                                <h6>Đăng nhập để claim</h6>
+                                <p class="small text-muted mb-0">Cần đăng nhập để có thể claim và sử dụng voucher</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

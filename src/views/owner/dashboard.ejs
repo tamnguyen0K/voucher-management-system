@@ -1,0 +1,330 @@
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2">
+        <i class="fas fa-store text-warning me-2"></i>
+        Owner Dashboard
+    </h1>
+    <div class="text-muted">
+        <i class="fas fa-calendar me-1"></i>
+        <%= new Date().toLocaleDateString('vi-VN') %>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-5">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0"><%= stats.totalLocations %></h4>
+                        <p class="mb-0">Địa điểm</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-map-marker-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0"><%= stats.totalVouchers %></h4>
+                        <p class="mb-0">Tổng Voucher</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-percent fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0"><%= stats.activeVouchers %></h4>
+                        <p class="mb-0">Voucher hoạt động</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-ticket-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0"><%= stats.totalClaims %></h4>
+                        <p class="mb-0">Lượt claim</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-gift fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-5">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Thao tác nhanh
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/owner/locations" class="btn btn-outline-primary">
+                        <i class="fas fa-map-marker-alt me-1"></i>Quản lý địa điểm
+                    </a>
+                    <a href="/owner/vouchers" class="btn btn-outline-success">
+                        <i class="fas fa-percent me-1"></i>Quản lý voucher
+                    </a>
+                    <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#createLocationModal">
+                        <i class="fas fa-plus me-1"></i>Tạo địa điểm mới
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Thống kê nhanh
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h3 class="text-success"><%= stats.activeVouchers %></h3>
+                        <p class="text-muted mb-0">Voucher hoạt động</p>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-primary"><%= stats.totalClaims %></h3>
+                        <p class="text-muted mb-0">Tổng lượt claim</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Locations -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-map-marker-alt me-2"></i>
+                    Địa điểm của tôi
+                </h5>
+                <a href="/owner/locations" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+            </div>
+            <div class="card-body">
+                <% if (locations && locations.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Tên địa điểm</th>
+                                    <th>Loại</th>
+                                    <th>Đánh giá</th>
+                                    <th>Địa chỉ</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% locations.forEach(location => { %>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img src="<%= location.imageUrl %>" class="rounded me-2" style="width: 40px; height: 30px; object-fit: cover;">
+                                                <div>
+                                                    <h6 class="mb-0"><%= location.name %></h6>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge bg-secondary"><%= location.type %></span></td>
+                                        <td>
+                                            <div class="rating">
+                                                <% for (let i = 1; i <= 5; i++) { %>
+                                                    <i class="fas fa-star <%= i <= location.rating ? 'text-warning' : 'text-muted' %>"></i>
+                                                <% } %>
+                                                <span class="ms-1">(<%= location.rating %>)</span>
+                                            </div>
+                                        </td>
+                                        <td><small class="text-muted"><%= location.address.substring(0, 30) %>...</small></td>
+                                        <td>
+                                            <a href="/locations/<%= location._id %>" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="text-center py-4">
+                        <i class="fas fa-map-marker-alt fa-2x text-muted mb-3"></i>
+                        <h5 class="text-muted">Chưa có địa điểm nào</h5>
+                        <p class="text-muted">Hãy tạo địa điểm đầu tiên của bạn!</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createLocationModal">
+                            <i class="fas fa-plus me-1"></i>Tạo địa điểm
+                        </button>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Vouchers -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-percent me-2"></i>
+                    Voucher gần đây
+                </h5>
+                <a href="/owner/vouchers" class="btn btn-sm btn-outline-success">Xem tất cả</a>
+            </div>
+            <div class="card-body">
+                <% if (vouchers && vouchers.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Mã voucher</th>
+                                    <th>Địa điểm</th>
+                                    <th>Giảm giá</th>
+                                    <th>Số lượng</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% vouchers.forEach(voucher => { %>
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-success fs-6">
+                                                <i class="fas fa-ticket-alt me-1"></i>
+                                                <%= voucher.code %>
+                                            </span>
+                                        </td>
+                                        <td><%= voucher.location.name %></td>
+                                        <td><span class="badge bg-warning text-dark">-<%= voucher.discountPct %>%</span></td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-success" style="width: <%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>%">
+                                                    <%= voucher.quantityClaimed %>/<%= voucher.quantityTotal %>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <% 
+                                                const now = new Date();
+                                                let status = 'active';
+                                                let statusClass = 'success';
+                                                let statusText = 'Hoạt động';
+                                                
+                                                if (now > voucher.endDate) {
+                                                    status = 'expired';
+                                                    statusClass = 'danger';
+                                                    statusText = 'Hết hạn';
+                                                } else if (voucher.quantityClaimed >= voucher.quantityTotal) {
+                                                    status = 'sold_out';
+                                                    statusClass = 'warning';
+                                                    statusText = 'Hết số lượng';
+                                                }
+                                            %>
+                                            <span class="badge bg-<%= statusClass %>"><%= statusText %></span>
+                                        </td>
+                                        <td>
+                                            <a href="/owner/vouchers" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="text-center py-4">
+                        <i class="fas fa-percent fa-2x text-muted mb-3"></i>
+                        <h5 class="text-muted">Chưa có voucher nào</h5>
+                        <p class="text-muted">Hãy tạo voucher đầu tiên của bạn!</p>
+                        <a href="/owner/vouchers" class="btn btn-success">
+                            <i class="fas fa-plus me-1"></i>Tạo voucher
+                        </a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Location Modal -->
+<div class="modal fade" id="createLocationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Tạo địa điểm mới
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/owner/locations" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Tên địa điểm *</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="type" class="form-label">Loại địa điểm *</label>
+                        <select class="form-select" id="type" name="type" required>
+                            <option value="">Chọn loại địa điểm</option>
+                            <option value="restaurant">Nhà hàng</option>
+                            <option value="cafe">Cafe</option>
+                            <option value="tourist_spot">Điểm du lịch</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Địa chỉ *</label>
+                        <input type="text" class="form-control" id="address" name="address" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Mô tả *</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="imageUrl" class="form-label">URL hình ảnh</label>
+                        <input type="url" class="form-control" id="imageUrl" name="imageUrl" placeholder="https://example.com/image.jpg">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Tạo địa điểm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

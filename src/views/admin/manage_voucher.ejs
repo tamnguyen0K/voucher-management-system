@@ -1,0 +1,299 @@
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2">
+        <i class="fas fa-percent text-warning me-2"></i>
+        Quản lý Voucher
+    </h1>
+    <% if (!isAdmin) { %>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createVoucherModal">
+            <i class="fas fa-plus me-1"></i>Tạo voucher mới
+        </button>
+    <% } %>
+</div>
+
+<!-- Vouchers Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>
+            Danh sách Voucher
+        </h5>
+    </div>
+    <div class="card-body">
+        <% if (vouchers && vouchers.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Mã voucher</th>
+                            <th>Địa điểm</th>
+                            <th>Giảm giá</th>
+                            <th>Số lượng</th>
+                            <th>Trạng thái</th>
+                            <th>Hạn sử dụng</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% vouchers.forEach(voucher => { %>
+                            <tr>
+                                <td>
+                                    <span class="badge bg-success fs-6">
+                                        <i class="fas fa-ticket-alt me-1"></i>
+                                        <%= voucher.code %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="<%= voucher.location.imageUrl %>" class="rounded me-2" style="width: 40px; height: 30px; object-fit: cover;">
+                                        <div>
+                                            <h6 class="mb-0"><%= voucher.location.name %></h6>
+                                            <small class="text-muted"><%= voucher.location.type %></small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-warning text-dark fs-6">
+                                        -<%= voucher.discountPct %>%
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-success" style="width: <%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>%">
+                                            <%= voucher.quantityClaimed %>/<%= voucher.quantityTotal %>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <% 
+                                        const now = new Date();
+                                        let status = 'active';
+                                        let statusClass = 'success';
+                                        let statusText = 'Hoạt động';
+                                        
+                                        if (now > voucher.endDate) {
+                                            status = 'expired';
+                                            statusClass = 'danger';
+                                            statusText = 'Hết hạn';
+                                        } else if (voucher.quantityClaimed >= voucher.quantityTotal) {
+                                            status = 'sold_out';
+                                            statusClass = 'warning';
+                                            statusText = 'Hết số lượng';
+                                        } else if (now < voucher.startDate) {
+                                            status = 'upcoming';
+                                            statusClass = 'info';
+                                            statusText = 'Sắp diễn ra';
+                                        }
+                                    %>
+                                    <span class="badge bg-<%= statusClass %>"><%= statusText %></span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        <%= new Date(voucher.endDate).toLocaleDateString('vi-VN') %>
+                                    </small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editVoucherModal<%= voucher._id %>">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <% if (isAdmin) { %>
+                                            <form action="/admin/vouchers/<%= voucher._id %>" method="POST" class="d-inline">
+                                                <input type="hidden" name="_method" value="DELETE">
+                                                <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Bạn có chắc muốn xóa voucher này?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        <% } else { %>
+                                            <form action="/owner/vouchers/<%= voucher._id %>" method="POST" class="d-inline">
+                                                <input type="hidden" name="_method" value="DELETE">
+                                                <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Bạn có chắc muốn xóa voucher này?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        <% } %>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <div class="text-center py-5">
+                <i class="fas fa-percent fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">Chưa có voucher nào</h4>
+                <p class="text-muted">Hãy tạo voucher đầu tiên của bạn!</p>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<!-- Create Voucher Modal -->
+<% if (!isAdmin) { %>
+<div class="modal fade" id="createVoucherModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Tạo voucher mới
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/owner/vouchers" method="POST">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="code" class="form-label">Mã voucher *</label>
+                                <input type="text" class="form-control" id="code" name="code" required>
+                                <small class="text-muted">Mã sẽ được chuyển thành chữ hoa</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="discountPct" class="form-label">Phần trăm giảm giá *</label>
+                                <input type="number" class="form-control" id="discountPct" name="discountPct" min="1" max="100" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="locationId" class="form-label">Địa điểm *</label>
+                                <select class="form-select" id="locationId" name="locationId" required>
+                                    <option value="">Chọn địa điểm</option>
+                                    <% if (locations) { %>
+                                        <% locations.forEach(location => { %>
+                                            <option value="<%= location._id %>"><%= location.name %></option>
+                                        <% }) %>
+                                    <% } %>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="quantityTotal" class="form-label">Số lượng voucher *</label>
+                                <input type="number" class="form-control" id="quantityTotal" name="quantityTotal" min="1" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="startDate" class="form-label">Ngày bắt đầu *</label>
+                                <input type="datetime-local" class="form-control" id="startDate" name="startDate" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="endDate" class="form-label">Ngày kết thúc *</label>
+                                <input type="datetime-local" class="form-control" id="endDate" name="endDate" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="conditions" class="form-label">Điều kiện sử dụng</label>
+                        <textarea class="form-control" id="conditions" name="conditions" rows="3" placeholder="Ví dụ: Áp dụng cho hóa đơn từ 500,000đ trở lên"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Tạo voucher
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<% } %>
+
+<!-- Edit Voucher Modals -->
+<% if (vouchers && vouchers.length > 0) { %>
+    <% vouchers.forEach(voucher => { %>
+        <div class="modal fade" id="editVoucherModal<%= voucher._id %>" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-edit me-2"></i>Chỉnh sửa voucher <%= voucher.code %>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form action="/owner/vouchers/<%= voucher._id %>" method="POST">
+                        <input type="hidden" name="_method" value="PUT">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Mã voucher</label>
+                                        <input type="text" class="form-control" value="<%= voucher.code %>" readonly>
+                                        <small class="text-muted">Không thể thay đổi mã voucher</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="discountPct_<%= voucher._id %>" class="form-label">Phần trăm giảm giá *</label>
+                                        <input type="number" class="form-control" id="discountPct_<%= voucher._id %>" name="discountPct" value="<%= voucher.discountPct %>" min="1" max="100" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Địa điểm</label>
+                                        <input type="text" class="form-control" value="<%= voucher.location.name %>" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="quantityTotal_<%= voucher._id %>" class="form-label">Số lượng voucher *</label>
+                                        <input type="number" class="form-control" id="quantityTotal_<%= voucher._id %>" name="quantityTotal" value="<%= voucher.quantityTotal %>" min="1" required>
+                                        <small class="text-muted">Đã claim: <%= voucher.quantityClaimed %></small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="startDate_<%= voucher._id %>" class="form-label">Ngày bắt đầu *</label>
+                                        <input type="datetime-local" class="form-control" id="startDate_<%= voucher._id %>" name="startDate" value="<%= new Date(voucher.startDate).toISOString().slice(0, 16) %>" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="endDate_<%= voucher._id %>" class="form-label">Ngày kết thúc *</label>
+                                        <input type="datetime-local" class="form-control" id="endDate_<%= voucher._id %>" name="endDate" value="<%= new Date(voucher.endDate).toISOString().slice(0, 16) %>" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="conditions_<%= voucher._id %>" class="form-label">Điều kiện sử dụng</label>
+                                <textarea class="form-control" id="conditions_<%= voucher._id %>" name="conditions" rows="3"><%= voucher.conditions || '' %></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Cập nhật
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    <% }) %>
+<% } %>
+
+<script>
+// Set default start date to now
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    const startDateInput = document.getElementById('startDate');
+    if (startDateInput) {
+        startDateInput.value = now.toISOString().slice(0, 16);
+    }
+});
+</script>

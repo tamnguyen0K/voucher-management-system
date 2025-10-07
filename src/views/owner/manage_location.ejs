@@ -1,0 +1,203 @@
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2">
+        <i class="fas fa-map-marker-alt text-primary me-2"></i>
+        Quản lý Địa điểm
+    </h1>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createLocationModal">
+        <i class="fas fa-plus me-1"></i>Tạo địa điểm mới
+    </button>
+</div>
+
+<!-- Locations Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>
+            Danh sách Địa điểm
+        </h5>
+    </div>
+    <div class="card-body">
+        <% if (locations && locations.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Hình ảnh</th>
+                            <th>Tên địa điểm</th>
+                            <th>Loại</th>
+                            <th>Đánh giá</th>
+                            <th>Địa chỉ</th>
+                            <th>Ngày tạo</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% locations.forEach(location => { %>
+                            <tr>
+                                <td>
+                                    <img src="<%= location.imageUrl %>" class="rounded" style="width: 60px; height: 40px; object-fit: cover;">
+                                </td>
+                                <td>
+                                    <h6 class="mb-0"><%= location.name %></h6>
+                                    <small class="text-muted"><%= location.description.substring(0, 50) %>...</small>
+                                </td>
+                                <td><span class="badge bg-secondary"><%= location.type %></span></td>
+                                <td>
+                                    <div class="rating">
+                                        <% for (let i = 1; i <= 5; i++) { %>
+                                            <i class="fas fa-star <%= i <= location.rating ? 'text-warning' : 'text-muted' %>"></i>
+                                        <% } %>
+                                        <span class="ms-1">(<%= location.rating %>)</span>
+                                    </div>
+                                </td>
+                                <td><small class="text-muted"><%= location.address.substring(0, 30) %>...</small></td>
+                                <td><small class="text-muted"><%= new Date(location.createdAt).toLocaleDateString('vi-VN') %></small></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/locations/<%= location._id %>" class="btn btn-outline-primary" title="Xem chi tiết">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#editLocationModal<%= location._id %>" title="Chỉnh sửa">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <form action="/owner/locations/<%= location._id %>" method="POST" class="d-inline">
+                                            <input type="hidden" name="_method" value="DELETE">
+                                            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Bạn có chắc muốn xóa địa điểm này? Tất cả voucher và review liên quan cũng sẽ bị xóa!')" title="Xóa">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <div class="text-center py-5">
+                <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">Chưa có địa điểm nào</h4>
+                <p class="text-muted">Hãy tạo địa điểm đầu tiên của bạn!</p>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createLocationModal">
+                    <i class="fas fa-plus me-1"></i>Tạo địa điểm
+                </button>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<!-- Create Location Modal -->
+<div class="modal fade" id="createLocationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Tạo địa điểm mới
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/owner/locations" method="POST">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Tên địa điểm *</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="type" class="form-label">Loại địa điểm *</label>
+                                <select class="form-select" id="type" name="type" required>
+                                    <option value="">Chọn loại địa điểm</option>
+                                    <option value="restaurant">Nhà hàng</option>
+                                    <option value="cafe">Cafe</option>
+                                    <option value="tourist_spot">Điểm du lịch</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Địa chỉ *</label>
+                        <input type="text" class="form-control" id="address" name="address" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Mô tả *</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="imageUrl" class="form-label">URL hình ảnh</label>
+                        <input type="url" class="form-control" id="imageUrl" name="imageUrl" placeholder="https://example.com/image.jpg">
+                        <small class="text-muted">Nếu để trống, sẽ sử dụng hình ảnh mặc định</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Tạo địa điểm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Location Modals -->
+<% if (locations && locations.length > 0) { %>
+    <% locations.forEach(location => { %>
+        <div class="modal fade" id="editLocationModal<%= location._id %>" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-edit me-2"></i>Chỉnh sửa địa điểm
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form action="/owner/locations/<%= location._id %>" method="POST">
+                        <input type="hidden" name="_method" value="PUT">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="name_<%= location._id %>" class="form-label">Tên địa điểm *</label>
+                                        <input type="text" class="form-control" id="name_<%= location._id %>" name="name" value="<%= location.name %>" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="type_<%= location._id %>" class="form-label">Loại địa điểm *</label>
+                                        <select class="form-select" id="type_<%= location._id %>" name="type" required>
+                                            <option value="restaurant" <%= location.type === 'restaurant' ? 'selected' : '' %>>Nhà hàng</option>
+                                            <option value="cafe" <%= location.type === 'cafe' ? 'selected' : '' %>>Cafe</option>
+                                            <option value="tourist_spot" <%= location.type === 'tourist_spot' ? 'selected' : '' %>>Điểm du lịch</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="address_<%= location._id %>" class="form-label">Địa chỉ *</label>
+                                <input type="text" class="form-control" id="address_<%= location._id %>" name="address" value="<%= location.address %>" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="description_<%= location._id %>" class="form-label">Mô tả *</label>
+                                <textarea class="form-control" id="description_<%= location._id %>" name="description" rows="3" required><%= location.description %></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="imageUrl_<%= location._id %>" class="form-label">URL hình ảnh</label>
+                                <input type="url" class="form-control" id="imageUrl_<%= location._id %>" name="imageUrl" value="<%= location.imageUrl %>">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Cập nhật
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    <% }) %>
+<% } %>
