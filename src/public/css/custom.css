@@ -1,0 +1,678 @@
+/* ========================================
+   VOUCHER MANAGEMENT SYSTEM - CUSTOM CSS
+   Override Bootstrap với CSS mạnh mẽ
+   ======================================== */
+
+/* CSS Variables - Biến CSS */
+:root {
+    --primary-color: #2563eb;
+    --primary-dark: #1d4ed8;
+    --secondary-color: #64748b;
+    --success-color: #10b981;
+    --danger-color: #ef4444;
+    --warning-color: #f59e0b;
+    --info-color: #06b6d4;
+    --light-color: #f8fafc;
+    --dark-color: #1e293b;
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --gradient-warning: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    --gradient-info: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    --border-radius: 12px;
+    --border-radius-lg: 16px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========================================
+   GLOBAL STYLES - Kiểu toàn cục
+   ======================================== */
+
+* {
+    box-sizing: border-box !important;
+}
+
+body {
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif !important;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
+    min-height: 100vh !important;
+    line-height: 1.6 !important;
+    color: var(--dark-color) !important;
+}
+
+/* ========================================
+   NAVIGATION - Thanh điều hướng
+   ======================================== */
+
+.navbar {
+    background: var(--gradient-primary) !important;
+    backdrop-filter: blur(10px) !important;
+    border: none !important;
+    box-shadow: var(--shadow-lg) !important;
+    padding: 1rem 0 !important;
+}
+
+.navbar-brand {
+    font-weight: 700 !important;
+    font-size: 1.75rem !important;
+    color: white !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 500 !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: var(--border-radius) !important;
+    transition: var(--transition) !important;
+    margin: 0 0.25rem !important;
+}
+
+.navbar-nav .nav-link:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+}
+
+.navbar-toggler {
+    border: none !important;
+    color: white !important;
+}
+
+/* ========================================
+   HERO SECTION - Phần hero
+   ======================================== */
+
+.hero-section {
+    background: var(--gradient-primary) !important;
+    border-radius: var(--border-radius-lg) !important;
+    padding: 4rem 2rem !important;
+    margin: 2rem 0 !important;
+    box-shadow: var(--shadow-xl) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+}
+
+.hero-section h1 {
+    font-size: 3.5rem !important;
+    font-weight: 800 !important;
+    color: white !important;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+    margin-bottom: 1rem !important;
+}
+
+.hero-section .lead {
+    font-size: 1.25rem !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    margin-bottom: 2rem !important;
+}
+
+/* ========================================
+   CARDS - Thẻ
+   ======================================== */
+
+.card {
+    border: none !important;
+    border-radius: var(--border-radius-lg) !important;
+    box-shadow: var(--shadow-md) !important;
+    transition: var(--transition) !important;
+    background: white !important;
+    overflow: hidden !important;
+}
+
+.card:hover {
+    transform: translateY(-8px) !important;
+    box-shadow: var(--shadow-xl) !important;
+}
+
+.card-header {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+    border: none !important;
+    padding: 1.5rem !important;
+    font-weight: 600 !important;
+}
+
+.card-body {
+    padding: 2rem !important;
+}
+
+.card-footer {
+    background: var(--light-color) !important;
+    border: none !important;
+    padding: 1.5rem !important;
+}
+
+/* ========================================
+   BUTTONS - Nút bấm
+   ======================================== */
+
+.btn {
+    border-radius: var(--border-radius) !important;
+    font-weight: 600 !important;
+    padding: 0.75rem 1.5rem !important;
+    transition: var(--transition) !important;
+    border: none !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn:hover::before {
+    left: 100%;
+}
+
+.btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-lg) !important;
+}
+
+.btn-primary {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+}
+
+.btn-success {
+    background: var(--gradient-success) !important;
+    color: white !important;
+}
+
+.btn-warning {
+    background: var(--gradient-warning) !important;
+    color: white !important;
+}
+
+.btn-info {
+    background: var(--gradient-info) !important;
+    color: white !important;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%) !important;
+    color: white !important;
+}
+
+/* ========================================
+   FORMS - Biểu mẫu
+   ======================================== */
+
+.form-control, .form-select {
+    border: 2px solid #e2e8f0 !important;
+    border-radius: var(--border-radius) !important;
+    padding: 0.75rem 1rem !important;
+    transition: var(--transition) !important;
+    background: white !important;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+    outline: none !important;
+}
+
+.form-label {
+    font-weight: 600 !important;
+    color: var(--dark-color) !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.form-group {
+    margin-bottom: 1.5rem !important;
+}
+
+/* ========================================
+   TABLES - Bảng
+   ======================================== */
+
+.table {
+    border-radius: var(--border-radius-lg) !important;
+    overflow: hidden !important;
+    box-shadow: var(--shadow-md) !important;
+    background: white !important;
+}
+
+.table thead th {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+    border: none !important;
+    padding: 1rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    font-size: 0.875rem !important;
+    letter-spacing: 0.5px !important;
+}
+
+.table tbody tr {
+    transition: var(--transition) !important;
+    border: none !important;
+}
+
+.table tbody tr:hover {
+    background: rgba(37, 99, 235, 0.05) !important;
+    transform: scale(1.01) !important;
+}
+
+.table tbody td {
+    padding: 1rem !important;
+    border: none !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+/* ========================================
+   ALERTS - Thông báo
+   ======================================== */
+
+.alert {
+    border-radius: var(--border-radius-lg) !important;
+    border: none !important;
+    padding: 1.5rem !important;
+    box-shadow: var(--shadow-md) !important;
+    font-weight: 500 !important;
+}
+
+.alert-success {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%) !important;
+    color: #065f46 !important;
+}
+
+.alert-danger {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
+    color: #991b1b !important;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+    color: #92400e !important;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
+    color: #1e40af !important;
+}
+
+/* ========================================
+   VOUCHER CARDS - Thẻ voucher
+   ======================================== */
+
+.voucher-item {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+    border: 2px solid var(--success-color) !important;
+    border-radius: var(--border-radius-lg) !important;
+    transition: var(--transition) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.voucher-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-success);
+}
+
+.voucher-item:hover {
+    border-color: var(--success-color) !important;
+    box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2) !important;
+    transform: translateY(-5px) !important;
+}
+
+/* ========================================
+   PROGRESS BARS - Thanh tiến trình
+   ======================================== */
+
+.progress {
+    border-radius: 10px !important;
+    background: rgba(255, 255, 255, 0.3) !important;
+    height: 8px !important;
+    overflow: hidden !important;
+}
+
+.progress-bar {
+    border-radius: 10px !important;
+    background: var(--gradient-success) !important;
+    transition: width 0.6s ease !important;
+}
+
+/* ========================================
+   BADGES - Nhãn
+   ======================================== */
+
+.badge {
+    border-radius: 20px !important;
+    padding: 0.5rem 1rem !important;
+    font-weight: 600 !important;
+    font-size: 0.75rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.badge-primary {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+}
+
+.badge-success {
+    background: var(--gradient-success) !important;
+    color: white !important;
+}
+
+.badge-warning {
+    background: var(--gradient-warning) !important;
+    color: white !important;
+}
+
+.badge-danger {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%) !important;
+    color: white !important;
+}
+
+/* ========================================
+   MODALS - Hộp thoại
+   ======================================== */
+
+.modal-content {
+    border-radius: var(--border-radius-lg) !important;
+    border: none !important;
+    box-shadow: var(--shadow-xl) !important;
+    overflow: hidden !important;
+}
+
+.modal-header {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+    border: none !important;
+    padding: 1.5rem !important;
+}
+
+.modal-title {
+    font-weight: 700 !important;
+}
+
+.modal-body {
+    padding: 2rem !important;
+}
+
+.modal-footer {
+    background: var(--light-color) !important;
+    border: none !important;
+    padding: 1.5rem !important;
+}
+
+/* ========================================
+   STATS CARDS - Thẻ thống kê
+   ======================================== */
+
+.stats-card {
+    background: white !important;
+    border-radius: var(--border-radius-lg) !important;
+    padding: 2rem !important;
+    box-shadow: var(--shadow-md) !important;
+    transition: var(--transition) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-primary);
+}
+
+.stats-card:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: var(--shadow-xl) !important;
+}
+
+.stats-number {
+    font-size: 2.5rem !important;
+    font-weight: 800 !important;
+    color: var(--primary-color) !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.stats-label {
+    color: var(--secondary-color) !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    font-size: 0.875rem !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* ========================================
+   RATING STARS - Sao đánh giá
+   ======================================== */
+
+.rating {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+}
+
+.rating .fas.fa-star {
+    color: #fbbf24 !important;
+    font-size: 1.25rem !important;
+    transition: var(--transition) !important;
+}
+
+.rating .fas.fa-star:hover {
+    transform: scale(1.2) !important;
+}
+
+.rating .fas.fa-star.text-muted {
+    color: #d1d5db !important;
+}
+
+/* ========================================
+   ANIMATIONS - Hiệu ứng
+   ======================================== */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.animate-fadeInUp {
+    animation: fadeInUp 0.6s ease-out !important;
+}
+
+.animate-slideInLeft {
+    animation: slideInLeft 0.6s ease-out !important;
+}
+
+.animate-slideInRight {
+    animation: slideInRight 0.6s ease-out !important;
+}
+
+.animate-pulse {
+    animation: pulse 2s infinite !important;
+}
+
+/* ========================================
+   UTILITY CLASSES - Lớp tiện ích
+   ======================================== */
+
+.text-gradient {
+    background: var(--gradient-primary) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+}
+
+.shadow-custom {
+    box-shadow: var(--shadow-xl) !important;
+}
+
+.border-gradient {
+    border: 2px solid transparent !important;
+    background: linear-gradient(white, white) padding-box,
+                var(--gradient-primary) border-box !important;
+}
+
+.glass-effect {
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN - Thiết kế đáp ứng
+   ======================================== */
+
+@media (max-width: 768px) {
+    .hero-section h1 {
+        font-size: 2.5rem !important;
+    }
+    
+    .hero-section .lead {
+        font-size: 1.125rem !important;
+    }
+    
+    .card {
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .btn {
+        width: 100% !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .table-responsive {
+        border-radius: var(--border-radius-lg) !important;
+    }
+    
+    .stats-card {
+        margin-bottom: 1rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .hero-section {
+        padding: 2rem 1rem !important;
+    }
+    
+    .hero-section h1 {
+        font-size: 2rem !important;
+    }
+    
+    .card-body {
+        padding: 1.5rem !important;
+    }
+    
+    .modal-body {
+        padding: 1.5rem !important;
+    }
+}
+
+/* ========================================
+   PRINT STYLES - Kiểu in
+   ======================================== */
+
+@media print {
+    .navbar, .btn, .modal, footer, .hero-section {
+        display: none !important;
+    }
+    
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #e2e8f0 !important;
+        break-inside: avoid !important;
+    }
+    
+    body {
+        background: white !important;
+    }
+}
+
+/* ========================================
+   DARK MODE SUPPORT - Hỗ trợ chế độ tối
+   ======================================== */
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --light-color: #1e293b;
+        --dark-color: #f8fafc;
+    }
+    
+    body {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+        color: var(--dark-color) !important;
+    }
+    
+    .card {
+        background: #1e293b !important;
+        color: var(--dark-color) !important;
+    }
+    
+    .table {
+        background: #1e293b !important;
+        color: var(--dark-color) !important;
+    }
+}

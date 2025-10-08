@@ -5,27 +5,27 @@
 ```mermaid
 graph TB
     subgraph "Frontend Layer"
-        A["EJS Templates"] --> B["Bootstrap 5 UI"]
-        B --> C["User Interface"]
+        A["EJS Templates<br/>Mẫu EJS"] --> B["Bootstrap 5 UI<br/>Giao diện Bootstrap"]
+        B --> C["User Interface<br/>Giao diện người dùng"]
     end
     
     subgraph "Backend Layer"
-        D["Express.js Server"] --> E["Controllers"]
-        E --> F["Business Logic"]
-        F --> G["Authentication Middleware"]
+        D["Express.js Server<br/>Máy chủ Express"] --> E["Controllers<br/>Bộ điều khiển"]
+        E --> F["Business Logic<br/>Logic nghiệp vụ"]
+        F --> G["Authentication Middleware<br/>Middleware xác thực"]
     end
     
     subgraph "Data Layer"
-        H["MongoDB Database"] --> I["User Collection"]
-        H --> J["Location Collection"]
-        H --> K["Voucher Collection"]
-        H --> L["Review Collection"]
+        H["MongoDB Database<br/>Cơ sở dữ liệu MongoDB"] --> I["User Collection<br/>Bộ sưu tập người dùng"]
+        H --> J["Location Collection<br/>Bộ sưu tập địa điểm"]
+        H --> K["Voucher Collection<br/>Bộ sưu tập voucher"]
+        H --> L["Review Collection<br/>Bộ sưu tập đánh giá"]
     end
     
     subgraph "User Roles"
-        M["Admin User"] --> N["Full System Access"]
-        O["Owner User"] --> P["Business Management"]
-        Q["Regular User"] --> R["Browse & Claim Vouchers"]
+        M["Admin User<br/>Người dùng quản trị"] --> N["Full System Access<br/>Truy cập toàn hệ thống"]
+        O["Owner User<br/>Người dùng chủ quán"] --> P["Business Management<br/>Quản lý kinh doanh"]
+        Q["Regular User<br/>Người dùng thường"] --> R["Browse & Claim Vouchers<br/>Duyệt và nhận voucher"]
     end
     
     C --> D
