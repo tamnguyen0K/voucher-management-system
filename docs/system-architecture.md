@@ -92,34 +92,34 @@ erDiagram
 
 ```mermaid
 flowchart TD
-    A["User visits website"] --> B{"User logged in?"}
-    B -->|No| C["Show Login/Register"]
-    B -->|Yes| D["Show Dashboard"]
+    A["User visits website<br/>Người dùng truy cập website"] --> B{"User logged in?<br/>Đã đăng nhập?"}
+    B -->|No| C["Show Login/Register<br/>Hiển thị đăng nhập/đăng ký"]
+    B -->|Yes| D["Show Dashboard<br/>Hiển thị bảng điều khiển"]
     
-    C --> E["Register/Login"]
-    E --> F{"Login successful?"}
+    C --> E["Register/Login<br/>Đăng ký/Đăng nhập"]
+    E --> F{"Login successful?<br/>Đăng nhập thành công?"}
     F -->|No| C
     F -->|Yes| D
     
-    D --> G{"User Role?"}
-    G -->|Admin| H["Admin Dashboard"]
-    G -->|Owner| I["Owner Dashboard"]
-    G -->|User| J["User Dashboard"]
+    D --> G{"User Role?<br/>Vai trò người dùng?"}
+    G -->|Admin| H["Admin Dashboard<br/>Bảng điều khiển quản trị"]
+    G -->|Owner| I["Owner Dashboard<br/>Bảng điều khiển chủ quán"]
+    G -->|User| J["User Dashboard<br/>Bảng điều khiển người dùng"]
     
-    H --> K["Manage Users"]
-    H --> L["Manage Locations"]
-    H --> M["Manage Vouchers"]
-    H --> N["Manage Reviews"]
+    H --> K["Manage Users<br/>Quản lý người dùng"]
+    H --> L["Manage Locations<br/>Quản lý địa điểm"]
+    H --> M["Manage Vouchers<br/>Quản lý voucher"]
+    H --> N["Manage Reviews<br/>Quản lý đánh giá"]
     
-    I --> O["My Locations"]
-    I --> P["My Vouchers"]
-    I --> Q["Create Location"]
-    I --> R["Create Voucher"]
+    I --> O["My Locations<br/>Địa điểm của tôi"]
+    I --> P["My Vouchers<br/>Voucher của tôi"]
+    I --> Q["Create Location<br/>Tạo địa điểm"]
+    I --> R["Create Voucher<br/>Tạo voucher"]
     
-    J --> S["Browse Locations"]
-    J --> T["Browse Vouchers"]
-    J --> U["Claim Voucher"]
-    J --> V["Write Review"]
+    J --> S["Browse Locations<br/>Duyệt địa điểm"]
+    J --> T["Browse Vouchers<br/>Duyệt voucher"]
+    J --> U["Claim Voucher<br/>Nhận voucher"]
+    J --> V["Write Review<br/>Viết đánh giá"]
 ```
 
 ## 4. Component Architecture Diagram (Sơ đồ kiến trúc component)
@@ -127,38 +127,38 @@ flowchart TD
 ```mermaid
 graph TB
     subgraph "Presentation Layer"
-        A["Home Page"] --> B["Location Detail"]
-        A --> C["Voucher List"]
-        A --> D["Login/Register"]
-        A --> E["User Profile"]
+        A["Home Page<br/>Trang chủ"] --> B["Location Detail<br/>Chi tiết địa điểm"]
+        A --> C["Voucher List<br/>Danh sách voucher"]
+        A --> D["Login/Register<br/>Đăng nhập/Đăng ký"]
+        A --> E["User Profile<br/>Hồ sơ người dùng"]
     end
     
     subgraph "Admin Interface"
-        F["Admin Dashboard"] --> G["User Management"]
-        F --> H["Location Management"]
-        F --> I["Voucher Management"]
-        F --> J["Review Management"]
+        F["Admin Dashboard<br/>Bảng điều khiển quản trị"] --> G["User Management<br/>Quản lý người dùng"]
+        F --> H["Location Management<br/>Quản lý địa điểm"]
+        F --> I["Voucher Management<br/>Quản lý voucher"]
+        F --> J["Review Management<br/>Quản lý đánh giá"]
     end
     
     subgraph "Owner Interface"
-        K["Owner Dashboard"] --> L["My Locations"]
-        K --> M["My Vouchers"]
-        K --> N["Create Location"]
-        K --> O["Create Voucher"]
+        K["Owner Dashboard<br/>Bảng điều khiển chủ quán"] --> L["My Locations<br/>Địa điểm của tôi"]
+        K --> M["My Vouchers<br/>Voucher của tôi"]
+        K --> N["Create Location<br/>Tạo địa điểm"]
+        K --> O["Create Voucher<br/>Tạo voucher"]
     end
     
     subgraph "Business Logic Layer"
-        P["User Controller"] --> Q["Authentication"]
-        R["Location Controller"] --> S["CRUD Operations"]
-        T["Voucher Controller"] --> U["Claim Logic"]
-        V["Review Controller"] --> W["Rating System"]
+        P["User Controller<br/>Bộ điều khiển người dùng"] --> Q["Authentication<br/>Xác thực"]
+        R["Location Controller<br/>Bộ điều khiển địa điểm"] --> S["CRUD Operations<br/>Thao tác CRUD"]
+        T["Voucher Controller<br/>Bộ điều khiển voucher"] --> U["Claim Logic<br/>Logic nhận voucher"]
+        V["Review Controller<br/>Bộ điều khiển đánh giá"] --> W["Rating System<br/>Hệ thống đánh giá"]
     end
     
     subgraph "Data Access Layer"
-        X["User Model"] --> Y["User Schema"]
-        Z["Location Model"] --> AA["Location Schema"]
-        BB["Voucher Model"] --> CC["Voucher Schema"]
-        DD["Review Model"] --> EE["Review Schema"]
+        X["User Model<br/>Mô hình người dùng"] --> Y["User Schema<br/>Lược đồ người dùng"]
+        Z["Location Model<br/>Mô hình địa điểm"] --> AA["Location Schema<br/>Lược đồ địa điểm"]
+        BB["Voucher Model<br/>Mô hình voucher"] --> CC["Voucher Schema<br/>Lược đồ voucher"]
+        DD["Review Model<br/>Mô hình đánh giá"] --> EE["Review Schema<br/>Lược đồ đánh giá"]
     end
     
     A --> P
@@ -205,22 +205,22 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    A["User clicks Claim Voucher"] --> B{"User logged in?"}
-    B -->|No| C["Redirect to Login"]
-    B -->|Yes| D["Check voucher validity"]
+    A["User clicks Claim Voucher<br/>Người dùng nhấn Nhận voucher"] --> B{"User logged in?<br/>Đã đăng nhập?"}
+    B -->|No| C["Redirect to Login<br/>Chuyển hướng đến đăng nhập"]
+    B -->|Yes| D["Check voucher validity<br/>Kiểm tra tính hợp lệ của voucher"]
     
-    D --> E{"Voucher active?"}
-    E -->|No| F["Show error message"]
-    E -->|Yes| G{"Quantity available?"}
+    D --> E{"Voucher active?<br/>Voucher có hoạt động?"}
+    E -->|No| F["Show error message<br/>Hiển thị thông báo lỗi"]
+    E -->|Yes| G{"Quantity available?<br/>Còn số lượng?"}
     
-    G -->|No| H["Show sold out message"]
-    G -->|Yes| I["Update quantityClaimed"]
+    G -->|No| H["Show sold out message<br/>Hiển thị thông báo hết hàng"]
+    G -->|Yes| I["Update quantityClaimed<br/>Cập nhật số lượng đã nhận"]
     
-    I --> J["Save to database"]
-    J --> K["Show success message"]
-    K --> L["Update UI"]
+    I --> J["Save to database<br/>Lưu vào cơ sở dữ liệu"]
+    J --> K["Show success message<br/>Hiển thị thông báo thành công"]
+    K --> L["Update UI<br/>Cập nhật giao diện"]
     
-    C --> M["User logs in"]
+    C --> M["User logs in<br/>Người dùng đăng nhập"]
     M --> A
 ```
 
@@ -228,43 +228,43 @@ flowchart TD
 
 ```mermaid
 graph TD
-    A["Project Root"] --> B["src/"]
-    A --> C["package.json"]
-    A --> D["README.md"]
-    A --> E[".gitignore"]
+    A["Project Root<br/>Thư mục gốc"] --> B["src/<br/>Mã nguồn"]
+    A --> C["package.json<br/>Cấu hình dự án"]
+    A --> D["README.md<br/>Tài liệu"]
+    A --> E[".gitignore<br/>Bỏ qua Git"]
     
-    B --> F["models/"]
-    B --> G["controllers/"]
-    B --> H["routes/"]
-    B --> I["views/"]
-    B --> J["middleware/"]
-    B --> K["config/"]
-    B --> L["public/"]
-    B --> M["app.js"]
+    B --> F["models/<br/>Mô hình"]
+    B --> G["controllers/<br/>Bộ điều khiển"]
+    B --> H["routes/<br/>Định tuyến"]
+    B --> I["views/<br/>Giao diện"]
+    B --> J["middleware/<br/>Middleware"]
+    B --> K["config/<br/>Cấu hình"]
+    B --> L["public/<br/>Tài nguyên công khai"]
+    B --> M["app.js<br/>Ứng dụng chính"]
     
-    F --> N["user.model.js"]
-    F --> O["location.model.js"]
-    F --> P["voucher.model.js"]
-    F --> Q["review.model.js"]
+    F --> N["user.model.js<br/>Mô hình người dùng"]
+    F --> O["location.model.js<br/>Mô hình địa điểm"]
+    F --> P["voucher.model.js<br/>Mô hình voucher"]
+    F --> Q["review.model.js<br/>Mô hình đánh giá"]
     
-    G --> R["user.controller.js"]
-    G --> S["location.controller.js"]
-    G --> T["voucher.controller.js"]
-    G --> U["review.controller.js"]
+    G --> R["user.controller.js<br/>Bộ điều khiển người dùng"]
+    G --> S["location.controller.js<br/>Bộ điều khiển địa điểm"]
+    G --> T["voucher.controller.js<br/>Bộ điều khiển voucher"]
+    G --> U["review.controller.js<br/>Bộ điều khiển đánh giá"]
     
-    H --> V["user.routes.js"]
-    H --> W["location.routes.js"]
-    H --> X["voucher.routes.js"]
-    H --> Y["admin.routes.js"]
+    H --> V["user.routes.js<br/>Định tuyến người dùng"]
+    H --> W["location.routes.js<br/>Định tuyến địa điểm"]
+    H --> X["voucher.routes.js<br/>Định tuyến voucher"]
+    H --> Y["admin.routes.js<br/>Định tuyến quản trị"]
     
-    I --> Z["pages/"]
-    I --> AA["admin/"]
-    I --> BB["owner/"]
-    I --> CC["layout.ejs"]
+    I --> Z["pages/<br/>Trang"]
+    I --> AA["admin/<br/>Quản trị"]
+    I --> BB["owner/<br/>Chủ quán"]
+    I --> CC["layout.ejs<br/>Bố cục"]
     
-    L --> DD["css/"]
-    L --> EE["js/"]
-    L --> FF["images/"]
+    L --> DD["css/<br/>Biểu định kiểu"]
+    L --> EE["js/<br/>JavaScript"]
+    L --> FF["images/<br/>Hình ảnh"]
 ```
 
 ## 8. API Endpoints Diagram (Sơ đồ các endpoint API)
@@ -272,34 +272,34 @@ graph TD
 ```mermaid
 graph LR
     subgraph "Public Routes"
-        A["GET /"] --> B["Home Page"]
-        C["GET /locations"] --> D["Location List"]
-        E["GET /vouchers"] --> F["Voucher List"]
-        G["GET /auth"] --> H["Login/Register"]
+        A["GET /"] --> B["Home Page<br/>Trang chủ"]
+        C["GET /locations"] --> D["Location List<br/>Danh sách địa điểm"]
+        E["GET /vouchers"] --> F["Voucher List<br/>Danh sách voucher"]
+        G["GET /auth"] --> H["Login/Register<br/>Đăng nhập/Đăng ký"]
     end
     
     subgraph "User Routes"
-        I["POST /login"] --> J["User Login"]
-        K["POST /register"] --> L["User Registration"]
-        M["POST /logout"] --> N["User Logout"]
-        O["GET /profile"] --> P["User Profile"]
+        I["POST /login"] --> J["User Login<br/>Đăng nhập người dùng"]
+        K["POST /register"] --> L["User Registration<br/>Đăng ký người dùng"]
+        M["POST /logout"] --> N["User Logout<br/>Đăng xuất người dùng"]
+        O["GET /profile"] --> P["User Profile<br/>Hồ sơ người dùng"]
     end
     
     subgraph "Voucher Routes"
-        Q["POST /vouchers/:id/claim"] --> R["Claim Voucher"]
+        Q["POST /vouchers/:id/claim"] --> R["Claim Voucher<br/>Nhận voucher"]
     end
     
     subgraph "Admin Routes"
-        S["GET /admin/dashboard"] --> T["Admin Dashboard"]
-        U["GET /admin/users"] --> V["User Management"]
-        W["GET /admin/locations"] --> X["Location Management"]
-        Y["GET /admin/vouchers"] --> Z["Voucher Management"]
+        S["GET /admin/dashboard"] --> T["Admin Dashboard<br/>Bảng điều khiển quản trị"]
+        U["GET /admin/users"] --> V["User Management<br/>Quản lý người dùng"]
+        W["GET /admin/locations"] --> X["Location Management<br/>Quản lý địa điểm"]
+        Y["GET /admin/vouchers"] --> Z["Voucher Management<br/>Quản lý voucher"]
     end
     
     subgraph "Owner Routes"
-        AA["GET /owner/dashboard"] --> BB["Owner Dashboard"]
-        CC["GET /owner/locations"] --> DD["My Locations"]
-        EE["GET /owner/vouchers"] --> FF["My Vouchers"]
+        AA["GET /owner/dashboard"] --> BB["Owner Dashboard<br/>Bảng điều khiển chủ quán"]
+        CC["GET /owner/locations"] --> DD["My Locations<br/>Địa điểm của tôi"]
+        EE["GET /owner/vouchers"] --> FF["My Vouchers<br/>Voucher của tôi"]
     end
 ```
 
