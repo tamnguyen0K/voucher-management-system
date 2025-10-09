@@ -119,7 +119,7 @@
                                     Còn lại <%= voucher.quantityRemaining %> voucher
                                 </small>
                                 <div class="progress" style="height: 4px;">
-                                    <div class="progress-bar bg-success" style="width: <%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>%"></div>
+                                    <div class="progress-bar bg-success" data-width="<%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>"></div>
                                 </div>
                             </div>
                             

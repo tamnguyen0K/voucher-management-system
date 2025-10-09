@@ -59,7 +59,7 @@
                                 </td>
                                 <td>
                                     <div class="progress" style="height: 20px;">
-                                        <div class="progress-bar bg-success" style="width: <%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>%">
+                                        <div class="progress-bar bg-success" data-width="<%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>"></div>
                                             <%= voucher.quantityClaimed %>/<%= voucher.quantityTotal %>
                                         </div>
                                     </div>
