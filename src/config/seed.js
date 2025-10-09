@@ -155,7 +155,46 @@ const seedDatabase = async () => {
         location: createdLocations[1]._id,
         conditions: 'Áp dụng cho đồ uống từ 50,000đ'
       },
-      // ... (các voucher khác tương tự)
+            {
+        code: 'MARKET10',
+        discountPct: 10,
+        quantityTotal: 200,
+        quantityClaimed: 45,
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
+        location: createdLocations[2]._id,
+        conditions: 'Áp dụng cho mua sắm từ 200,000đ'
+      },
+      {
+        code: 'FAMILY25',
+        discountPct: 25,
+        quantityTotal: 30,
+        quantityClaimed: 8,
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000),
+        location: createdLocations[3]._id,
+        conditions: 'Áp dụng cho gia đình từ 4 người'
+      },
+      {
+        code: 'ROOFTOP30',
+        discountPct: 30,
+        quantityTotal: 40,
+        quantityClaimed: 15,
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+        location: createdLocations[4]._id,
+        conditions: 'Áp dụng vào cuối tuần'
+      },
+      {
+        code: 'MUSEUM50',
+        discountPct: 50,
+        quantityTotal: 100,
+        quantityClaimed: 30,
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+        location: createdLocations[5]._id,
+        conditions: 'Áp dụng cho sinh viên và học sinh'
+      }
     ];
 
     await Voucher.insertMany(vouchers);
@@ -167,15 +206,56 @@ const seedDatabase = async () => {
         user: user1._id,
         location: createdLocations[0]._id,
         rating: 5,
-        comment: 'Hải sản rất tươi ngon, nhân viên thân thiện.'
+        comment: 'Hải sản rất tươi ngon, giá cả hợp lý. Nhân viên phục vụ nhiệt tình.'
       },
       {
         user: user2._id,
         location: createdLocations[0]._id,
         rating: 4,
-        comment: 'Đồ ăn ngon nhưng hơi đông khách.'
+        comment: 'Món ăn ngon nhưng hơi đông khách, nên đặt bàn trước.'
       },
-      // ... (các đánh giá khác)
+      {
+        user: user1._id,
+        location: createdLocations[1]._id,
+        rating: 5,
+        comment: 'Không gian yên tĩnh, cà phê ngon. Lý tưởng để học tập và làm việc.'
+      },
+      {
+        user: user2._id,
+        location: createdLocations[1]._id,
+        rating: 4,
+        comment: 'Cà phê chất lượng tốt, wifi ổn định.'
+      },
+      {
+        user: user1._id,
+        location: createdLocations[2]._id,
+        rating: 4,
+        comment: 'Chợ truyền thống đầy màu sắc, nhiều món ăn ngon.'
+      },
+      {
+        user: user2._id,
+        location: createdLocations[2]._id,
+        rating: 3,
+        comment: 'Hơi đông đúc và ồn ào, nhưng trải nghiệm thú vị.'
+      },
+      {
+        user: user1._id,
+        location: createdLocations[3]._id,
+        rating: 4,
+        comment: 'Món ăn gia đình ngon, giá cả phải chăng.'
+      },
+      {
+        user: user2._id,
+        location: createdLocations[4]._id,
+        rating: 5,
+        comment: 'View đẹp, cà phê ngon. Perfect cho date!'
+      },
+      {
+        user: user1._id,
+        location: createdLocations[5]._id,
+        rating: 4,
+        comment: 'Bảo tàng có nhiều hiện vật thú vị, đáng để tham quan.'
+      }
     ];
 
     await Review.insertMany(reviews);
