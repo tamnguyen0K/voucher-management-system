@@ -1,3 +1,4 @@
+// Import các thư viện và model cần thiết
 const express = require('express');
 const router = express.Router();
 const User = require('../models/user.model');
@@ -5,39 +6,42 @@ const Location = require('../models/location.model');
 const Voucher = require('../models/voucher.model');
 const Review = require('../models/review.model');
 const reviewController = require('../controllers/review.controller');
-const { requireAuth, requireAdmin } = require('../middleware/auth');
+const { requireAuth, requireAdmin } = require('../middleware/auth'); // Middleware xác thực và kiểm tra quyền admin
 
-// Admin dashboard
+// =============================
+// TRANG DASHBOARD ADMIN
+// =============================
 router.get('/admin/dashboard', requireAuth, requireAdmin, async (req, res) => {
   try {
-    // Get statistics
+    // Lấy thống kê tổng số người dùng, địa điểm, voucher, review
     const totalUsers = await User.countDocuments();
     const totalLocations = await Location.countDocuments();
     const totalVouchers = await Voucher.countDocuments();
     const totalReviews = await Review.countDocuments();
 
-    // Get recent activities
+    // Lấy dữ liệu hoạt động gần đây (5 cái mới nhất)
     const recentUsers = await User.find().sort({ createdAt: -1 }).limit(5);
     const recentLocations = await Location.find()
-      .populate('owner', 'username')
+      .populate('owner', 'username') // Gắn thông tin chủ sở hữu
       .sort({ createdAt: -1 })
       .limit(5);
     const recentVouchers = await Voucher.find()
-      .populate('location', 'name')
+      .populate('location', 'name') // Gắn thông tin địa điểm
       .sort({ createdAt: -1 })
       .limit(5);
 
-    // Get voucher statistics
+    // Lấy thống kê voucher đang hoạt động và voucher đã hết hạn
     const activeVouchers = await Voucher.countDocuments({
       startDate: { $lte: new Date() },
       endDate: { $gte: new Date() },
-      quantityClaimed: { $lt: { $expr: '$quantityTotal' } }
+      quantityClaimed: { $lt: { $expr: '$quantityTotal' } } // còn số lượng
     });
 
     const expiredVouchers = await Voucher.countDocuments({
-      endDate: { $lt: new Date() }
+      endDate: { $lt: new Date() } // hết hạn
     });
 
+    // Render giao diện Dashboard
     res.render('admin/dashboard', {
       title: 'Admin Dashboard',
       stats: {
@@ -59,7 +63,9 @@ router.get('/admin/dashboard', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// Manage users
+// =============================
+// QUẢN LÝ NGƯỜI DÙNG
+// =============================
 router.get('/admin/users', requireAuth, requireAdmin, async (req, res) => {
   try {
     const users = await User.find().sort({ createdAt: -1 });
@@ -74,12 +80,13 @@ router.get('/admin/users', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// Update user role
+// Cập nhật vai trò (role) người dùng
 router.put('/admin/users/:id/role', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
 
+    // Kiểm tra role hợp lệ
     if (!['user', 'owner', 'admin'].includes(role)) {
       req.flash('error', 'Role không hợp lệ');
       return res.redirect('/admin/users');
@@ -95,18 +102,18 @@ router.put('/admin/users/:id/role', requireAuth, requireAdmin, async (req, res) 
   }
 });
 
-// Delete user
+// Xóa người dùng
 router.delete('/admin/users/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Don't allow deleting yourself
+    // Không cho phép admin tự xóa chính mình
     if (id === req.session.userId) {
       req.flash('error', 'Không thể xóa chính mình');
       return res.redirect('/admin/users');
     }
 
-    // Delete related data
+    // Xóa dữ liệu liên quan: review, location, voucher
     await Review.deleteMany({ user: id });
     await Location.deleteMany({ owner: id });
     await Voucher.deleteMany({ location: { $in: await Location.find({ owner: id }).distinct('_id') } });
@@ -121,11 +128,13 @@ router.delete('/admin/users/:id', requireAuth, requireAdmin, async (req, res) =>
   }
 });
 
-// Manage locations
+// =============================
+// QUẢN LÝ ĐỊA ĐIỂM
+// =============================
 router.get('/admin/locations', requireAuth, requireAdmin, async (req, res) => {
   try {
     const locations = await Location.find()
-      .populate('owner', 'username email')
+      .populate('owner', 'username email') // Thêm thông tin chủ địa điểm
       .sort({ createdAt: -1 });
 
     res.render('admin/manage_location', {
@@ -139,15 +148,14 @@ router.get('/admin/locations', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// Delete location (admin)
+// Xóa địa điểm (và dữ liệu liên quan)
 router.delete('/admin/locations/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Delete related data
-    await Voucher.deleteMany({ location: id });
-    await Review.deleteMany({ location: id });
-    await Location.findByIdAndDelete(id);
+    await Voucher.deleteMany({ location: id }); // Xóa voucher thuộc địa điểm
+    await Review.deleteMany({ location: id }); // Xóa review thuộc địa điểm
+    await Location.findByIdAndDelete(id); // Xóa địa điểm
 
     req.flash('success', 'Xóa địa điểm thành công!');
     res.redirect('/admin/locations');
@@ -158,17 +166,19 @@ router.delete('/admin/locations/:id', requireAuth, requireAdmin, async (req, res
   }
 });
 
-// Manage vouchers
+// =============================
+// QUẢN LÝ VOUCHER
+// =============================
 router.get('/admin/vouchers', requireAuth, requireAdmin, async (req, res) => {
   try {
     const vouchers = await Voucher.find()
-      .populate('location', 'name')
+      .populate('location', 'name') // Hiển thị tên địa điểm chứa voucher
       .sort({ createdAt: -1 });
 
     res.render('admin/manage_voucher', {
       title: 'Quản lý Voucher',
       vouchers,
-      isAdmin: true
+      isAdmin: true // Dùng để render giao diện riêng cho admin
     });
   } catch (error) {
     console.error('Get vouchers error:', error);
@@ -177,7 +187,7 @@ router.get('/admin/vouchers', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// Delete voucher (admin)
+// Xóa voucher
 router.delete('/admin/vouchers/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
@@ -191,8 +201,13 @@ router.delete('/admin/vouchers/:id', requireAuth, requireAdmin, async (req, res)
   }
 });
 
-// Manage reviews
+// =============================
+// QUẢN LÝ ĐÁNH GIÁ (REVIEW)
+// =============================
 router.get('/admin/reviews', requireAuth, requireAdmin, reviewController.getAllReviews);
 router.delete('/admin/reviews/:reviewId', requireAuth, requireAdmin, reviewController.adminDeleteReview);
 
+// =============================
+// EXPORT ROUTER
+// =============================
 module.exports = router;

@@ -1,44 +1,41 @@
-// Main JavaScript for Voucher Management System
+// ==========================
+// Main JavaScript cho Hệ thống Quản lý Voucher
+// Dùng để xử lý hiệu ứng, form, xác nhận, copy mã, tìm kiếm, animation, toast, v.v.
+// ==========================
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize tooltips
+    // Khởi tạo tooltip của Bootstrap (hiện mô tả khi hover)
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
-    // Initialize popovers
+    // Khởi tạo popover (hộp thông tin nhỏ khi click vào phần tử)
     var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
     var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl);
     });
 
-    // Auto-hide alerts after 5 seconds
+    // Tự động ẩn alert (thông báo) sau 5 giây
     setTimeout(function() {
         var alerts = document.querySelectorAll('.alert');
         alerts.forEach(function(alert) {
             var bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
+            bsAlert.close(); // Đóng alert
         });
     }, 5000);
 
-    // Form validation
-    initializeFormValidation();
-
-    // Rating stars functionality
-    initializeRatingStars();
-
-    // Voucher claim confirmation
-    initializeVoucherClaim();
-
-    // Search functionality
-    initializeSearch();
-
-    // Animation on scroll
-    initializeScrollAnimations();
+    // Gọi các hàm khởi tạo chính
+    initializeFormValidation();   // Kiểm tra form trước khi submit
+    initializeRatingStars();      // Hệ thống chấm sao
+    initializeVoucherClaim();     // Xác nhận khi claim voucher
+    initializeSearch();           // Tìm kiếm realtime
+    initializeScrollAnimations(); // Hiệu ứng khi scroll trang
 });
 
-// Form Validation
+// ==========================
+// Kiểm tra form hợp lệ (Bootstrap validation)
+// ==========================
 function initializeFormValidation() {
     const forms = document.querySelectorAll('.needs-validation');
     
@@ -48,13 +45,14 @@ function initializeFormValidation() {
                 event.preventDefault();
                 event.stopPropagation();
             }
-            
             form.classList.add('was-validated');
         }, false);
     });
 }
 
-// Rating Stars
+// ==========================
+// Hệ thống đánh giá sao (rating)
+// ==========================
 function initializeRatingStars() {
     const ratingInputs = document.querySelectorAll('.rating-input');
     
@@ -62,19 +60,22 @@ function initializeRatingStars() {
         const stars = ratingInput.querySelectorAll('.star-rating');
         const hiddenInput = ratingInput.querySelector('input[type="hidden"]');
         
-        stars.forEach(function(star, index) {
+        // Khi click vào sao
+        stars.forEach(function(star) {
             star.addEventListener('click', function() {
                 const rating = parseInt(this.dataset.rating);
                 hiddenInput.value = rating;
                 updateStarDisplay(stars, rating);
             });
             
+            // Khi rê chuột qua sao
             star.addEventListener('mouseenter', function() {
                 const rating = parseInt(this.dataset.rating);
                 updateStarDisplay(stars, rating);
             });
         });
         
+        // Khi rời chuột khỏi vùng sao → hiển thị lại giá trị hiện tại
         ratingInput.addEventListener('mouseleave', function() {
             const currentRating = parseInt(hiddenInput.value) || 0;
             updateStarDisplay(stars, currentRating);
@@ -82,6 +83,7 @@ function initializeRatingStars() {
     });
 }
 
+// Cập nhật hiển thị màu của sao (vàng = chọn, xám = chưa chọn)
 function updateStarDisplay(stars, rating) {
     stars.forEach(function(star, index) {
         if (index < rating) {
@@ -94,7 +96,9 @@ function updateStarDisplay(stars, rating) {
     });
 }
 
-// Voucher Claim Confirmation
+// ==========================
+// Xác nhận khi claim voucher
+// ==========================
 function initializeVoucherClaim() {
     const claimForms = document.querySelectorAll('form[action*="/claim"]');
     
@@ -102,18 +106,19 @@ function initializeVoucherClaim() {
         form.addEventListener('submit', function(event) {
             const voucherCode = form.closest('.card').querySelector('.badge').textContent.trim();
             
+            // Hỏi xác nhận người dùng
             if (!confirm(`Bạn có chắc muốn claim voucher ${voucherCode}?`)) {
                 event.preventDefault();
                 return false;
             }
             
-            // Show loading state
+            // Hiển thị trạng thái "đang xử lý"
             const submitBtn = form.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<span class="loading"></span> Đang xử lý...';
             submitBtn.disabled = true;
             
-            // Reset button after 3 seconds if no redirect
+            // Sau 3s nếu không redirect → reset lại nút
             setTimeout(function() {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
@@ -122,7 +127,9 @@ function initializeVoucherClaim() {
     });
 }
 
-// Search Functionality
+// ==========================
+// Chức năng tìm kiếm realtime (lọc danh sách theo input)
+// ==========================
 function initializeSearch() {
     const searchInputs = document.querySelectorAll('.search-input');
     
@@ -134,17 +141,15 @@ function initializeSearch() {
             
             items.forEach(function(item) {
                 const text = item.textContent.toLowerCase();
-                if (text.includes(searchTerm)) {
-                    item.style.display = '';
-                } else {
-                    item.style.display = 'none';
-                }
+                item.style.display = text.includes(searchTerm) ? '' : 'none';
             });
         }, 300));
     });
 }
 
-// Scroll Animations
+// ==========================
+// Hiệu ứng xuất hiện khi scroll
+// ==========================
 function initializeScrollAnimations() {
     const observerOptions = {
         threshold: 0.1,
@@ -154,7 +159,7 @@ function initializeScrollAnimations() {
     const observer = new IntersectionObserver(function(entries) {
         entries.forEach(function(entry) {
             if (entry.isIntersecting) {
-                entry.target.classList.add('fade-in');
+                entry.target.classList.add('fade-in'); // Thêm class hiệu ứng
             }
         });
     }, observerOptions);
@@ -165,7 +170,9 @@ function initializeScrollAnimations() {
     });
 }
 
-// Utility Functions
+// ==========================
+// Hàm tiện ích: debounce (chống spam sự kiện input)
+// ==========================
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -178,6 +185,9 @@ function debounce(func, wait) {
     };
 }
 
+// ==========================
+// Toast Notification (Thông báo nổi Bootstrap)
+// ==========================
 function showToast(message, type = 'info') {
     const toastContainer = document.getElementById('toast-container') || createToastContainer();
     
@@ -195,16 +205,14 @@ function showToast(message, type = 'info') {
     `;
     
     toastContainer.appendChild(toast);
-    
     const bsToast = new bootstrap.Toast(toast);
     bsToast.show();
-    
-    // Remove toast element after it's hidden
-    toast.addEventListener('hidden.bs.toast', function() {
-        toast.remove();
-    });
+
+    // Xóa toast khi ẩn
+    toast.addEventListener('hidden.bs.toast', () => toast.remove());
 }
 
+// Tạo container cho toast nếu chưa có
 function createToastContainer() {
     const container = document.createElement('div');
     container.id = 'toast-container';
@@ -214,6 +222,7 @@ function createToastContainer() {
     return container;
 }
 
+// Icon phù hợp theo loại thông báo
 function getToastIcon(type) {
     const icons = {
         'success': 'check-circle',
@@ -224,7 +233,9 @@ function getToastIcon(type) {
     return icons[type] || 'info-circle';
 }
 
-// API Helper Functions
+// ==========================
+// Hàm hỗ trợ fetch API có hiển thị lỗi/toast
+// ==========================
 async function fetchWithLoading(url, options = {}) {
     const defaultOptions = {
         headers: {
@@ -235,11 +246,7 @@ async function fetchWithLoading(url, options = {}) {
     
     try {
         const response = await fetch(url, { ...defaultOptions, ...options });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         return await response.json();
     } catch (error) {
         console.error('Fetch error:', error);
@@ -248,20 +255,23 @@ async function fetchWithLoading(url, options = {}) {
     }
 }
 
-// Copy to clipboard functionality
+// ==========================
+// Sao chép mã voucher vào clipboard
+// ==========================
 function copyToClipboard(text) {
     if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(function() {
-            showToast('Đã sao chép vào clipboard', 'success');
-        }).catch(function(err) {
-            console.error('Could not copy text: ', err);
-            fallbackCopyTextToClipboard(text);
-        });
+        navigator.clipboard.writeText(text)
+            .then(() => showToast('Đã sao chép vào clipboard', 'success'))
+            .catch(err => {
+                console.error('Copy error:', err);
+                fallbackCopyTextToClipboard(text);
+            });
     } else {
         fallbackCopyTextToClipboard(text);
     }
 }
 
+// Dự phòng copy nếu trình duyệt cũ không hỗ trợ navigator.clipboard
 function fallbackCopyTextToClipboard(text) {
     const textArea = document.createElement('textarea');
     textArea.value = text;
@@ -276,14 +286,13 @@ function fallbackCopyTextToClipboard(text) {
         document.execCommand('copy');
         showToast('Đã sao chép vào clipboard', 'success');
     } catch (err) {
-        console.error('Fallback: Could not copy text: ', err);
+        console.error('Fallback copy error:', err);
         showToast('Không thể sao chép', 'danger');
     }
-    
     document.body.removeChild(textArea);
 }
 
-// Voucher code copy functionality
+// Khi click vào nút copy voucher code
 document.addEventListener('click', function(event) {
     if (event.target.classList.contains('copy-voucher-code')) {
         const voucherCode = event.target.dataset.code;
@@ -291,14 +300,14 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// Progress bar animation
+// ==========================
+// Hiệu ứng thanh tiến trình (progress bar)
+// ==========================
 function animateProgressBars() {
     const progressBars = document.querySelectorAll('.progress-bar');
-    
     progressBars.forEach(function(bar) {
         const width = bar.style.width;
         bar.style.width = '0%';
-        
         setTimeout(function() {
             bar.style.transition = 'width 1s ease-in-out';
             bar.style.width = width;
@@ -306,12 +315,14 @@ function animateProgressBars() {
     });
 }
 
-// Initialize progress bar animation when page loads
+// Gọi hiệu ứng khi trang load
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(animateProgressBars, 500);
 });
 
-// Export functions for global use
+// ==========================
+// Xuất các hàm tiện ích ra global (window)
+// ==========================
 window.VoucherSystem = {
     showToast,
     copyToClipboard,

@@ -7,7 +7,7 @@ const reviewSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId, // Kiểu ObjectId để tham chiếu
     ref: 'User',                          // Liên kết đến model User
-    required: [true, 'User is required']   // Bắt buộc phải có người dùng
+    required: [true, 'User is required']  // Bắt buộc phải có người dùng
   },
 
   // Địa điểm được đánh giá

@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
   // Tên đăng nhập
   username: {
     type: String,
-    required: [true, 'Username is required'],          // Bắt buộc phải có
+    required: [true, 'Username is required'],         // Bắt buộc phải có
     unique: true,                                     // Không được trùng lặp
     trim: true,                                       // Loại bỏ khoảng trắng thừa
     minlength: [3, 'Username must be at least 3 characters'], // Tối thiểu 3 ký tự

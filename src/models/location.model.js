@@ -4,9 +4,9 @@ const mongoose = require('mongoose');
 // Định nghĩa cấu trúc dữ liệu (schema) cho một địa điểm (location)
 const locationSchema = new mongoose.Schema({
   name: {
-    type: String,                     // Kiểu dữ liệu là chuỗi
-    required: [true, 'Location name is required'], // Bắt buộc phải có
-    trim: true,                       // Tự động loại bỏ khoảng trắng ở đầu/cuối
+    type: String,                                                  // Kiểu dữ liệu là chuỗi
+    required: [true, 'Location name is required'],                 // Bắt buộc phải có
+    trim: true,                                                    // Tự động loại bỏ khoảng trắng ở đầu/cuối
     maxlength: [100, 'Location name cannot exceed 100 characters'] // Giới hạn độ dài
   },
 
@@ -35,9 +35,9 @@ const locationSchema = new mongoose.Schema({
   // Điểm đánh giá trung bình (ví dụ: 4.5 sao)
   rating: {
     type: Number,
-    default: 0,                        // Nếu chưa có đánh giá thì mặc định = 0
-    min: [0, 'Rating cannot be less than 0'], // Giới hạn nhỏ nhất
-    max: [5, 'Rating cannot exceed 5']       // Giới hạn lớn nhất
+    default: 0,                                // Nếu chưa có đánh giá thì mặc định = 0
+    min: [0, 'Rating cannot be less than 0'],  // Giới hạn nhỏ nhất
+    max: [5, 'Rating cannot exceed 5']         // Giới hạn lớn nhất
   },
 
   // Ảnh đại diện của địa điểm
