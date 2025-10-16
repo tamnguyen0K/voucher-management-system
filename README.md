@@ -229,25 +229,3 @@ npm start          # Start production server
 npm run dev        # Start development server với nodemon
 npm run seed       # Seed dữ liệu mẫu
 ```
-
-## 🤝 Đóng góp
-
-1. Fork repository
-2. Tạo feature branch
-3. Commit changes
-4. Push to branch
-5. Tạo Pull Request
-
-## 📄 License
-
-MIT License
-
-## 🆘 Hỗ trợ
-
-Nếu gặp vấn đề, vui lòng tạo issue trên GitHub hoặc liên hệ:
-- Email: support@example.com
-- GitHub: [Repository Issues](link-to-issues)
-
----
-
-**Lưu ý**: Đây là project demo, trong môi trường production cần thêm các tính năng bảo mật và tối ưu hóa khác.
