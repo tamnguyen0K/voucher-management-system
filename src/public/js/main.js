@@ -1,70 +1,61 @@
-/* ========================================
-   FILE JAVASCRIPT CHÍNH CHO HỆ THỐNG QUẢN LÝ VOUCHER
-   File này chứa toàn bộ logic xử lý JavaScript cho frontend
-   Bao gồm: validation form, rating, voucher claim, search, animation, toast, modal, v.v.
-   ======================================== */
+// ==========================
+// Main JavaScript cho Hệ thống Quản lý Voucher
+// Dùng để xử lý hiệu ứng, form, xác nhận, copy mã, tìm kiếm, animation, toast, v.v.
+// ==========================
 
-/* ========================================
-   KHỞI TẠO KHI TRANG ĐƯỢC TẢI XONG
-   Chạy các hàm setup khi DOM đã sẵn sàng
-   ======================================== */
 document.addEventListener('DOMContentLoaded', function() {
-    // Khởi tạo tooltip của Bootstrap - hiển thị gợi ý khi di chuột vào phần tử
+    // Khởi tạo tooltip của Bootstrap (hiện mô tả khi hover)
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
-    // Khởi tạo popover - hộp thông tin nhỏ khi click vào phần tử
+    // Khởi tạo popover (hộp thông tin nhỏ khi click vào phần tử)
     var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
     var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl);
     });
 
-    // Tự động ẩn thông báo alert sau 5 giây
+    // Tự động ẩn alert (thông báo) sau 5 giây
     setTimeout(function() {
         var alerts = document.querySelectorAll('.alert');
         alerts.forEach(function(alert) {
             var bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
+            bsAlert.close(); // Đóng alert
         });
     }, 5000);
 
-    // Gọi các hàm khởi tạo chức năng chính
-    initializeFormValidation();      // Kiểm tra tính hợp lệ của form trước khi submit
-    initializeRatingStars();         // Hệ thống đánh giá bằng sao
-    initializeVoucherClaim();        // Xác nhận khi người dùng claim voucher
-    initializeSearch();              // Tìm kiếm realtime để lọc danh sách
-    initializeScrollAnimations();    // Hiệu ứng xuất hiện khi scroll trang
-    initializeCenterModal();         // Modal popup hình vuông ở giữa màn hình
-    initializeLocationQuickView();   // Xem nhanh thông tin địa điểm trong popup
-    initializeAuthForms();           // Xử lý form đăng nhập/đăng ký bằng AJAX
+    // Gọi các hàm khởi tạo chính
+    initializeFormValidation();   // Kiểm tra form trước khi submit
+    initializeRatingStars();      // Hệ thống chấm sao
+    initializeVoucherClaim();     // Xác nhận khi claim voucher
+    initializeSearch();           // Tìm kiếm realtime
+    initializeScrollAnimations(); // Hiệu ứng khi scroll trang
+    initializeCenterModal();      // Modal popup trung tâm
+    initializeLocationQuickView(); // Xem nhanh địa điểm
+    initializeAuthForms();        // Xử lý form đăng nhập/đăng ký với AJAX
 });
 
-/* ========================================
-   KIỂM TRA TÍNH HỢP LỆ CỦA FORM
-   Sử dụng Bootstrap validation để kiểm tra form trước khi submit
-   ======================================== */
+// ==========================
+// Kiểm tra form hợp lệ (Bootstrap validation)
+// ==========================
 function initializeFormValidation() {
     const forms = document.querySelectorAll('.needs-validation');
     
     Array.prototype.slice.call(forms).forEach(function(form) {
         form.addEventListener('submit', function(event) {
-            // Nếu form không hợp lệ, ngăn submit và hiển thị lỗi
             if (!form.checkValidity()) {
                 event.preventDefault();
                 event.stopPropagation();
             }
-            // Thêm class để Bootstrap hiển thị thông báo lỗi
             form.classList.add('was-validated');
         }, false);
     });
 }
 
-/* ========================================
-   HỆ THỐNG ĐÁNH GIÁ BẰNG SAO
-   Cho phép người dùng click vào sao để đánh giá, có hiệu ứng hover
-   ======================================== */
+// ==========================
+// Hệ thống đánh giá sao (rating)
+// ==========================
 function initializeRatingStars() {
     const ratingInputs = document.querySelectorAll('.rating-input');
     
@@ -72,7 +63,7 @@ function initializeRatingStars() {
         const stars = ratingInput.querySelectorAll('.star-rating');
         const hiddenInput = ratingInput.querySelector('input[type="hidden"]');
         
-        // Xử lý khi click vào sao để chọn điểm đánh giá
+        // Khi click vào sao
         stars.forEach(function(star) {
             star.addEventListener('click', function() {
                 const rating = parseInt(this.dataset.rating);
@@ -80,14 +71,14 @@ function initializeRatingStars() {
                 updateStarDisplay(stars, rating);
             });
             
-            // Xử lý khi di chuột qua sao để preview điểm đánh giá
+            // Khi rê chuột qua sao
             star.addEventListener('mouseenter', function() {
                 const rating = parseInt(this.dataset.rating);
                 updateStarDisplay(stars, rating);
             });
         });
         
-        // Khi rời chuột khỏi vùng sao, hiển thị lại giá trị đã chọn
+        // Khi rời chuột khỏi vùng sao → hiển thị lại giá trị hiện tại
         ratingInput.addEventListener('mouseleave', function() {
             const currentRating = parseInt(hiddenInput.value) || 0;
             updateStarDisplay(stars, currentRating);
@@ -95,8 +86,7 @@ function initializeRatingStars() {
     });
 }
 
-/* Cập nhật hiển thị màu của sao dựa trên điểm đánh giá
-   Sao vàng = đã chọn, sao xám = chưa chọn */
+// Cập nhật hiển thị màu của sao (vàng = chọn, xám = chưa chọn)
 function updateStarDisplay(stars, rating) {
     stars.forEach(function(star, index) {
         if (index < rating) {
@@ -109,31 +99,29 @@ function updateStarDisplay(stars, rating) {
     });
 }
 
-/* ========================================
-   XÁC NHẬN KHI CLAIM VOUCHER
-   Hỏi xác nhận và hiển thị trạng thái đang xử lý khi claim voucher
-   ======================================== */
+// ==========================
+// Xác nhận khi claim voucher
+// ==========================
 function initializeVoucherClaim() {
     const claimForms = document.querySelectorAll('form[action*="/claim"]');
     
     claimForms.forEach(function(form) {
         form.addEventListener('submit', function(event) {
-            // Lấy mã voucher từ thẻ card
             const voucherCode = form.closest('.card').querySelector('.badge').textContent.trim();
             
-            // Hỏi xác nhận từ người dùng trước khi claim
+            // Hỏi xác nhận người dùng
             if (!confirm(`Bạn có chắc muốn claim voucher ${voucherCode}?`)) {
                 event.preventDefault();
                 return false;
             }
             
-            // Hiển thị trạng thái "đang xử lý" trên nút submit
+            // Hiển thị trạng thái "đang xử lý"
             const submitBtn = form.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<span class="loading"></span> Đang xử lý...';
             submitBtn.disabled = true;
             
-            // Sau 3 giây nếu không redirect, reset lại nút về trạng thái ban đầu
+            // Sau 3s nếu không redirect → reset lại nút
             setTimeout(function() {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
@@ -142,21 +130,18 @@ function initializeVoucherClaim() {
     });
 }
 
-/* ========================================
-   TÌM KIẾM REALTIME
-   Lọc danh sách theo từ khóa nhập vào, có debounce để tránh gọi quá nhiều lần
-   ======================================== */
+// ==========================
+// Chức năng tìm kiếm realtime (lọc danh sách theo input)
+// ==========================
 function initializeSearch() {
     const searchInputs = document.querySelectorAll('.search-input');
     
     searchInputs.forEach(function(input) {
-        // Sử dụng debounce để tránh gọi hàm quá nhiều lần khi gõ
         input.addEventListener('input', debounce(function() {
             const searchTerm = this.value.toLowerCase();
             const targetSelector = this.dataset.target;
             const items = document.querySelectorAll(targetSelector);
             
-            // Hiển thị hoặc ẩn item dựa trên kết quả tìm kiếm
             items.forEach(function(item) {
                 const text = item.textContent.toLowerCase();
                 item.style.display = text.includes(searchTerm) ? '' : 'none';
@@ -165,37 +150,32 @@ function initializeSearch() {
     });
 }
 
-/* ========================================
-   HIỆU ỨNG XUẤT HIỆN KHI SCROLL
-   Thêm class fade-in khi phần tử xuất hiện trong viewport
-   ======================================== */
+// ==========================
+// Hiệu ứng xuất hiện khi scroll
+// ==========================
 function initializeScrollAnimations() {
     const observerOptions = {
-        threshold: 0.1,  // Kích hoạt khi 10% phần tử xuất hiện
-        rootMargin: '0px 0px -50px 0px'  // Offset để kích hoạt sớm hơn
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
     };
     
     const observer = new IntersectionObserver(function(entries) {
         entries.forEach(function(entry) {
-            // Khi phần tử xuất hiện trong viewport, thêm class hiệu ứng
             if (entry.isIntersecting) {
-                entry.target.classList.add('fade-in');
+                entry.target.classList.add('fade-in'); // Thêm class hiệu ứng
             }
         });
     }, observerOptions);
     
-    // Quan sát các phần tử card và hero-section
     const animatedElements = document.querySelectorAll('.card, .hero-section');
     animatedElements.forEach(function(el) {
         observer.observe(el);
     });
 }
 
-/* ========================================
-   HÀM TIỆN ÍCH: DEBOUNCE
-   Trì hoãn việc thực thi hàm để tránh gọi quá nhiều lần trong thời gian ngắn
-   Thường dùng cho input search để giảm số lần gọi API hoặc filter
-   ======================================== */
+// ==========================
+// Hàm tiện ích: debounce (chống spam sự kiện input)
+// ==========================
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -208,15 +188,12 @@ function debounce(func, wait) {
     };
 }
 
-/* ========================================
-   THÔNG BÁO TOAST
-   Hiển thị thông báo nổi ở góc trên bên phải màn hình
-   ======================================== */
+// ==========================
+// Toast Notification (Thông báo nổi Bootstrap)
+// ==========================
 function showToast(message, type = 'info') {
-    // Lấy hoặc tạo container cho toast
     const toastContainer = document.getElementById('toast-container') || createToastContainer();
     
-    // Tạo element toast mới
     const toast = document.createElement('div');
     toast.className = `toast align-items-center text-white bg-${type} border-0`;
     toast.setAttribute('role', 'alert');
@@ -230,16 +207,15 @@ function showToast(message, type = 'info') {
         </div>
     `;
     
-    // Thêm toast vào container và hiển thị
     toastContainer.appendChild(toast);
     const bsToast = new bootstrap.Toast(toast);
     bsToast.show();
 
-    // Xóa toast khỏi DOM sau khi ẩn đi
+    // Xóa toast khi ẩn
     toast.addEventListener('hidden.bs.toast', () => toast.remove());
 }
 
-/* Tạo container cho toast nếu chưa tồn tại */
+// Tạo container cho toast nếu chưa có
 function createToastContainer() {
     const container = document.createElement('div');
     container.id = 'toast-container';
@@ -249,21 +225,20 @@ function createToastContainer() {
     return container;
 }
 
-/* Trả về icon phù hợp theo loại thông báo */
+// Icon phù hợp theo loại thông báo
 function getToastIcon(type) {
     const icons = {
-        'success': 'check-circle',      // Thành công
-        'danger': 'exclamation-triangle',  // Lỗi
-        'warning': 'exclamation-circle',   // Cảnh báo
-        'info': 'info-circle'              // Thông tin
+        'success': 'check-circle',
+        'danger': 'exclamation-triangle',
+        'warning': 'exclamation-circle',
+        'info': 'info-circle'
     };
     return icons[type] || 'info-circle';
 }
 
-/* ========================================
-   HÀM HỖ TRỢ FETCH API
-   Gọi API và tự động hiển thị lỗi bằng toast nếu có lỗi xảy ra
-   ======================================== */
+// ==========================
+// Hàm hỗ trợ fetch API có hiển thị lỗi/toast
+// ==========================
 async function fetchWithLoading(url, options = {}) {
     const defaultOptions = {
         headers: {
@@ -283,27 +258,23 @@ async function fetchWithLoading(url, options = {}) {
     }
 }
 
-/* ========================================
-   SAO CHÉP VÀO CLIPBOARD
-   Copy mã voucher hoặc text vào clipboard của người dùng
-   ======================================== */
+// ==========================
+// Sao chép mã voucher vào clipboard
+// ==========================
 function copyToClipboard(text) {
-    // Sử dụng Clipboard API nếu trình duyệt hỗ trợ
     if (navigator.clipboard) {
         navigator.clipboard.writeText(text)
             .then(() => showToast('Đã sao chép vào clipboard', 'success'))
             .catch(err => {
                 console.error('Copy error:', err);
-                // Fallback cho trình duyệt cũ
                 fallbackCopyTextToClipboard(text);
             });
     } else {
-        // Fallback cho trình duyệt không hỗ trợ Clipboard API
         fallbackCopyTextToClipboard(text);
     }
 }
 
-/* Phương pháp copy dự phòng cho trình duyệt cũ không hỗ trợ navigator.clipboard */
+// Dự phòng copy nếu trình duyệt cũ không hỗ trợ navigator.clipboard
 function fallbackCopyTextToClipboard(text) {
     const textArea = document.createElement('textarea');
     textArea.value = text;
@@ -324,7 +295,7 @@ function fallbackCopyTextToClipboard(text) {
     document.body.removeChild(textArea);
 }
 
-/* Xử lý khi click vào nút copy voucher code */
+// Khi click vào nút copy voucher code
 document.addEventListener('click', function(event) {
     if (event.target.classList.contains('copy-voucher-code')) {
         const voucherCode = event.target.dataset.code;
@@ -332,18 +303,14 @@ document.addEventListener('click', function(event) {
     }
 });
 
-/* ========================================
-   HIỆU ỨNG THANH TIẾN TRÌNH
-   Animation cho progress bar khi trang được tải
-   ======================================== */
+// ==========================
+// Hiệu ứng thanh tiến trình (progress bar)
+// ==========================
 function animateProgressBars() {
     const progressBars = document.querySelectorAll('.progress-bar');
     progressBars.forEach(function(bar) {
-        // Lưu giá trị width ban đầu
         const width = bar.style.width;
-        // Đặt về 0 để bắt đầu animation
         bar.style.width = '0%';
-        // Sau 100ms, animate đến giá trị ban đầu
         setTimeout(function() {
             bar.style.transition = 'width 1s ease-in-out';
             bar.style.width = width;
@@ -351,15 +318,14 @@ function animateProgressBars() {
     });
 }
 
-// Gọi hiệu ứng khi trang load xong
+// Gọi hiệu ứng khi trang load
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(animateProgressBars, 500);
 });
 
-/* ========================================
-   XUẤT CÁC HÀM TIỆN ÍCH RA GLOBAL
-   Cho phép các file JS khác sử dụng các hàm này
-   ======================================== */
+// ==========================
+// Xuất các hàm tiện ích ra global (window)
+// ==========================
 window.VoucherSystem = {
     showToast,
     copyToClipboard,
@@ -367,15 +333,13 @@ window.VoucherSystem = {
     debounce
 };
 
-/* ========================================
-   XỬ LÝ FORM ĐĂNG NHẬP VÀ ĐĂNG KÝ
-   Sử dụng AJAX để submit form, tránh reload trang không cần thiết
-   ======================================== */
+// ==========================
+// Auth Forms (Login/Register with AJAX)
+// ==========================
 function initializeAuthForms() {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
 
-    // Xử lý form đăng nhập
     if (loginForm) {
         loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -383,11 +347,9 @@ function initializeAuthForms() {
         });
     }
 
-    // Xử lý form đăng ký
     if (registerForm) {
         registerForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            // Kiểm tra mật khẩu xác nhận trước khi submit
             const pw = document.getElementById('reg_password').value;
             const cpw = document.getElementById('confirm_password').value;
             
@@ -401,56 +363,77 @@ function initializeAuthForms() {
     }
 }
 
-/* Xử lý submit form đăng nhập/đăng ký bằng AJAX
-   form: element form cần submit
-   url: URL endpoint để gửi request
-   tabType: loại tab (login hoặc register) để giữ tab khi có lỗi */
 async function handleAuthFormSubmit(form, url, tabType) {
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
+    
+    // Convert FormData thành URLSearchParams để Express có thể parse
+    // Vì Express urlencoded middleware chỉ parse application/x-www-form-urlencoded
     const formData = new FormData(form);
+    const urlEncodedData = new URLSearchParams();
+    for (const [key, value] of formData.entries()) {
+        urlEncodedData.append(key, value);
+    }
 
-    // Hiển thị trạng thái đang xử lý
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xử lý...';
 
     try {
-        // Gửi request với redirect tự động để browser xử lý redirect từ server
+        console.log('Submitting form to:', url);
+        console.log('Form data:', Object.fromEntries(urlEncodedData));
+        
+        // Gửi request với Content-Type: application/x-www-form-urlencoded
+        // để Express middleware có thể parse đúng
         const response = await fetch(url, {
             method: 'POST',
-            body: formData,
-            credentials: 'same-origin'
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: urlEncodedData,
+            credentials: 'same-origin',
+            redirect: 'follow' // Tự động follow redirect
         });
 
-        // Xử lý response sau khi submit
-        if (response.ok) {
-            const finalUrl = response.url;
-            
-            // Nếu đăng nhập thành công, server sẽ redirect đến dashboard hoặc trang chủ
-            // Nếu có lỗi hoặc đăng ký, server sẽ redirect về /auth?tab=...
-            if (finalUrl && finalUrl !== window.location.href) {
+        console.log('Response status:', response.status);
+        console.log('Response URL:', response.url);
+        console.log('Response ok:', response.ok);
+
+        // Sau khi fetch follow redirect, kiểm tra response.url
+        const finalUrl = response.url;
+        
+        // Nếu đăng nhập thành công, server redirect đến dashboard/trang chủ
+        // Kiểm tra xem URL cuối cùng có khác với trang hiện tại không
+        if (response.ok && finalUrl && finalUrl !== window.location.href) {
+            // Redirect đến URL mới (dashboard hoặc trang chủ)
+            if (!finalUrl.includes('/auth')) {
+                // Đăng nhập thành công, chuyển đến dashboard/trang chủ
                 window.location.href = finalUrl;
-            } else {
-                // Nếu URL không thay đổi, reload để cập nhật trạng thái
-                window.location.href = `/auth?tab=${tabType}`;
+                return;
             }
-        } else {
-            // Có lỗi, reload với tab tương ứng để hiển thị thông báo lỗi
+        }
+        
+        // Nếu URL cuối cùng là /auth (có lỗi hoặc đăng ký thành công)
+        // hoặc status không OK, reload để hiển thị thông báo
+        if (finalUrl && finalUrl.includes('/auth')) {
+            window.location.href = finalUrl;
+        } else if (!response.ok) {
+            // Có lỗi, reload với tab tương ứng
             window.location.href = `/auth?tab=${tabType}`;
+        } else {
+            // Trường hợp khác, reload trang
+            window.location.reload();
         }
     } catch (error) {
         console.error('Auth form error:', error);
-        showToast('Có lỗi xảy ra khi xử lý yêu cầu', 'danger');
-        // Khôi phục lại nút về trạng thái ban đầu
+        showToast('Có lỗi xảy ra khi xử lý yêu cầu: ' + (error.message || 'Unknown error'), 'danger');
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
     }
 }
 
-/* ========================================
-   MODAL POPUP TRUNG TÂM
-   Cửa sổ popup hình vuông ở giữa màn hình với nền mờ
-   ======================================== */
+// ==========================
+// Centered Modal (custom)
+// ==========================
 function initializeCenterModal() {
     const backdrop = document.getElementById('center-modal-backdrop');
     const modal = document.getElementById('center-modal');
@@ -458,78 +441,61 @@ function initializeCenterModal() {
 
     if (!backdrop || !modal || !closeBtn) return;
 
-    // Đóng modal khi click nút đóng
     closeBtn.addEventListener('click', closeCenterModal);
 
-    // Đóng modal khi click vào nền mờ
     backdrop.addEventListener('click', function(e) {
         if (e.target === backdrop) closeCenterModal();
     });
 
-    // Đóng modal khi nhấn phím Escape
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeCenterModal();
     });
 }
 
-/* Mở modal và hiển thị nội dung HTML */
 function openCenterModal(html) {
     const backdrop = document.getElementById('center-modal-backdrop');
     const content = document.getElementById('center-modal-content');
     if (!backdrop || !content) return;
     content.innerHTML = html || '';
     backdrop.style.display = 'flex';
-    // Ngăn scroll body khi modal mở
     document.body.style.overflow = 'hidden';
 }
 
-/* Đóng modal và xóa nội dung */
 function closeCenterModal() {
     const backdrop = document.getElementById('center-modal-backdrop');
     const content = document.getElementById('center-modal-content');
     if (!backdrop || !content) return;
     backdrop.style.display = 'none';
     content.innerHTML = '';
-    // Cho phép scroll body lại
     document.body.style.overflow = '';
 }
 
-/* ========================================
-   XEM NHANH ĐỊA ĐIỂM
-   Khi click vào nút "Xem địa điểm", hiển thị popup với thông tin địa điểm, voucher và reviews
-   ======================================== */
+// ==========================
+// Quick View for Locations
+// ==========================
 function initializeLocationQuickView() {
-    // Lắng nghe click event trên toàn bộ document
     document.addEventListener('click', async function(e) {
-        // Tìm phần tử có thuộc tính data-location-id và data-action="quick-view"
         const trigger = e.target.closest('[data-location-id][data-action="quick-view"]');
         if (!trigger) return;
-        
         e.preventDefault();
         const id = trigger.getAttribute('data-location-id');
         if (!id) return;
-        
         try {
-            // Gọi API để lấy thông tin tóm tắt địa điểm
             const data = await fetchWithLoading(`/locations/${id}/summary`);
-            // Render HTML và hiển thị trong modal
             const html = renderLocationQuickView(data);
             openCenterModal(html);
         } catch (err) {
-            // Lỗi đã được xử lý trong fetchWithLoading
+            // error handled in fetchWithLoading
         }
     });
 }
 
-/* Render HTML cho popup xem nhanh địa điểm
-   data: object chứa thông tin location, vouchers, reviews */
 function renderLocationQuickView(data) {
     if (!data || !data.location) return '<div class="p-3">Không có dữ liệu</div>';
     const loc = data.location;
     const vouchers = data.vouchers || [];
     const reviews = data.reviews || [];
 
-    // Render danh sách voucher
     const voucherList = vouchers.length ? vouchers.map(v => `
         <div class="d-flex align-items-center justify-content-between border rounded p-2 mb-2">
             <div>
@@ -540,7 +506,6 @@ function renderLocationQuickView(data) {
         </div>
     `).join('') : '<div class="text-muted">Chưa có voucher hoạt động</div>';
 
-    // Render danh sách reviews
     const reviewList = reviews.length ? reviews.map(r => `
         <div class="border-bottom py-2">
             <div class="small text-muted">${(r.user && r.user.username) || 'Ẩn danh'} • ${'★'.repeat(r.rating || 0)}${'☆'.repeat(Math.max(0, 5 - (r.rating || 0)))}</div>
@@ -548,7 +513,6 @@ function renderLocationQuickView(data) {
         </div>
     `).join('') : '<div class="text-muted">Chưa có đánh giá</div>';
 
-    // Trả về HTML đầy đủ của popup
     return `
       <div>
         <img src="${loc.imageUrl}" alt="${loc.name}" style="width:100%;height:180px;object-fit:cover;">

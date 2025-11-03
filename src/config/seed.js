@@ -34,6 +34,8 @@ const seedDatabase = async () => {
     // Tạo các user mẫu gồm admin, owner và user bình thường
     const admin = new User({
       username: 'admin',
+      idName: 'admin',
+      phoneNumber: '0912345678',
       email: 'admin@example.com',
       password: 'admin123',
       role: 'admin'
@@ -41,6 +43,8 @@ const seedDatabase = async () => {
 
     const owner1 = new User({
       username: 'owner1',
+      idName: 'owner1',
+      phoneNumber: '0912345679',
       email: 'owner1@example.com',
       password: 'owner123',
       role: 'owner'
@@ -48,6 +52,8 @@ const seedDatabase = async () => {
 
     const owner2 = new User({
       username: 'owner2',
+      idName: 'owner2',
+      phoneNumber: '0912345680',
       email: 'owner2@example.com',
       password: 'owner123',
       role: 'owner'
@@ -55,6 +61,8 @@ const seedDatabase = async () => {
 
     const user1 = new User({
       username: 'user1',
+      idName: 'user1',
+      phoneNumber: '0912345681',
       email: 'user1@example.com',
       password: 'user123',
       role: 'user'
@@ -62,6 +70,8 @@ const seedDatabase = async () => {
 
     const user2 = new User({
       username: 'user2',
+      idName: 'user2',
+      phoneNumber: '0912345682',
       email: 'user2@example.com',
       password: 'user123',
       role: 'user'

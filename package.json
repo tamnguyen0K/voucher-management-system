@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "seed": "node src/config/seed.js"
+    "seed": "node src/config/seed.js",
+    "migrate": "node src/config/migrate.js",
+    "reset": "node src/config/seed.js"
   },
   "keywords": [
     "nodejs",

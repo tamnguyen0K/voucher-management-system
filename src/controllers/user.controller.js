@@ -25,7 +25,7 @@ const renderLoginRegister = (req, res) => {
 const register = async (req, res) => {
   try {
     // Lấy dữ liệu từ form gửi lên
-    const { username, email, password, confirmPassword, role } = req.body;
+    const { username, email, password, confirmPassword, role, phonenumber } = req.body;
 
     // Kiểm tra xác nhận mật khẩu
     if (password !== confirmPassword) {
@@ -37,20 +37,40 @@ const register = async (req, res) => {
     const allowedRoles = ['user', 'owner'];
     const selectedRole = role && allowedRoles.includes(role) ? role : 'user';
 
-    // Kiểm tra xem email hoặc username đã tồn tại trong DB chưa
+    // Validate phone number
+    if (!phonenumber || !/^[0-9]{9,11}$/.test(phonenumber)) {
+      req.flash('error', 'Số điện thoại không hợp lệ (phải có 9-11 chữ số)');
+      return res.redirect('/auth?tab=register');
+    }
+
+    // Kiểm tra xem email, username hoặc phoneNumber đã tồn tại trong DB chưa
     const existingUser = await User.findOne({
-      $or: [{ email }, { username }]
+      $or: [
+        { email: email.toLowerCase().trim() },
+        { username },
+        { phoneNumber: phonenumber.trim() }
+      ]
     });
 
     if (existingUser) {
-      req.flash('error', 'Email hoặc username đã tồn tại');
+      if (existingUser.email === email.toLowerCase().trim()) {
+        req.flash('error', 'Email đã tồn tại');
+      } else if (existingUser.username === username) {
+        req.flash('error', 'Tên đăng nhập đã tồn tại');
+      } else if (existingUser.phoneNumber === phonenumber.trim()) {
+        req.flash('error', 'Số điện thoại đã được sử dụng');
+      } else {
+        req.flash('error', 'Thông tin đã tồn tại trong hệ thống');
+      }
       return res.redirect('/auth?tab=register');
     }
 
     // Nếu chưa tồn tại → tạo tài khoản mới
     const user = new User({
       username,
-      email,
+      idName: username, // Đồng bộ idName với username
+      phoneNumber: phonenumber.trim(),
+      email: email.toLowerCase().trim(),
       password,   // Mật khẩu sẽ được mã hóa trong model (pre-save hook)
       role: selectedRole // Sử dụng role được chọn (user hoặc owner)
     });
@@ -74,16 +94,33 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body; // Lấy email và mật khẩu từ form
 
-    // Tìm người dùng bằng email
-    const user = await User.findOne({ email });
+    // Kiểm tra email và password có tồn tại không
+    if (!email || !password) {
+      req.flash('error', 'Vui lòng nhập đầy đủ email và mật khẩu');
+      return res.redirect('/auth?tab=login');
+    }
+
+    console.log('Login attempt for email:', email);
+
+    // Normalize email (lowercase và trim) để tìm user
+    // Email trong schema đã được set lowercase: true nên chỉ cần trim
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
+    
     if (!user) {
+      console.log('User not found for email:', normalizedEmail);
       req.flash('error', 'Email hoặc mật khẩu không đúng');
       return res.redirect('/auth?tab=login');
     }
 
+    console.log('User found:', user.username, 'Role:', user.role);
+
     // Kiểm tra mật khẩu có khớp không (hàm comparePassword định nghĩa trong model)
     const isMatch = await user.comparePassword(password);
+    console.log('Password match:', isMatch);
+    
     if (!isMatch) {
+      console.log('Password does not match for user:', user.username);
       req.flash('error', 'Email hoặc mật khẩu không đúng');
       return res.redirect('/auth?tab=login');
     }
@@ -96,13 +133,15 @@ const login = async (req, res) => {
     req.flash('success', `Chào mừng ${user.username}!`);
     
     // Điều hướng dựa vào vai trò người dùng
+    let redirectUrl = '/';
     if (user.role === 'admin') {
-      res.redirect('/admin/dashboard');     // Admin → dashboard quản trị
+      redirectUrl = '/admin/dashboard';     // Admin → dashboard quản trị
     } else if (user.role === 'owner') {
-      res.redirect('/owner/dashboard');     // Chủ địa điểm → dashboard riêng
-    } else {
-      res.redirect('/');                    // Người dùng bình thường → trang chủ
+      redirectUrl = '/owner/dashboard';     // Chủ địa điểm → dashboard riêng
     }
+    
+    console.log('Login successful, redirecting to:', redirectUrl);
+    res.redirect(redirectUrl);
   } catch (error) {
     console.error('Login error:', error);
     req.flash('error', 'Có lỗi xảy ra khi đăng nhập');

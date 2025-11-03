@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 
 // Định nghĩa schema cho người dùng
 const userSchema = new mongoose.Schema({
-  // Tên đăng nhập
+  // Tên đăng nhập (idName)
   username: {
     type: String,
     required: [true, 'Username is required'],         // Bắt buộc phải có
@@ -13,6 +13,20 @@ const userSchema = new mongoose.Schema({
     trim: true,                                       // Loại bỏ khoảng trắng thừa
     minlength: [3, 'Username must be at least 3 characters'], // Tối thiểu 3 ký tự
     maxlength: [30, 'Username cannot exceed 30 characters']   // Tối đa 30 ký tự
+  },
+
+  // ID Name (alias cho username, giữ để tương thích)
+  idName: {
+    type: String,
+    trim: true
+  },
+
+  // Số điện thoại
+  phoneNumber: {
+    type: String,
+    required: [true, 'Phone number is required'],
+    trim: true,
+    match: [/^[0-9]{9,11}$/, 'Phone number must be 9-11 digits'] // Chỉ chứa số, 9-11 ký tự
   },
 
   // Địa chỉ email
@@ -48,8 +62,13 @@ const userSchema = new mongoose.Schema({
 
 
 // Middleware "pre-save":
-// Mã hóa mật khẩu trước khi lưu vào database
+// Mã hóa mật khẩu trước khi lưu vào database và đồng bộ idName với username
 userSchema.pre('save', async function(next) {
+  // Đồng bộ idName với username nếu idName chưa được set
+  if (!this.idName && this.username) {
+    this.idName = this.username;
+  }
+  
   // Nếu mật khẩu không thay đổi (khi update thông tin khác) thì bỏ qua
   if (!this.isModified('password')) return next();
   
