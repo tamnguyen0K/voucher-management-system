@@ -7,11 +7,15 @@ const Voucher = require('../models/voucher.model'); // Model voucher (phiếu gi
 // Hàm hiển thị trang đăng nhập / đăng ký
 // ==================================
 const renderLoginRegister = (req, res) => {
+  // Lấy tab từ query string (login hoặc register), mặc định là login
+  const activeTab = req.query.tab || 'login';
+  
   // Render trang login_register.ejs (hoặc .hbs tùy template)
   res.render('pages/login_register', {
     title: 'Đăng nhập / Đăng ký',
     error: req.flash('error'),     // Hiển thị thông báo lỗi (nếu có)
-    success: req.flash('success')  // Hiển thị thông báo thành công
+    success: req.flash('success'), // Hiển thị thông báo thành công
+    activeTab                       // Tab đang được chọn (login hoặc register)
   });
 };
 
@@ -21,13 +25,17 @@ const renderLoginRegister = (req, res) => {
 const register = async (req, res) => {
   try {
     // Lấy dữ liệu từ form gửi lên
-    const { username, email, password, confirmPassword } = req.body;
+    const { username, email, password, confirmPassword, role } = req.body;
 
     // Kiểm tra xác nhận mật khẩu
     if (password !== confirmPassword) {
       req.flash('error', 'Mật khẩu xác nhận không khớp');
-      return res.redirect('/auth');
+      return res.redirect('/auth?tab=register');
     }
+
+    // Kiểm tra và validate role (chỉ cho phép 'user' hoặc 'owner', không cho 'admin')
+    const allowedRoles = ['user', 'owner'];
+    const selectedRole = role && allowedRoles.includes(role) ? role : 'user';
 
     // Kiểm tra xem email hoặc username đã tồn tại trong DB chưa
     const existingUser = await User.findOne({
@@ -36,7 +44,7 @@ const register = async (req, res) => {
 
     if (existingUser) {
       req.flash('error', 'Email hoặc username đã tồn tại');
-      return res.redirect('/auth');
+      return res.redirect('/auth?tab=register');
     }
 
     // Nếu chưa tồn tại → tạo tài khoản mới
@@ -44,18 +52,18 @@ const register = async (req, res) => {
       username,
       email,
       password,   // Mật khẩu sẽ được mã hóa trong model (pre-save hook)
-      role: 'user' // Mặc định người dùng mới là user thường
+      role: selectedRole // Sử dụng role được chọn (user hoặc owner)
     });
 
     // Lưu vào cơ sở dữ liệu MongoDB
     await user.save();
 
     req.flash('success', 'Đăng ký thành công! Vui lòng đăng nhập.');
-    res.redirect('/auth');
+    res.redirect('/auth?tab=login');
   } catch (error) {
     console.error('Register error:', error);
     req.flash('error', 'Có lỗi xảy ra khi đăng ký');
-    res.redirect('/auth');
+    res.redirect('/auth?tab=register');
   }
 };
 
@@ -70,14 +78,14 @@ const login = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) {
       req.flash('error', 'Email hoặc mật khẩu không đúng');
-      return res.redirect('/auth');
+      return res.redirect('/auth?tab=login');
     }
 
     // Kiểm tra mật khẩu có khớp không (hàm comparePassword định nghĩa trong model)
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       req.flash('error', 'Email hoặc mật khẩu không đúng');
-      return res.redirect('/auth');
+      return res.redirect('/auth?tab=login');
     }
 
     // Nếu đăng nhập thành công → lưu thông tin vào session
@@ -98,7 +106,7 @@ const login = async (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     req.flash('error', 'Có lỗi xảy ra khi đăng nhập');
-    res.redirect('/auth');
+    res.redirect('/auth?tab=login');
   }
 };
 

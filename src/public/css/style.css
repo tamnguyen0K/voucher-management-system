@@ -1,105 +1,275 @@
-/* Custom CSS for Voucher Management System */
+/* ========================================
+   HỆ THỐNG QUẢN LÝ VOUCHER - CSS CHÍNH
+   File này chứa toàn bộ CSS tùy chỉnh cho hệ thống
+   ======================================== */
 
+/* ========================================
+   BIẾN CSS - Định nghĩa màu sắc và giá trị chung
+   ======================================== */
 :root {
-    --primary-color: #0d6efd;
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --info: #06b6d4;
+    --light: #f8fafc;
+    --dark: #1e293b;
+    --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --radius: 12px;
+    
+    /* Giữ lại các biến cũ để tương thích */
+    --primary-color: var(--primary);
     --secondary-color: #6c757d;
-    --success-color: #198754;
-    --danger-color: #dc3545;
-    --warning-color: #ffc107;
-    --info-color: #0dcaf0;
-    --light-color: #f8f9fa;
-    --dark-color: #212529;
+    --success-color: var(--success);
+    --danger-color: var(--danger);
+    --warning-color: var(--warning);
+    --info-color: var(--info);
+    --light-color: var(--light);
+    --dark-color: var(--dark);
 }
 
-/* Global Styles */
+/* ========================================
+   STYLE TOÀN CỤC - Áp dụng cho toàn bộ trang
+   ======================================== */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f8f9fa;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
 }
 
-.hero-section {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #6610f2 100%);
-    border-radius: 15px;
-}
-
-/* Card Styles */
-.card {
+/* ========================================
+   THANH ĐIỀU HƯỚNG - Navigation bar
+   ======================================== */
+.navbar {
+    background: var(--gradient);
+    box-shadow: var(--shadow);
     border: none;
-    border-radius: 15px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.card-header {
-    border-radius: 15px 15px 0 0 !important;
-    border-bottom: none;
-}
-
-/* Navigation */
 .navbar-brand {
-    font-weight: bold;
+    font-weight: 700;
     font-size: 1.5rem;
 }
 
 .navbar-nav .nav-link {
     font-weight: 500;
-    transition: color 0.3s ease;
+    border-radius: 8px;
+    margin: 0 4px;
+    transition: all 0.3s ease;
 }
 
 .navbar-nav .nav-link:hover {
-    color: rgba(255, 255, 255, 0.8) !important;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
 }
 
-/* Buttons */
-.btn {
-    border-radius: 10px;
-    font-weight: 500;
+/* ========================================
+   PHẦN HERO - Phần giới thiệu chính ở đầu trang
+   ======================================== */
+.hero-section {
+    background: var(--gradient);
+    border-radius: var(--radius);
+    padding: 3rem 2rem;
+    margin: 2rem 0;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+}
+
+.hero-section h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    color: white;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+}
+
+.hero-section .lead {
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 2rem;
+}
+
+/* ========================================
+   THẺ CARD - Thẻ hiển thị nội dung
+   ======================================== */
+.card {
+    border: none;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
     transition: all 0.3s ease;
+    background: white;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    background: var(--gradient);
+    color: white;
+    border: none;
+    border-radius: var(--radius) var(--radius) 0 0;
+    font-weight: 600;
+}
+
+/* ========================================
+   NÚT BẤM - Buttons
+   ======================================== */
+.btn {
+    border-radius: var(--radius);
+    font-weight: 600;
+    border: none;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn:hover::before {
+    left: 100%;
 }
 
 .btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* Rating Stars */
+.btn-primary {
+    background: var(--gradient);
+    color: white;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    color: white;
+}
+
+/* Nút cố định ở cuối popup */
+.button_popup {
+    position: absolute;
+    bottom: 0.5em;
+    left: 0.5em;
+    right: 0.5em;
+}
+
+/* Nút với kích thước cố định, không bị co lại */
+.fixed-btn {
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* ========================================
+   SAO ĐÁNH GIÁ - Rating stars
+   ======================================== */
+.rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .rating .fas.fa-star {
-    color: #ffc107;
-    margin-right: 2px;
-}
-
-.rating .fas.fa-star.text-muted {
-    color: #dee2e6;
-}
-
-/* Voucher Cards */
-.voucher-item {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border: 2px solid var(--success-color) !important;
+    color: #fbbf24;
+    font-size: 1.25rem;
     transition: all 0.3s ease;
 }
 
-.voucher-item:hover {
-    border-color: #157347 !important;
-    box-shadow: 0 8px 25px rgba(25, 135, 84, 0.2);
+.rating .fas.fa-star:hover {
+    transform: scale(1.2);
 }
 
-/* Progress Bars */
+.rating .fas.fa-star.text-muted {
+    color: #d1d5db;
+}
+
+/* ========================================
+   THẺ VOUCHER - Voucher cards
+   ======================================== */
+.voucher-item {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 2px solid var(--success);
+    border-radius: var(--radius);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.voucher-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.voucher-item:hover {
+    border-color: var(--success);
+    box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
+    transform: translateY(-5px);
+}
+
+/* ========================================
+   THANH TIẾN TRÌNH - Progress bars
+   ======================================== */
 .progress {
     border-radius: 10px;
-    background-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.3);
+    height: 8px;
+    overflow: hidden;
 }
 
 .progress-bar {
     border-radius: 10px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    transition: width 0.6s ease;
 }
 
-/* Feature Icons */
+/* ========================================
+   ICON TÍNH NĂNG - Feature icons
+   ======================================== */
 .feature-icon {
     transition: transform 0.3s ease;
 }
@@ -108,34 +278,75 @@ body {
     transform: scale(1.1);
 }
 
-/* Form Controls */
+/* ========================================
+   FORM - Biểu mẫu nhập liệu
+   ======================================== */
 .form-control, .form-select {
-    border-radius: 10px;
-    border: 2px solid #e9ecef;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    border: 2px solid #e2e8f0;
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    transition: all 0.3s ease;
+    background: white;
 }
 
 .form-control:focus, .form-select:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    outline: none;
 }
 
-/* Alerts */
+.form-label {
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 8px;
+}
+
+/* ========================================
+   THÔNG BÁO - Alerts
+   ======================================== */
 .alert {
-    border-radius: 15px;
+    border-radius: var(--radius);
     border: none;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 16px 20px;
+    box-shadow: var(--shadow);
+    font-weight: 500;
 }
 
-/* Tables */
+.alert-success {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: #065f46;
+}
+
+.alert-danger {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #991b1b;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    color: #1e40af;
+}
+
+/* ========================================
+   BẢNG - Tables
+   ======================================== */
 .table {
-    border-radius: 15px;
+    border-radius: var(--radius);
     overflow: hidden;
+    box-shadow: var(--shadow);
+    background: white;
 }
 
 .table thead th {
-    background-color: var(--light-color);
-    border-bottom: 2px solid #dee2e6;
+    background: var(--gradient);
+    color: white;
+    border: none;
+    padding: 16px;
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.875rem;
@@ -143,71 +354,153 @@ body {
 }
 
 .table tbody tr {
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
+    border: none;
 }
 
 .table tbody tr:hover {
-    background-color: rgba(13, 110, 253, 0.05);
+    background: rgba(37, 99, 235, 0.05);
+    transform: scale(1.01);
 }
 
-/* Badges */
-.badge {
-    font-size: 0.75rem;
-    padding: 0.5em 0.75em;
-    border-radius: 10px;
-}
-
-/* Modal */
-.modal-content {
-    border-radius: 15px;
+.table tbody td {
+    padding: 16px;
     border: none;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid #f1f5f9;
+}
+
+/* ========================================
+   NHÃN - Badges
+   ======================================== */
+.badge {
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-primary {
+    background: var(--gradient);
+    color: white;
+}
+
+.badge-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.badge-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.badge-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+/* ========================================
+   HỘP THOẠI MODAL - Modal dialogs
+   ======================================== */
+.modal-content {
+    border-radius: var(--radius);
+    border: none;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
 }
 
 .modal-header {
-    border-bottom: 1px solid #dee2e6;
-    border-radius: 15px 15px 0 0;
+    background: var(--gradient);
+    color: white;
+    border: none;
+    padding: 20px;
+}
+
+.modal-title {
+    font-weight: 700;
+}
+
+.modal-body {
+    padding: 24px;
 }
 
 .modal-footer {
-    border-top: 1px solid #dee2e6;
-    border-radius: 0 0 15px 15px;
+    background: var(--light);
+    border: none;
+    padding: 20px;
 }
 
-/* Stats Cards */
-.card.bg-primary, .card.bg-success, .card.bg-warning, .card.bg-info {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #6610f2 100%);
+/* ========================================
+   THẺ THỐNG KÊ - Stats cards
+   ======================================== */
+.stats-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 2rem;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 }
 
-.card.bg-success {
-    background: linear-gradient(135deg, var(--success-color) 0%, #20c997 100%);
+.stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient);
 }
 
-.card.bg-warning {
-    background: linear-gradient(135deg, var(--warning-color) 0%, #fd7e14 100%);
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
 
-.card.bg-info {
-    background: linear-gradient(135deg, var(--info-color) 0%, #6f42c1 100%);
+.stats-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
 }
 
-/* Footer */
+.stats-label {
+    color: var(--dark);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 0.5px;
+}
+
+/* ========================================
+   CHÂN TRANG - Footer
+   ======================================== */
 footer {
     margin-top: auto;
 }
 
-/* Responsive */
+/* ========================================
+   THIẾT KẾ ĐÁP ỨNG - Responsive design cho màn hình nhỏ
+   ======================================== */
 @media (max-width: 768px) {
     .hero-section h1 {
-        font-size: 2rem;
+        font-size: 2.5rem;
     }
     
     .hero-section .lead {
-        font-size: 1rem;
+        font-size: 1.125rem;
     }
     
     .card {
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
     }
     
     .btn-group {
@@ -217,9 +510,38 @@ footer {
     .btn-group .btn {
         margin-bottom: 0.25rem;
     }
+
+    .fixed-btn {
+        width: auto;
+        padding: 0.45rem 0.9rem;
+    }
+
+    .stats-card {
+        margin-bottom: 1rem;
+    }
 }
 
-/* Loading Animation */
+@media (max-width: 576px) {
+    .hero-section {
+        padding: 2rem 1rem;
+    }
+    
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .modal-body {
+        padding: 1.5rem;
+    }
+}
+
+/* ========================================
+   HIỆU ỨNG LOADING - Animation khi đang tải
+   ======================================== */
 .loading {
     display: inline-block;
     width: 20px;
@@ -234,7 +556,9 @@ footer {
     to { transform: rotate(360deg); }
 }
 
-/* Custom Scrollbar */
+/* ========================================
+   THANH CUỘN TÙY CHỈNH - Custom scrollbar
+   ======================================== */
 ::-webkit-scrollbar {
     width: 8px;
 }
@@ -245,15 +569,17 @@ footer {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--primary-color);
+    background: var(--primary);
     border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #0b5ed7;
+    background: var(--primary-dark);
 }
 
-/* Star Rating */
+/* ========================================
+   SAO ĐÁNH GIÁ - Star rating có thể click
+   ======================================== */
 .star-rating {
     cursor: pointer;
     font-size: 1.5rem;
@@ -265,7 +591,9 @@ footer {
     transform: scale(1.1);
 }
 
-/* Animation Classes */
+/* ========================================
+   HIỆU ỨNG ANIMATION - Các lớp animation cho phần tử
+   ======================================== */
 .fade-in {
     animation: fadeIn 0.5s ease-in;
 }
@@ -293,32 +621,119 @@ footer {
     to { opacity: 1; transform: translateX(0); }
 }
 
-/* Utility Classes */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fadeInUp {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.animate-slideInLeft {
+    animation: slideInLeft 0.6s ease-out;
+}
+
+.animate-slideInRight {
+    animation: slideInRight 0.6s ease-out;
+}
+
+/* ========================================
+   LỚP TIỆN ÍCH - Utility classes
+   ======================================== */
 .text-gradient {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #6610f2 100%);
+    background: var(--gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
 .shadow-custom {
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow);
 }
 
 .border-gradient {
     border: 2px solid transparent;
     background: linear-gradient(white, white) padding-box,
-                linear-gradient(135deg, var(--primary-color) 0%, #6610f2 100%) border-box;
+                var(--gradient) border-box;
 }
 
-/* Print Styles */
+.glass-effect {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ========================================
+   KIỂU IN - Print styles ẩn các phần không cần khi in
+   ======================================== */
 @media print {
-    .navbar, .btn, .modal, footer {
-        display: none !important;
+    .navbar, .btn, .modal, footer, .hero-section {
+        display: none;
     }
     
     .card {
-        box-shadow: none !important;
-        border: 1px solid #dee2e6 !important;
+        box-shadow: none;
+        border: 1px solid #e2e8f0;
+        break-inside: avoid;
     }
+    
+    body {
+        background: white;
+    }
+}
+
+/* ========================================
+   MODAL POPUP TRUNG TÂM - Cửa sổ popup hình vuông ở giữa màn hình
+   ======================================== */
+/* Nền mờ phía sau modal */
+.center-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1055;
+}
+
+/* Khung modal hình vuông, kích thước dựa trên cạnh nhỏ hơn của màn hình */
+.center-modal {
+    position: relative;
+    width: calc(min(90vw, 90vh));
+    height: calc(min(90vw, 90vh));
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    overflow: auto;
+}
+
+/* Nội dung bên trong modal */
+.center-modal-content {
+    padding: 16px;
+}
+
+/* Nút đóng modal ở góc phải trên */
+.center-modal-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    color: #6c757d;
+}
+
+.center-modal-close:hover {
+    color: #212529;
 }

@@ -19,6 +19,9 @@ router.get('/locations', locationController.getAllLocations);
 // Lấy chi tiết 1 địa điểm cụ thể (theo id)
 router.get('/locations/:id', locationController.getLocationById);
 
+// Tóm tắt địa điểm dạng JSON để hiển thị popup nhanh
+router.get('/locations/:id/summary', locationController.getLocationSummary);
+
 // =============================
 // REVIEW ROUTES - Người dùng đã đăng nhập mới được review
 // =============================

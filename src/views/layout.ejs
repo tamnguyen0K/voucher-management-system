@@ -13,7 +13,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="/css/style.css" rel="stylesheet">
-    <link href="/css/override.css" rel="stylesheet">
 </head>
 <body>
     <!-- Navigation -->
@@ -127,6 +126,14 @@
             </div>
         </div>
     </footer>
+
+    <!-- Centered Square Modal (custom) -->
+    <div id="center-modal-backdrop" class="center-modal-backdrop" style="display:none;">
+        <div id="center-modal" class="center-modal" role="dialog" aria-modal="true" aria-hidden="true">
+            <button type="button" class="center-modal-close" aria-label="Đóng">&times;</button>
+            <div id="center-modal-content" class="center-modal-content"></div>
+        </div>
+    </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

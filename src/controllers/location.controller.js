@@ -207,6 +207,61 @@ const deleteLocation = async (req, res) => {
 };
 
 /**
+ * Trả về JSON tóm tắt địa điểm để hiển thị trong popup nhanh
+ * Bao gồm: location cơ bản, tối đa 3 voucher đang hoạt động, 5 review mới nhất và điểm trung bình
+ */
+const getLocationSummary = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const location = await Location.findById(id).lean();
+    if (!location) {
+      return res.status(404).json({ message: 'Không tìm thấy địa điểm' });
+    }
+
+    const vouchers = await Voucher.find({
+      location: id,
+      startDate: { $lte: new Date() },
+      endDate: { $gte: new Date() },
+      $expr: { $lt: ["$quantityClaimed", "$quantityTotal"] }
+    })
+      .sort({ createdAt: -1 })
+      .limit(3)
+      .lean();
+
+    const reviews = await Review.find({ location: id })
+      .populate('user', 'username')
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean();
+
+    let averageRating = 0;
+    if (reviews.length > 0) {
+      const totalRating = reviews.reduce((sum, r) => sum + (r.rating || 0), 0);
+      averageRating = Number((totalRating / reviews.length).toFixed(1));
+    }
+
+    return res.json({
+      location: {
+        _id: location._id,
+        name: location.name,
+        description: location.description,
+        address: location.address,
+        type: location.type,
+        imageUrl: location.imageUrl
+      },
+      vouchers,
+      reviews,
+      averageRating,
+      reviewCount: await Review.countDocuments({ location: id })
+    });
+  } catch (error) {
+    console.error('Get location summary error:', error);
+    return res.status(500).json({ message: 'Có lỗi xảy ra khi tải dữ liệu' });
+  }
+};
+
+/**
  * Xuất các hàm controller để sử dụng trong routes
  */
 module.exports = {
@@ -214,5 +269,6 @@ module.exports = {
   getLocationById,
   createLocation,
   updateLocation,
-  deleteLocation
+  deleteLocation,
+  getLocationSummary
 };
