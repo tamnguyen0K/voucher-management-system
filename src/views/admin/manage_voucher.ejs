@@ -1,4 +1,4 @@
-
+<!-- Quản lý Voucher -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h2">
         <i class="fas fa-percent text-warning me-2"></i>
@@ -11,7 +11,7 @@
     <% } %>
 </div>
 
-<!-- Vouchers Table -->
+<!-- Bảng danh sách voucher -->
 <div class="card">
     <div class="card-header">
         <h5 class="mb-0">
@@ -60,27 +60,21 @@
                                 <td>
                                     <div class="progress" style="height: 20px;">
                                         <div class="progress-bar bg-success" data-width="<%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>"></div>
-                                            <%= voucher.quantityClaimed %>/<%= voucher.quantityTotal %>
-                                        </div>
+                                        <%= voucher.quantityClaimed %>/<%= voucher.quantityTotal %>
                                     </div>
                                 </td>
                                 <td>
                                     <% 
                                         const now = new Date();
-                                        let status = 'active';
                                         let statusClass = 'success';
                                         let statusText = 'Hoạt động';
-                                        
                                         if (now > voucher.endDate) {
-                                            status = 'expired';
                                             statusClass = 'danger';
                                             statusText = 'Hết hạn';
                                         } else if (voucher.quantityClaimed >= voucher.quantityTotal) {
-                                            status = 'sold_out';
                                             statusClass = 'warning';
                                             statusText = 'Hết số lượng';
                                         } else if (now < voucher.startDate) {
-                                            status = 'upcoming';
                                             statusClass = 'info';
                                             statusText = 'Sắp diễn ra';
                                         }
@@ -99,16 +93,16 @@
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         <% if (isAdmin) { %>
-                                            <form action="/admin/vouchers/<%= voucher._id %>" method="POST" class="d-inline">
+                                            <form action="/admin/vouchers/<%= voucher._id %>" method="POST" class="d-inline" data-confirm="Xóa voucher này?">
                                                 <input type="hidden" name="_method" value="DELETE">
-                                                <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Bạn có chắc muốn xóa voucher này?')">
+                                                <button type="submit" class="btn btn-outline-danger">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
                                         <% } else { %>
-                                            <form action="/owner/vouchers/<%= voucher._id %>" method="POST" class="d-inline">
+                                            <form action="/owner/vouchers/<%= voucher._id %>" method="POST" class="d-inline" data-confirm="Xóa voucher này?">
                                                 <input type="hidden" name="_method" value="DELETE">
-                                                <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Bạn có chắc muốn xóa voucher này?')">
+                                                <button type="submit" class="btn btn-outline-danger">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
@@ -130,7 +124,7 @@
     </div>
 </div>
 
-<!-- Create Voucher Modal -->
+<!-- Form tạo voucher -->
 <% if (!isAdmin) { %>
 <div class="modal fade" id="createVoucherModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -141,7 +135,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="/owner/vouchers" method="POST">
+            <form action="/owner/vouchers" method="POST" data-confirm="Xác nhận tạo voucher mới?">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6">
@@ -210,7 +204,7 @@
 </div>
 <% } %>
 
-<!-- Edit Voucher Modals -->
+<!-- Form chỉnh sửa voucher -->
 <% if (vouchers && vouchers.length > 0) { %>
     <% vouchers.forEach(voucher => { %>
         <div class="modal fade" id="editVoucherModal<%= voucher._id %>" tabindex="-1">
@@ -222,7 +216,7 @@
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <form action="/owner/vouchers/<%= voucher._id %>" method="POST">
+                    <form action="/owner/vouchers/<%= voucher._id %>" method="POST" data-confirm="Xác nhận cập nhật voucher?">
                         <input type="hidden" name="_method" value="PUT">
                         <div class="modal-body">
                             <div class="row">
@@ -287,13 +281,11 @@
     <% }) %>
 <% } %>
 
+<!-- Xử lý tự động set thời gian -->
 <script>
-// Set default start date to now
 document.addEventListener('DOMContentLoaded', function() {
     const now = new Date();
     const startDateInput = document.getElementById('startDate');
-    if (startDateInput) {
-        startDateInput.value = now.toISOString().slice(0, 16);
-    }
+    if (startDateInput) startDateInput.value = now.toISOString().slice(0, 16);
 });
 </script>

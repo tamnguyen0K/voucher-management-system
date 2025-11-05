@@ -1,79 +1,65 @@
-// Import thư viện mongoose để định nghĩa schema và model
+// ==================================
+// File: models/location.model.js
+// Mục đích: Định nghĩa schema và model cho địa điểm (Location)
+// ==================================
+
 const mongoose = require('mongoose');
 
-// Định nghĩa cấu trúc dữ liệu (schema) cho một địa điểm (location)
+// Định nghĩa schema cho một địa điểm
 const locationSchema = new mongoose.Schema({
   name: {
-    type: String,                                                  // Kiểu dữ liệu là chuỗi
-    required: [true, 'Location name is required'],                 // Bắt buộc phải có
-    trim: true,                                                    // Tự động loại bỏ khoảng trắng ở đầu/cuối
-    maxlength: [100, 'Location name cannot exceed 100 characters'] // Giới hạn độ dài
+    type: String,
+    required: [true, 'Location name is required'],
+    trim: true,
+    maxlength: [100, 'Location name cannot exceed 100 characters']
   },
-
   description: {
     type: String,
     required: [true, 'Description is required'],
     trim: true,
     maxlength: [500, 'Description cannot exceed 500 characters']
   },
-
   address: {
     type: String,
     required: [true, 'Address is required'],
     trim: true,
     maxlength: [200, 'Address cannot exceed 200 characters']
   },
-
-  // Phân loại địa điểm: nhà hàng, quán cà phê, hay điểm du lịch
   type: {
     type: String,
     required: [true, 'Location type is required'],
-    enum: ['restaurant', 'cafe', 'tourist_spot'], // Chỉ được chọn trong danh sách này
+    enum: ['restaurant', 'cafe', 'tourist_spot'],
     default: 'restaurant'
   },
-
-  // Điểm đánh giá trung bình (ví dụ: 4.5 sao)
   rating: {
     type: Number,
-    default: 0,                                // Nếu chưa có đánh giá thì mặc định = 0
-    min: [0, 'Rating cannot be less than 0'],  // Giới hạn nhỏ nhất
-    max: [5, 'Rating cannot exceed 5']         // Giới hạn lớn nhất
+    default: 0,
+    min: [0, 'Rating cannot be less than 0'],
+    max: [5, 'Rating cannot exceed 5']
   },
-
-  // Ảnh đại diện của địa điểm
   imageUrl: {
     type: String,
     default: 'https://via.placeholder.com/400x300?text=No+Image',
     trim: true
   },
-
-  // Tham chiếu đến người sở hữu địa điểm (liên kết với model User)
   owner: {
-    type: mongoose.Schema.Types.ObjectId, // Dùng ObjectId để tham chiếu
-    ref: 'User',                          // Liên kết đến collection "users"
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: [true, 'Owner is required']
   },
-
-  // Ngày tạo địa điểm (tự động gán khi thêm mới)
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
 
-
-// Tạo virtual field (trường ảo, không lưu vào DB)
-// Giúp hiển thị rating đã làm tròn 1 chữ số thập phân
+// Virtual field: hiển thị điểm đánh giá trung bình (1 chữ số thập phân)
 locationSchema.virtual('averageRating').get(function() {
-  return this.rating.toFixed(1); // Ví dụ 4 → "4.0"
+  return this.rating.toFixed(1);
 });
 
-
-// Cấu hình để khi chuyển sang JSON (ví dụ khi gửi API),
-// thì các virtual field cũng được bao gồm
+// Cho phép hiển thị các trường ảo khi chuyển sang JSON
 locationSchema.set('toJSON', { virtuals: true });
 
-
-// Tạo model Location từ schema và export để dùng ở nơi khác
-// Trong MongoDB, model này sẽ tương ứng với collection "locations"
+// Xuất model Location (tương ứng với collection "locations")
 module.exports = mongoose.model('Location', locationSchema);

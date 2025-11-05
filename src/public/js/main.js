@@ -1,48 +1,38 @@
-// ==========================
-// Main JavaScript cho Hệ thống Quản lý Voucher
-// Dùng để xử lý hiệu ứng, form, xác nhận, copy mã, tìm kiếm, animation, toast, v.v.
-// ==========================
+/**
+ * File: public/js/main.js
+ * Mô tả: File JavaScript chính cho hệ thống quản lý voucher
+ * Chức năng: Xử lý form validation, đánh giá sao, tìm kiếm, xác nhận, toast notification, modal, auth forms
+ */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Khởi tạo tooltip của Bootstrap (hiện mô tả khi hover)
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
-    // Khởi tạo popover (hộp thông tin nhỏ khi click vào phần tử)
-    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-        return new bootstrap.Popover(popoverTriggerEl);
-    });
+    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    popoverTriggerList.map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
 
-    // Tự động ẩn alert (thông báo) sau 5 giây
-    setTimeout(function() {
-        var alerts = document.querySelectorAll('.alert');
-        alerts.forEach(function(alert) {
-            var bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close(); // Đóng alert
-        });
+    setTimeout(() => {
+        document.querySelectorAll('.alert').forEach(alert => new bootstrap.Alert(alert).close());
     }, 5000);
 
-    // Gọi các hàm khởi tạo chính
-    initializeFormValidation();   // Kiểm tra form trước khi submit
-    initializeRatingStars();      // Hệ thống chấm sao
-    initializeVoucherClaim();     // Xác nhận khi claim voucher
-    initializeSearch();           // Tìm kiếm realtime
-    initializeScrollAnimations(); // Hiệu ứng khi scroll trang
-    initializeCenterModal();      // Modal popup trung tâm
-    initializeLocationQuickView(); // Xem nhanh địa điểm
-    initializeAuthForms();        // Xử lý form đăng nhập/đăng ký với AJAX
+    initializeFormValidation();
+    initializeRatingStars();
+    initializeVoucherClaim();
+    initializeSearch();
+    initializeScrollAnimations();
+    initializeCenterModal();
+    initializeLocationQuickView();
+    initializeAuthForms();
+    initializeConfirmations();
 });
 
-// ==========================
-// Kiểm tra form hợp lệ (Bootstrap validation)
-// ==========================
+/**
+ * Hàm: initializeFormValidation
+ * Mô tả: Khởi tạo kiểm tra form hợp lệ (Bootstrap validation)
+ */
 function initializeFormValidation() {
     const forms = document.querySelectorAll('.needs-validation');
-    
-    Array.prototype.slice.call(forms).forEach(function(form) {
+    Array.prototype.slice.call(forms).forEach(form => {
         form.addEventListener('submit', function(event) {
             if (!form.checkValidity()) {
                 event.preventDefault();
@@ -53,32 +43,26 @@ function initializeFormValidation() {
     });
 }
 
-// ==========================
-// Hệ thống đánh giá sao (rating)
-// ==========================
+/**
+ * Hàm: initializeRatingStars
+ * Mô tả: Khởi tạo hệ thống đánh giá sao (rating)
+ */
 function initializeRatingStars() {
     const ratingInputs = document.querySelectorAll('.rating-input');
-    
-    ratingInputs.forEach(function(ratingInput) {
+    ratingInputs.forEach(ratingInput => {
         const stars = ratingInput.querySelectorAll('.star-rating');
         const hiddenInput = ratingInput.querySelector('input[type="hidden"]');
-        
-        // Khi click vào sao
-        stars.forEach(function(star) {
+        stars.forEach(star => {
             star.addEventListener('click', function() {
                 const rating = parseInt(this.dataset.rating);
                 hiddenInput.value = rating;
                 updateStarDisplay(stars, rating);
             });
-            
-            // Khi rê chuột qua sao
             star.addEventListener('mouseenter', function() {
                 const rating = parseInt(this.dataset.rating);
                 updateStarDisplay(stars, rating);
             });
         });
-        
-        // Khi rời chuột khỏi vùng sao → hiển thị lại giá trị hiện tại
         ratingInput.addEventListener('mouseleave', function() {
             const currentRating = parseInt(hiddenInput.value) || 0;
             updateStarDisplay(stars, currentRating);
@@ -86,9 +70,12 @@ function initializeRatingStars() {
     });
 }
 
-// Cập nhật hiển thị màu của sao (vàng = chọn, xám = chưa chọn)
+/**
+ * Hàm: updateStarDisplay
+ * Mô tả: Cập nhật hiển thị màu của sao (vàng = chọn, xám = chưa chọn)
+ */
 function updateStarDisplay(stars, rating) {
-    stars.forEach(function(star, index) {
+    stars.forEach((star, index) => {
         if (index < rating) {
             star.classList.add('text-warning');
             star.classList.remove('text-muted');
@@ -99,30 +86,24 @@ function updateStarDisplay(stars, rating) {
     });
 }
 
-// ==========================
-// Xác nhận khi claim voucher
-// ==========================
+/**
+ * Hàm: initializeVoucherClaim
+ * Mô tả: Xác nhận khi claim voucher
+ */
 function initializeVoucherClaim() {
     const claimForms = document.querySelectorAll('form[action*="/claim"]');
-    
-    claimForms.forEach(function(form) {
+    claimForms.forEach(form => {
         form.addEventListener('submit', function(event) {
             const voucherCode = form.closest('.card').querySelector('.badge').textContent.trim();
-            
-            // Hỏi xác nhận người dùng
             if (!confirm(`Bạn có chắc muốn claim voucher ${voucherCode}?`)) {
                 event.preventDefault();
                 return false;
             }
-            
-            // Hiển thị trạng thái "đang xử lý"
             const submitBtn = form.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<span class="loading"></span> Đang xử lý...';
             submitBtn.disabled = true;
-            
-            // Sau 3s nếu không redirect → reset lại nút
-            setTimeout(function() {
+            setTimeout(() => {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
             }, 3000);
@@ -130,19 +111,74 @@ function initializeVoucherClaim() {
     });
 }
 
-// ==========================
-// Chức năng tìm kiếm realtime (lọc danh sách theo input)
-// ==========================
+/**
+ * Hàm: initializeConfirmations
+ * Mô tả: Xác nhận chung cho thêm/sửa/xóa (admin & owner)
+ */
+function initializeConfirmations() {
+    document.addEventListener('click', async function(e) {
+        const submitBtn = e.target.closest('button[type="submit"][data-confirm], input[type="submit"][data-confirm]');
+        if (!submitBtn) return;
+        const form = submitBtn.form;
+        if (!form) return;
+        e.preventDefault();
+        const message = submitBtn.getAttribute('data-confirm');
+        const ok = await confirmWithCenterModal(message || 'Bạn có chắc muốn thực hiện thao tác này?');
+        if (ok) form.submit();
+    });
+
+    document.querySelectorAll('form[data-confirm]').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            if (form.__confirming) return;
+            e.preventDefault();
+            const message = form.getAttribute('data-confirm');
+            const ok = await confirmWithCenterModal(message || 'Bạn có chắc muốn thực hiện thao tác này?');
+            if (ok) {
+                form.__confirming = true;
+                form.submit();
+            }
+        });
+    });
+}
+
+/**
+ * Hàm: confirmWithCenterModal
+ * Mô tả: Hiển thị modal xác nhận trung tâm
+ */
+async function confirmWithCenterModal(message) {
+    const backdrop = document.getElementById('center-modal-backdrop');
+    const content = document.getElementById('center-modal-content');
+    if (!backdrop || !content) return window.confirm(message);
+    return new Promise(resolve => {
+        const html = `
+            <div class="p-3">
+                <div class="mb-3">${message}</div>
+                <div class="d-flex gap-2">
+                    <button id="cm-cancel" type="button" class="btn btn-secondary flex-fill">Hủy</button>
+                    <button id="cm-ok" type="button" class="btn btn-danger flex-fill">Xác nhận</button>
+                </div>
+            </div>`;
+        openCenterModal(html);
+        const cancelBtn = document.getElementById('cm-cancel');
+        const okBtn = document.getElementById('cm-ok');
+        const cleanup = () => closeCenterModal();
+        cancelBtn.addEventListener('click', () => { cleanup(); resolve(false); }, { once: true });
+        okBtn.addEventListener('click', () => { cleanup(); resolve(true); }, { once: true });
+    });
+}
+
+/**
+ * Hàm: initializeSearch
+ * Mô tả: Chức năng tìm kiếm realtime (lọc danh sách theo input)
+ */
 function initializeSearch() {
     const searchInputs = document.querySelectorAll('.search-input');
-    
-    searchInputs.forEach(function(input) {
+    searchInputs.forEach(input => {
         input.addEventListener('input', debounce(function() {
             const searchTerm = this.value.toLowerCase();
             const targetSelector = this.dataset.target;
             const items = document.querySelectorAll(targetSelector);
-            
-            items.forEach(function(item) {
+            items.forEach(item => {
                 const text = item.textContent.toLowerCase();
                 item.style.display = text.includes(searchTerm) ? '' : 'none';
             });
@@ -150,72 +186,56 @@ function initializeSearch() {
     });
 }
 
-// ==========================
-// Hiệu ứng xuất hiện khi scroll
-// ==========================
+/**
+ * Hàm: initializeScrollAnimations
+ * Mô tả: Hiệu ứng xuất hiện khi scroll
+ */
 function initializeScrollAnimations() {
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
-    
-    const observer = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('fade-in'); // Thêm class hiệu ứng
-            }
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) entry.target.classList.add('fade-in');
         });
-    }, observerOptions);
-    
-    const animatedElements = document.querySelectorAll('.card, .hero-section');
-    animatedElements.forEach(function(el) {
-        observer.observe(el);
-    });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    document.querySelectorAll('.card, .hero-section').forEach(el => observer.observe(el));
 }
 
-// ==========================
-// Hàm tiện ích: debounce (chống spam sự kiện input)
-// ==========================
+/**
+ * Hàm: debounce
+ * Mô tả: Hàm tiện ích debounce (chống spam sự kiện input)
+ */
 function debounce(func, wait) {
     let timeout;
-    return function executedFunction(...args) {
-        const later = function() {
-            clearTimeout(timeout);
-            func(...args);
-        };
+    return function(...args) {
         clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
+        timeout = setTimeout(() => func(...args), wait);
     };
 }
 
-// ==========================
-// Toast Notification (Thông báo nổi Bootstrap)
-// ==========================
+/**
+ * Hàm: showToast
+ * Mô tả: Hiển thị toast notification (thông báo nổi Bootstrap)
+ */
 function showToast(message, type = 'info') {
     const toastContainer = document.getElementById('toast-container') || createToastContainer();
-    
     const toast = document.createElement('div');
     toast.className = `toast align-items-center text-white bg-${type} border-0`;
-    toast.setAttribute('role', 'alert');
     toast.innerHTML = `
         <div class="d-flex">
             <div class="toast-body">
-                <i class="fas fa-${getToastIcon(type)} me-2"></i>
-                ${message}
+                <i class="fas fa-${getToastIcon(type)} me-2"></i>${message}
             </div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-    `;
-    
+        </div>`;
     toastContainer.appendChild(toast);
     const bsToast = new bootstrap.Toast(toast);
     bsToast.show();
-
-    // Xóa toast khi ẩn
     toast.addEventListener('hidden.bs.toast', () => toast.remove());
 }
 
-// Tạo container cho toast nếu chưa có
+/**
+ * Hàm: createToastContainer
+ * Mô tả: Tạo container cho toast nếu chưa có
+ */
 function createToastContainer() {
     const container = document.createElement('div');
     container.id = 'toast-container';
@@ -225,28 +245,21 @@ function createToastContainer() {
     return container;
 }
 
-// Icon phù hợp theo loại thông báo
+/**
+ * Hàm: getToastIcon
+ * Mô tả: Icon phù hợp theo loại thông báo
+ */
 function getToastIcon(type) {
-    const icons = {
-        'success': 'check-circle',
-        'danger': 'exclamation-triangle',
-        'warning': 'exclamation-circle',
-        'info': 'info-circle'
-    };
+    const icons = { success: 'check-circle', danger: 'exclamation-triangle', warning: 'exclamation-circle', info: 'info-circle' };
     return icons[type] || 'info-circle';
 }
 
-// ==========================
-// Hàm hỗ trợ fetch API có hiển thị lỗi/toast
-// ==========================
+/**
+ * Hàm: fetchWithLoading
+ * Mô tả: Hàm hỗ trợ fetch API có hiển thị lỗi/toast
+ */
 async function fetchWithLoading(url, options = {}) {
-    const defaultOptions = {
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    };
-    
+    const defaultOptions = { headers: { 'Content-Type': 'application/json', ...options.headers } };
     try {
         const response = await fetch(url, { ...defaultOptions, ...options });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -258,74 +271,65 @@ async function fetchWithLoading(url, options = {}) {
     }
 }
 
-// ==========================
-// Sao chép mã voucher vào clipboard
-// ==========================
+/**
+ * Hàm: copyToClipboard
+ * Mô tả: Sao chép mã voucher vào clipboard
+ */
 function copyToClipboard(text) {
     if (navigator.clipboard) {
         navigator.clipboard.writeText(text)
             .then(() => showToast('Đã sao chép vào clipboard', 'success'))
-            .catch(err => {
-                console.error('Copy error:', err);
-                fallbackCopyTextToClipboard(text);
-            });
-    } else {
-        fallbackCopyTextToClipboard(text);
-    }
+            .catch(() => fallbackCopyTextToClipboard(text));
+    } else fallbackCopyTextToClipboard(text);
 }
 
-// Dự phòng copy nếu trình duyệt cũ không hỗ trợ navigator.clipboard
+/**
+ * Hàm: fallbackCopyTextToClipboard
+ * Mô tả: Dự phòng copy nếu trình duyệt cũ không hỗ trợ navigator.clipboard
+ */
 function fallbackCopyTextToClipboard(text) {
     const textArea = document.createElement('textarea');
     textArea.value = text;
     textArea.style.position = 'fixed';
     textArea.style.left = '-999999px';
-    textArea.style.top = '-999999px';
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
-    
     try {
         document.execCommand('copy');
         showToast('Đã sao chép vào clipboard', 'success');
-    } catch (err) {
-        console.error('Fallback copy error:', err);
+    } catch {
         showToast('Không thể sao chép', 'danger');
     }
     document.body.removeChild(textArea);
 }
 
-// Khi click vào nút copy voucher code
 document.addEventListener('click', function(event) {
     if (event.target.classList.contains('copy-voucher-code')) {
-        const voucherCode = event.target.dataset.code;
-        copyToClipboard(voucherCode);
+        copyToClipboard(event.target.dataset.code);
     }
 });
 
-// ==========================
-// Hiệu ứng thanh tiến trình (progress bar)
-// ==========================
+/**
+ * Hàm: animateProgressBars
+ * Mô tả: Hiệu ứng thanh tiến trình (progress bar)
+ */
 function animateProgressBars() {
     const progressBars = document.querySelectorAll('.progress-bar');
-    progressBars.forEach(function(bar) {
+    progressBars.forEach(bar => {
         const width = bar.style.width;
         bar.style.width = '0%';
-        setTimeout(function() {
+        setTimeout(() => {
             bar.style.transition = 'width 1s ease-in-out';
             bar.style.width = width;
         }, 100);
     });
 }
 
-// Gọi hiệu ứng khi trang load
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(animateProgressBars, 500);
 });
 
-// ==========================
-// Xuất các hàm tiện ích ra global (window)
-// ==========================
 window.VoucherSystem = {
     showToast,
     copyToClipboard,
@@ -333,125 +337,94 @@ window.VoucherSystem = {
     debounce
 };
 
-// ==========================
-// Auth Forms (Login/Register with AJAX)
-// ==========================
+/**
+ * Hàm: initializeAuthForms
+ * Mô tả: Xử lý form đăng nhập/đăng ký với AJAX
+ */
 function initializeAuthForms() {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
-
     if (loginForm) {
         loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             await handleAuthFormSubmit(this, '/login', 'login');
         });
     }
-
     if (registerForm) {
         registerForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const pw = document.getElementById('reg_password').value;
             const cpw = document.getElementById('confirm_password').value;
-            
             if (pw !== cpw) {
                 showToast('Mật khẩu xác nhận không khớp', 'danger');
                 return;
             }
-            
             await handleAuthFormSubmit(this, '/register', 'register');
         });
     }
 }
 
+/**
+ * Hàm: handleAuthFormSubmit
+ * Mô tả: Xử lý submit form đăng nhập/đăng ký
+ */
 async function handleAuthFormSubmit(form, url, tabType) {
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
-    
-    // Convert FormData thành URLSearchParams để Express có thể parse
-    // Vì Express urlencoded middleware chỉ parse application/x-www-form-urlencoded
     const formData = new FormData(form);
-    const urlEncodedData = new URLSearchParams();
-    for (const [key, value] of formData.entries()) {
-        urlEncodedData.append(key, value);
-    }
-
+    const urlEncodedData = new URLSearchParams(formData);
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xử lý...';
-
     try {
-        console.log('Submitting form to:', url);
-        console.log('Form data:', Object.fromEntries(urlEncodedData));
-        
-        // Gửi request với Content-Type: application/x-www-form-urlencoded
-        // để Express middleware có thể parse đúng
         const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: urlEncodedData,
             credentials: 'same-origin',
-            redirect: 'follow' // Tự động follow redirect
+            redirect: 'follow'
         });
 
-        console.log('Response status:', response.status);
-        console.log('Response URL:', response.url);
-        console.log('Response ok:', response.ok);
-
-        // Sau khi fetch follow redirect, kiểm tra response.url
         const finalUrl = response.url;
-        
-        // Nếu đăng nhập thành công, server redirect đến dashboard/trang chủ
-        // Kiểm tra xem URL cuối cùng có khác với trang hiện tại không
         if (response.ok && finalUrl && finalUrl !== window.location.href) {
-            // Redirect đến URL mới (dashboard hoặc trang chủ)
             if (!finalUrl.includes('/auth')) {
-                // Đăng nhập thành công, chuyển đến dashboard/trang chủ
                 window.location.href = finalUrl;
                 return;
             }
         }
-        
-        // Nếu URL cuối cùng là /auth (có lỗi hoặc đăng ký thành công)
-        // hoặc status không OK, reload để hiển thị thông báo
         if (finalUrl && finalUrl.includes('/auth')) {
             window.location.href = finalUrl;
         } else if (!response.ok) {
-            // Có lỗi, reload với tab tương ứng
             window.location.href = `/auth?tab=${tabType}`;
-        } else {
-            // Trường hợp khác, reload trang
-            window.location.reload();
-        }
+        } else window.location.reload();
     } catch (error) {
-        console.error('Auth form error:', error);
-        showToast('Có lỗi xảy ra khi xử lý yêu cầu: ' + (error.message || 'Unknown error'), 'danger');
+        showToast('Có lỗi xảy ra: ' + (error.message || 'Unknown error'), 'danger');
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
     }
 }
 
-// ==========================
-// Centered Modal (custom)
-// ==========================
+/**
+ * Hàm: initializeCenterModal
+ * Mô tả: Khởi tạo modal popup trung tâm (custom)
+ */
 function initializeCenterModal() {
     const backdrop = document.getElementById('center-modal-backdrop');
     const modal = document.getElementById('center-modal');
     const closeBtn = document.querySelector('.center-modal-close');
-
     if (!backdrop || !modal || !closeBtn) return;
-
     closeBtn.addEventListener('click', closeCenterModal);
-
     backdrop.addEventListener('click', function(e) {
         if (e.target === backdrop) closeCenterModal();
     });
-
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeCenterModal();
     });
 }
 
+/**
+ * Hàm: openCenterModal
+ * Mô tả: Mở modal trung tâm với nội dung HTML
+ */
 function openCenterModal(html) {
     const backdrop = document.getElementById('center-modal-backdrop');
     const content = document.getElementById('center-modal-content');
@@ -461,6 +434,10 @@ function openCenterModal(html) {
     document.body.style.overflow = 'hidden';
 }
 
+/**
+ * Hàm: closeCenterModal
+ * Mô tả: Đóng modal trung tâm
+ */
 function closeCenterModal() {
     const backdrop = document.getElementById('center-modal-backdrop');
     const content = document.getElementById('center-modal-content');
@@ -470,9 +447,10 @@ function closeCenterModal() {
     document.body.style.overflow = '';
 }
 
-// ==========================
-// Quick View for Locations
-// ==========================
+/**
+ * Hàm: initializeLocationQuickView
+ * Mô tả: Xem nhanh địa điểm (quick view)
+ */
 function initializeLocationQuickView() {
     document.addEventListener('click', async function(e) {
         const trigger = e.target.closest('[data-location-id][data-action="quick-view"]');
@@ -484,54 +462,42 @@ function initializeLocationQuickView() {
             const data = await fetchWithLoading(`/locations/${id}/summary`);
             const html = renderLocationQuickView(data);
             openCenterModal(html);
-        } catch (err) {
-            // error handled in fetchWithLoading
-        }
+        } catch {}
     });
 }
 
+/**
+ * Hàm: renderLocationQuickView
+ * Mô tả: Render HTML cho quick view địa điểm
+ */
 function renderLocationQuickView(data) {
     if (!data || !data.location) return '<div class="p-3">Không có dữ liệu</div>';
     const loc = data.location;
     const vouchers = data.vouchers || [];
     const reviews = data.reviews || [];
-
     const voucherList = vouchers.length ? vouchers.map(v => `
         <div class="d-flex align-items-center justify-content-between border rounded p-2 mb-2">
-            <div>
-                <div class="fw-semibold text-success"><i class="fas fa-ticket-alt me-1"></i>${v.code || ''} - ${v.discountPct || 0}%</div>
-                ${v.conditions ? `<div class="text-muted small">${v.conditions}</div>` : ''}
-            </div>
-            <a class="btn btn-sm btn-success" href="/vouchers">Dùng</a>
-        </div>
-    `).join('') : '<div class="text-muted">Chưa có voucher hoạt động</div>';
-
+            <div><div class="fw-semibold text-success"><i class="fas fa-ticket-alt me-1"></i>${v.code || ''} - ${v.discountPct || 0}%</div>
+            ${v.conditions ? `<div class="text-muted small">${v.conditions}</div>` : ''}</div>
+            <a class="btn btn-sm btn-success" href="/vouchers">Dùng</a></div>`).join('') : '<div class="text-muted">Chưa có voucher hoạt động</div>';
     const reviewList = reviews.length ? reviews.map(r => `
         <div class="border-bottom py-2">
             <div class="small text-muted">${(r.user && r.user.username) || 'Ẩn danh'} • ${'★'.repeat(r.rating || 0)}${'☆'.repeat(Math.max(0, 5 - (r.rating || 0)))}</div>
-            <div>${r.comment || ''}</div>
-        </div>
-    `).join('') : '<div class="text-muted">Chưa có đánh giá</div>';
-
+            <div>${r.comment || ''}</div></div>`).join('') : '<div class="text-muted">Chưa có đánh giá</div>';
     return `
-      <div>
-        <img src="${loc.imageUrl}" alt="${loc.name}" style="width:100%;height:180px;object-fit:cover;">
-        <div class="p-3">
-          <h5 class="mb-1">${loc.name}</h5>
-          <div class="text-muted small mb-2"><i class="fas fa-map-marker-alt me-1"></i>${loc.address || ''}</div>
-          <div class="mb-2"><span class="badge bg-secondary">${loc.type || ''}</span> <span class="ms-2 text-warning">${data.averageRating || 0} ★ (${data.reviewCount || 0})</span></div>
-          <div class="text-muted">${loc.description || ''}</div>
-
-          <h6 class="mt-3">Voucher</h6>
-          ${voucherList}
-
-          <h6 class="mt-3">Đánh giá gần đây</h6>
-          ${reviewList}
-
-          <div class="button_popup mt-3 d-flex">
-            <button type="button" class="btn btn-outline-secondary flex-fill" onclick="(${closeCenterModal.toString()})()">Đóng</button>
-          </div>
-        </div>
-      </div>
-    `;
+        <div>
+            <img src="${loc.imageUrl}" alt="${loc.name}" style="width:100%;height:180px;object-fit:cover;">
+            <div class="p-3">
+                <h5 class="mb-1">${loc.name}</h5>
+                <div class="text-muted small mb-2"><i class="fas fa-map-marker-alt me-1"></i>${loc.address || ''}</div>
+                <div class="mb-2"><span class="badge bg-secondary">${loc.type || ''}</span> 
+                <span class="ms-2 text-warning">${data.averageRating || 0} ★ (${data.reviewCount || 0})</span></div>
+                <div class="text-muted">${loc.description || ''}</div>
+                <h6 class="mt-3">Voucher</h6>${voucherList}
+                <h6 class="mt-3">Đánh giá gần đây</h6>${reviewList}
+                <div class="button_popup mt-3 d-flex">
+                    <button type="button" class="btn btn-outline-secondary flex-fill" onclick="(${closeCenterModal.toString()})()">Đóng</button>
+                </div>
+            </div>
+        </div>`;
 }

@@ -1,0 +1,233 @@
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2">
+        <i class="fas fa-user-circle text-warning me-2"></i>
+        Thông tin cá nhân
+    </h1>
+    <div class="text-muted">
+        <i class="fas fa-calendar me-1"></i>
+        <%= new Date().toLocaleDateString('vi-VN') %>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4">
+        <!-- Profile Info -->
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <div class="profile-avatar mb-3">
+                    <i class="fas fa-store fa-4x text-warning"></i>
+                </div>
+                <h4 class="card-title"><%= user.username %></h4>
+                <p class="text-muted mb-2">
+                    <i class="fas fa-envelope me-1"></i>
+                    <%= user.email %>
+                </p>
+                <p class="text-muted mb-3">
+                    <i class="fas fa-phone me-1"></i>
+                    <%= user.phoneNumber %>
+                </p>
+                <span class="badge bg-warning text-dark fs-6">
+                    <i class="fas fa-user-tag me-1"></i>
+                    Chủ quán
+                </span>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Quản lý
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/owner/locations" class="btn btn-outline-primary">
+                        <i class="fas fa-map-marker-alt me-1"></i>Quản lý địa điểm
+                    </a>
+                    <a href="/owner/vouchers" class="btn btn-outline-success">
+                        <i class="fas fa-percent me-1"></i>Quản lý voucher
+                    </a>
+                    <a href="/owner/dashboard" class="btn btn-outline-warning">
+                        <i class="fas fa-chart-line me-1"></i>Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <!-- My Locations -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-map-marker-alt me-2"></i>
+                    Địa điểm của tôi (<%= locations ? locations.length : 0 %>)
+                </h5>
+                <a href="/owner/locations" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-plus me-1"></i>Thêm địa điểm
+                </a>
+            </div>
+            <div class="card-body">
+                <% if (locations && locations.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Tên địa điểm</th>
+                                    <th>Loại</th>
+                                    <th>Đánh giá</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% locations.slice(0, 5).forEach(location => { %>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img src="<%= location.imageUrl || '/images/default-location.jpg' %>" 
+                                                     class="rounded me-2" 
+                                                     style="width: 40px; height: 30px; object-fit: cover;"
+                                                     onerror="this.src='/images/default-location.jpg'">
+                                                <div>
+                                                    <h6 class="mb-0"><%= location.name %></h6>
+                                                    <small class="text-muted"><%= location.address ? location.address.substring(0, 30) + '...' : '' %></small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge bg-secondary"><%= location.type %></span></td>
+                                        <td>
+                                            <div class="rating">
+                                                <% for (let i = 1; i <= 5; i++) { %>
+                                                    <i class="fas fa-star <%= i <= (location.rating || 0) ? 'text-warning' : 'text-muted' %>"></i>
+                                                <% } %>
+                                                <span class="ms-1">(<%= location.rating || 0 %>)</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <a href="/locations/<%= location._id %>" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                    <% if (locations.length > 5) { %>
+                        <div class="text-center mt-3">
+                            <a href="/owner/locations" class="btn btn-outline-primary">
+                                Xem tất cả địa điểm
+                            </a>
+                        </div>
+                    <% } %>
+                <% } else { %>
+                    <div class="text-center py-4">
+                        <i class="fas fa-map-marker-alt fa-2x text-muted mb-3"></i>
+                        <h5 class="text-muted">Chưa có địa điểm nào</h5>
+                        <p class="text-muted">Hãy tạo địa điểm đầu tiên của bạn!</p>
+                        <a href="/owner/locations" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Tạo địa điểm
+                        </a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- My Vouchers -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-percent me-2"></i>
+                    Voucher của tôi (<%= vouchers ? vouchers.length : 0 %>)
+                </h5>
+                <a href="/owner/vouchers" class="btn btn-sm btn-outline-success">
+                    <i class="fas fa-plus me-1"></i>Tạo voucher
+                </a>
+            </div>
+            <div class="card-body">
+                <% if (vouchers && vouchers.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Mã voucher</th>
+                                    <th>Địa điểm</th>
+                                    <th>Giảm giá</th>
+                                    <th>Số lượng</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% vouchers.slice(0, 5).forEach(voucher => { %>
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-success fs-6">
+                                                <i class="fas fa-ticket-alt me-1"></i>
+                                                <%= voucher.code %>
+                                            </span>
+                                        </td>
+                                        <td><%= voucher.location ? voucher.location.name : 'N/A' %></td>
+                                        <td><span class="badge bg-warning text-dark">-<%= voucher.discountPct %>%</span></td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-success" 
+                                                     data-width="<%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>">
+                                                    <%= voucher.quantityClaimed %>/<%= voucher.quantityTotal %>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <% 
+                                                const now = new Date();
+                                                let status = 'active';
+                                                let statusClass = 'success';
+                                                let statusText = 'Hoạt động';
+                                                
+                                                if (now > voucher.endDate) {
+                                                    status = 'expired';
+                                                    statusClass = 'danger';
+                                                    statusText = 'Hết hạn';
+                                                } else if (voucher.quantityClaimed >= voucher.quantityTotal) {
+                                                    status = 'sold_out';
+                                                    statusClass = 'warning';
+                                                    statusText = 'Hết số lượng';
+                                                }
+                                            %>
+                                            <span class="badge bg-<%= statusClass %>"><%= statusText %></span>
+                                        </td>
+                                        <td>
+                                            <a href="/owner/vouchers" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                    <% if (vouchers.length > 5) { %>
+                        <div class="text-center mt-3">
+                            <a href="/owner/vouchers" class="btn btn-outline-success">
+                                Xem tất cả voucher
+                            </a>
+                        </div>
+                    <% } %>
+                <% } else { %>
+                    <div class="text-center py-4">
+                        <i class="fas fa-percent fa-2x text-muted mb-3"></i>
+                        <h5 class="text-muted">Chưa có voucher nào</h5>
+                        <p class="text-muted">Hãy tạo voucher đầu tiên của bạn!</p>
+                        <a href="/owner/vouchers" class="btn btn-success">
+                            <i class="fas fa-plus me-1"></i>Tạo voucher
+                        </a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+

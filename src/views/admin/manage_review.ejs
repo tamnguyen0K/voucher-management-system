@@ -1,0 +1,113 @@
+<!-- Header: Tiêu đề trang và nút quay lại Dashboard -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2">
+        <i class="fas fa-star text-warning me-2"></i>
+        Quản lý Đánh giá
+    </h1>
+    <a href="/admin/dashboard" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Quay lại Dashboard
+    </a>
+</div>
+
+<!-- Bảng danh sách đánh giá -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>
+            Danh sách Đánh giá (<%= reviews ? reviews.length : 0 %>)
+        </h5>
+    </div>
+
+    <div class="card-body">
+        <% if (reviews && reviews.length > 0) { %>
+            <!-- Bảng hiển thị thông tin từng đánh giá -->
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Người đánh giá</th>
+                            <th>Địa điểm</th>
+                            <th>Đánh giá</th>
+                            <th>Nhận xét</th>
+                            <th>Ngày tạo</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% reviews.forEach(review => { %>
+                            <tr>
+                                <!-- Cột: Người đánh giá -->
+                                <td>
+                                    <% if (review.user) { %>
+                                        <div>
+                                            <strong><%= review.user.username %></strong>
+                                            <br>
+                                            <small class="text-muted"><%= review.user.email %></small>
+                                        </div>
+                                    <% } else { %>
+                                        <span class="text-muted">Người dùng đã bị xóa</span>
+                                    <% } %>
+                                </td>
+
+                                <!-- Cột: Địa điểm được đánh giá -->
+                                <td>
+                                    <% if (review.location) { %>
+                                        <strong><%= review.location.name %></strong>
+                                    <% } else { %>
+                                        <span class="text-muted">Địa điểm đã bị xóa</span>
+                                    <% } %>
+                                </td>
+
+                                <!-- Cột: Số sao đánh giá -->
+                                <td>
+                                    <div class="rating">
+                                        <% for (let i = 1; i <= 5; i++) { %>
+                                            <i class="fas fa-star <%= i <= review.rating ? 'text-warning' : 'text-muted' %>"></i>
+                                        <% } %>
+                                        <span class="ms-1">(<%= review.rating %>/5)</span>
+                                    </div>
+                                </td>
+
+                                <!-- Cột: Nhận xét -->
+                                <td>
+                                    <% if (review.comment) { %>
+                                        <p class="mb-0">
+                                            <%= review.comment.substring(0, 100) %>
+                                            <%= review.comment.length > 100 ? '...' : '' %>
+                                        </p>
+                                    <% } else { %>
+                                        <span class="text-muted">Không có nhận xét</span>
+                                    <% } %>
+                                </td>
+
+                                <!-- Cột: Ngày tạo -->
+                                <td>
+                                    <small class="text-muted">
+                                        <%= new Date(review.createdAt).toLocaleDateString('vi-VN') %>
+                                    </small>
+                                </td>
+
+                                <!-- Cột: Xóa đánh giá -->
+                                <td>
+                                    <form action="/admin/reviews/<%= review._id %>" method="POST" class="d-inline" 
+                                          data-confirm="Bạn có chắc muốn xóa đánh giá này?">
+                                          <input type="hidden" name="_method" value="DELETE">
+                                          <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i> Xóa
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <!-- Hiển thị khi chưa có dữ liệu -->
+            <div class="text-center py-5">
+                <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">Chưa có đánh giá nào</h4>
+            </div>
+        <% } %>
+    </div>
+</div>

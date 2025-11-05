@@ -128,15 +128,19 @@
                                 <div>
                                     <h6 class="text-success mb-1">
                                         <i class="fas fa-ticket-alt me-1"></i>
-                                        <%= voucher.code %>
+                                        <%= voucher.voucherCode %>
                                     </h6>
                                     <p class="mb-0 text-muted">
                                         <i class="fas fa-map-marker-alt me-1"></i>
-                                        <%= voucher.location.name %>
+                                        <%= voucher.locationName %>
                                     </p>
                                     <span class="badge bg-success">Giảm <%= voucher.discountPct %>%</span>
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="fas fa-clock me-1"></i>
+                                        Hết hạn: <%= new Date(voucher.expiryDate).toLocaleDateString('vi-VN') %>
+                                    </small>
                                 </div>
-                                <button class="btn btn-sm btn-outline-success copy-voucher-code" data-code="<%= voucher.code %>">
+                                <button class="btn btn-sm btn-outline-success copy-voucher-code" data-code="<%= voucher.voucherCode %>">
                                     <i class="fas fa-copy"></i>
                                 </button>
                             </div>

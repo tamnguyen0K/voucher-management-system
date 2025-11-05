@@ -1,11 +1,14 @@
-// Script migration để cập nhật database cũ sang cấu trúc mới
-// Thêm phoneNumber và idName cho các user đã tồn tại
+// =======================================
+//  File: scripts/migrateUsers.js
+//  Mục đích: Migration cập nhật user cũ — thêm phoneNumber và idName
+// =======================================
 
 require('dotenv').config({ path: './src/config/dotenv' });
 const mongoose = require('mongoose');
 const User = require('../models/user.model');
 
-// Hàm kết nối MongoDB
+// Hàm: connectDB
+// Chức năng: Kết nối đến MongoDB
 const connectDB = async () => {
   try {
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/voucher_system';
@@ -17,12 +20,12 @@ const connectDB = async () => {
   }
 };
 
-// Hàm migration: cập nhật user cũ
+// Hàm: migrateDatabase
+// Chức năng: Cập nhật các user chưa có phoneNumber hoặc idName
 const migrateDatabase = async () => {
   try {
     console.log('Starting migration...');
-    
-    // Tìm tất cả user không có phoneNumber hoặc idName
+
     const usersToUpdate = await User.find({
       $or: [
         { phoneNumber: { $exists: false } },
@@ -42,50 +45,37 @@ const migrateDatabase = async () => {
       return;
     }
 
-    // Cập nhật từng user
     let updatedCount = 0;
     for (const user of usersToUpdate) {
       const updates = {};
-      
-      // Thêm idName nếu chưa có (bằng username)
+
       if (!user.idName && user.username) {
         updates.idName = user.username;
       }
-      
-      // Thêm phoneNumber mặc định nếu chưa có
-      // Sử dụng pattern: 09 + index (đảm bảo unique)
+
       if (!user.phoneNumber) {
-        // Tạo số điện thoại dựa trên index hoặc random
         const randomPhone = `09${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`;
-        
-        // Kiểm tra số điện thoại đã tồn tại chưa
         let phoneExists = await User.findOne({ phoneNumber: randomPhone });
         let finalPhone = randomPhone;
         let counter = 0;
-        
+
         while (phoneExists && counter < 100) {
           finalPhone = `09${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`;
           phoneExists = await User.findOne({ phoneNumber: finalPhone });
           counter++;
         }
-        
+
         updates.phoneNumber = finalPhone;
       }
-      
-      // Cập nhật user nếu có thay đổi
+
       if (Object.keys(updates).length > 0) {
-        await User.updateOne(
-          { _id: user._id },
-          { $set: updates }
-        );
-        console.log(`Updated user: ${user.username} - phoneNumber: ${updates.phoneNumber || 'kept'}, idName: ${updates.idName || 'kept'}`);
+        await User.updateOne({ _id: user._id }, { $set: updates });
+        console.log(`Updated user: ${user.username}`);
         updatedCount++;
       }
     }
 
     console.log(`\nMigration completed! Updated ${updatedCount} users.`);
-    console.log('All users now have phoneNumber and idName fields.');
-    
     await mongoose.disconnect();
     console.log('Disconnected from MongoDB');
   } catch (error) {
@@ -100,4 +90,3 @@ const migrateDatabase = async () => {
   await connectDB();
   await migrateDatabase();
 })();
-

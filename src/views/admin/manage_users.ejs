@@ -1,0 +1,157 @@
+<!-- Quản lý Người dùng -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2">
+        <i class="fas fa-users text-primary me-2"></i>
+        Quản lý Người dùng
+    </h1>
+    <a href="/admin/dashboard" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Quay lại Dashboard
+    </a>
+</div>
+
+<!-- Bộ lọc và tìm kiếm -->
+<div class="row mt-3">
+    <div class="col-md-6">
+        <input type="text" class="form-control" placeholder="Tìm kiếm theo email, username..." id="searchUser">
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" id="filterRole">
+            <option value="">Tất cả vai trò</option>
+            <option value="user">User</option>
+            <option value="owner">Owner</option>
+            <option value="admin">Admin</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-primary w-100" id="btnFilter">Lọc</button>
+    </div>
+</div>
+
+<!-- Bảng danh sách người dùng -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>
+            Danh sách Người dùng (<%= users ? users.length : 0 %>)
+        </h5>
+    </div>
+    <div class="card-body">
+        <% if (users && users.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Số điện thoại</th>
+                            <th>Vai trò</th>
+                            <th>Ngày tạo</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% users.forEach(user => { %>
+                            <tr>
+                                <td><strong class="user-username"><%= user.username %></strong></td>
+                                <td class="user-email"><%= user.email %></td>
+                                <td><%= user.phoneNumber %></td>
+                                <td>
+                                    <select class="form-select form-select-sm change-role" data-user-id="<%= user._id %>" style="width: auto; display: inline-block;">
+                                        <option value="user" <%= user.role === 'user' ? 'selected' : '' %>>User</option>
+                                        <option value="owner" <%= user.role === 'owner' ? 'selected' : '' %>>Owner</option>
+                                        <option value="admin" <%= user.role === 'admin' ? 'selected' : '' %>>Admin</option>
+                                    </select>
+                                </td>
+                                <td><small class="text-muted"><%= new Date(user.createdAt).toLocaleDateString('vi-VN') %></small></td>
+                                <td>
+                                    <% if (user._id.toString() !== userId) { %>
+                                        <button class="btn btn-sm btn-outline-danger delete-user" data-user-id="<%= user._id %>">
+                                            <i class="fas fa-trash"></i> Xóa
+                                        </button>
+                                    <% } else { %>
+                                        <span class="text-muted">Tài khoản của bạn</span>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <div class="text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">Chưa có người dùng nào</h4>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<script>
+// Lọc và tìm kiếm người dùng
+document.getElementById('btnFilter').addEventListener('click', function() {
+    const q = (document.getElementById('searchUser').value || '').toLowerCase();
+    const role = document.getElementById('filterRole').value;
+    const rows = document.querySelectorAll('table.table tbody tr');
+    rows.forEach(tr => {
+        const username = (tr.querySelector('.user-username')?.textContent || '').toLowerCase();
+        const email = (tr.querySelector('.user-email')?.textContent || '').toLowerCase();
+        const selectedRole = tr.querySelector('.change-role')?.value || '';
+        const matchText = !q || username.includes(q) || email.includes(q);
+        const matchRole = !role || selectedRole === role;
+        tr.style.display = (matchText && matchRole) ? '' : 'none';
+    });
+});
+
+// Đổi vai trò người dùng
+document.querySelectorAll('.change-role').forEach(select => {
+    select.addEventListener('change', async function() {
+        const userId = this.dataset.userId;
+        const newRole = this.value;
+        if (!confirm(`Thay đổi vai trò người dùng thành ${newRole}?`)) return;
+        try {
+            const res = await fetch(`/admin/users/${userId}/role`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ role: newRole })
+            });
+            const data = await res.json();
+            if (data && data.success) {
+                window.VoucherSystem?.showToast 
+                    ? window.VoucherSystem.showToast('Cập nhật vai trò thành công', 'success') 
+                    : alert('Cập nhật vai trò thành công');
+            } else {
+                alert((data && data.message) || 'Cập nhật vai trò thất bại');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Có lỗi xảy ra');
+        }
+    });
+});
+
+// Xóa người dùng
+document.querySelectorAll('.delete-user').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const userId = this.dataset.userId;
+        if (!confirm('Bạn có chắc muốn xóa người dùng này?')) return;
+        try {
+            const res = await fetch(`/admin/users/${userId}`, { 
+                method: 'DELETE', 
+                headers: { 'Accept': 'application/json' } 
+            });
+            const data = await res.json();
+            if (data && data.success) {
+                window.VoucherSystem?.showToast 
+                    ? window.VoucherSystem.showToast('Xóa người dùng thành công', 'success') 
+                    : alert('Xóa người dùng thành công');
+                this.closest('tr').remove();
+            } else {
+                alert((data && data.message) || 'Xóa người dùng thất bại');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Có lỗi xảy ra');
+        }
+    });
+});
+</script>

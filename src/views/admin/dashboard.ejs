@@ -1,4 +1,8 @@
+<!-- ========================= -->
+<!-- ADMIN DASHBOARD - GIAO DIỆN TỔNG QUAN -->
+<!-- ========================= -->
 
+<!-- Header: Tiêu đề và ngày hiện tại -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h2">
         <i class="fas fa-tachometer-alt text-primary me-2"></i>
@@ -10,87 +14,74 @@
     </div>
 </div>
 
-<!-- Statistics Cards -->
+<!-- THỐNG KÊ TỔNG QUÁT (TỔNG USERS / LOCATIONS / VOUCHERS / REVIEWS) -->
 <div class="row mb-5">
+    <!-- Tổng người dùng -->
     <div class="col-md-3 mb-3">
         <div class="card bg-primary text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 class="mb-0"><%= stats.totalUsers %></h4>
-                        <p class="mb-0">Tổng Users</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-users fa-2x"></i>
-                    </div>
+            <div class="card-body d-flex justify-content-between">
+                <div>
+                    <h4 class="mb-0"><%= stats.totalUsers %></h4>
+                    <p class="mb-0">Tổng Users</p>
                 </div>
+                <i class="fas fa-users fa-2x align-self-center"></i>
             </div>
         </div>
     </div>
+
+    <!-- Tổng địa điểm -->
     <div class="col-md-3 mb-3">
         <div class="card bg-success text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 class="mb-0"><%= stats.totalLocations %></h4>
-                        <p class="mb-0">Địa điểm</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-map-marker-alt fa-2x"></i>
-                    </div>
+            <div class="card-body d-flex justify-content-between">
+                <div>
+                    <h4 class="mb-0"><%= stats.totalLocations %></h4>
+                    <p class="mb-0">Địa điểm</p>
                 </div>
+                <i class="fas fa-map-marker-alt fa-2x align-self-center"></i>
             </div>
         </div>
     </div>
+
+    <!-- Tổng voucher -->
     <div class="col-md-3 mb-3">
         <div class="card bg-warning text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 class="mb-0"><%= stats.totalVouchers %></h4>
-                        <p class="mb-0">Tổng Voucher</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-percent fa-2x"></i>
-                    </div>
+            <div class="card-body d-flex justify-content-between">
+                <div>
+                    <h4 class="mb-0"><%= stats.totalVouchers %></h4>
+                    <p class="mb-0">Tổng Voucher</p>
                 </div>
+                <i class="fas fa-percent fa-2x align-self-center"></i>
             </div>
         </div>
     </div>
+
+    <!-- Tổng review -->
     <div class="col-md-3 mb-3">
         <div class="card bg-info text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 class="mb-0"><%= stats.totalReviews %></h4>
-                        <p class="mb-0">Đánh giá</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-star fa-2x"></i>
-                    </div>
+            <div class="card-body d-flex justify-content-between">
+                <div>
+                    <h4 class="mb-0"><%= stats.totalReviews %></h4>
+                    <p class="mb-0">Đánh giá</p>
                 </div>
+                <i class="fas fa-star fa-2x align-self-center"></i>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Voucher Statistics -->
+<!-- THỐNG KÊ VOUCHER VÀ LIÊN KẾT QUẢN LÝ NHANH -->
 <div class="row mb-5">
+    <!-- Biểu đồ trạng thái voucher -->
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-chart-pie me-2"></i>
-                    Thống kê Voucher
-                </h5>
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Thống kê Voucher</h5>
             </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-6">
-                        <div class="border-end">
-                            <h3 class="text-success"><%= stats.activeVouchers %></h3>
-                            <p class="text-muted mb-0">Đang hoạt động</p>
-                        </div>
+            <div class="card-body text-center">
+                <div class="row">
+                    <div class="col-6 border-end">
+                        <h3 class="text-success"><%= stats.activeVouchers %></h3>
+                        <p class="text-muted mb-0">Đang hoạt động</p>
                     </div>
                     <div class="col-6">
                         <h3 class="text-danger"><%= stats.expiredVouchers %></h3>
@@ -100,46 +91,88 @@
             </div>
         </div>
     </div>
+
+    <!-- Liên kết nhanh đến các trang quản lý -->
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-cogs me-2"></i>
-                    Quản lý nhanh
-                </h5>
+                <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Quản lý nhanh</h5>
             </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="/admin/users" class="btn btn-outline-primary">
-                        <i class="fas fa-users me-1"></i>Quản lý Users
-                    </a>
-                    <a href="/admin/locations" class="btn btn-outline-success">
-                        <i class="fas fa-map-marker-alt me-1"></i>Quản lý Địa điểm
-                    </a>
-                    <a href="/admin/vouchers" class="btn btn-outline-warning">
-                        <i class="fas fa-percent me-1"></i>Quản lý Voucher
-                    </a>
-                    <a href="/admin/reviews" class="btn btn-outline-info">
-                        <i class="fas fa-star me-1"></i>Quản lý Reviews
-                    </a>
-                </div>
+            <div class="card-body d-grid gap-2">
+                <a href="/admin/users" class="btn btn-outline-primary"><i class="fas fa-users me-1"></i>Users</a>
+                <a href="/admin/locations" class="btn btn-outline-success"><i class="fas fa-map-marker-alt me-1"></i>Địa điểm</a>
+                <a href="/admin/vouchers" class="btn btn-outline-warning"><i class="fas fa-percent me-1"></i>Voucher</a>
+                <a href="/admin/reviews" class="btn btn-outline-info"><i class="fas fa-star me-1"></i>Reviews</a>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Recent Activities -->
+<!-- BIỂU ĐỒ TĂNG TRƯỞNG (USERS + LOCATIONS 6 THÁNG GẦN NHẤT) -->
+<div class="row mb-5">
+    <!-- Biểu đồ người dùng -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0"><i class="fas fa-user-chart me-2"></i>Tăng trưởng người dùng</h5></div>
+            <div class="card-body"><canvas id="userGrowthChart" height="140"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Biểu đồ địa điểm -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0"><i class="fas fa-map me-2"></i>Tăng trưởng địa điểm</h5></div>
+            <div class="card-body"><canvas id="locationGrowthChart" height="140"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Script Chart.js hiển thị biểu đồ tăng trưởng -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        try {
+            // Dữ liệu biểu đồ truyền từ server
+            const labels = <%- JSON.stringify(growthData?.labels || []) %>;
+            const userData = <%- JSON.stringify(growthData?.users || []) %>;
+            const locationData = <%- JSON.stringify(growthData?.locations || []) %>;
+
+            // Cấu hình chung cho biểu đồ
+            const options = {
+                responsive: true,
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+                plugins: { legend: { display: false } }
+            };
+
+            // Biểu đồ người dùng (line chart)
+            new Chart(document.getElementById('userGrowthChart'), {
+                type: 'line',
+                data: { labels, datasets: [{ data: userData, borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.15)', tension: 0.25, fill: true }] },
+                options
+            });
+
+            // Biểu đồ địa điểm (bar chart)
+            new Chart(document.getElementById('locationGrowthChart'), {
+                type: 'bar',
+                data: { labels, datasets: [{ data: locationData, backgroundColor: '#20c997' }] },
+                options
+            });
+        } catch (e) {
+            console.error('Chart render error', e);
+        }
+    });
+    </script>
+</div>
+
+<!-- ========================= -->
+<!-- HOẠT ĐỘNG GẦN ĐÂY (USERS / LOCATIONS / VOUCHERS) -->
+<!-- ========================= -->
 <div class="row">
+    <!-- Người dùng mới -->
     <div class="col-md-4">
         <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-user-plus me-2"></i>
-                    Users mới
-                </h5>
-            </div>
+            <div class="card-header"><h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>Users mới</h5></div>
             <div class="card-body">
-                <% if (recentUsers && recentUsers.length > 0) { %>
+                <% if (recentUsers?.length) { %>
                     <% recentUsers.forEach(user => { %>
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <div>
@@ -155,17 +188,13 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Địa điểm mới -->
     <div class="col-md-4">
         <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-map-marker-alt me-2"></i>
-                    Địa điểm mới
-                </h5>
-            </div>
+            <div class="card-header"><h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Địa điểm mới</h5></div>
             <div class="card-body">
-                <% if (recentLocations && recentLocations.length > 0) { %>
+                <% if (recentLocations?.length) { %>
                     <% recentLocations.forEach(location => { %>
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <div>
@@ -181,17 +210,13 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Voucher mới -->
     <div class="col-md-4">
         <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-percent me-2"></i>
-                    Voucher mới
-                </h5>
-            </div>
+            <div class="card-header"><h5 class="mb-0"><i class="fas fa-percent me-2"></i>Voucher mới</h5></div>
             <div class="card-body">
-                <% if (recentVouchers && recentVouchers.length > 0) { %>
+                <% if (recentVouchers?.length) { %>
                     <% recentVouchers.forEach(voucher => { %>
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <div>
