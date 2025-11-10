@@ -5,6 +5,7 @@ const router = express.Router();
 // Controller xử lý logic chính
 const locationController = require('../controllers/location.controller');
 const reviewController = require('../controllers/review.controller');
+const { reviewUpload } = require('../middleware/upload');
 
 // Middleware kiểm tra đăng nhập và quyền chủ sở hữu
 const { requireAuth, requireOwner } = require('../middleware/auth');
@@ -17,7 +18,19 @@ router.get('/locations/:id/summary', locationController.getLocationSummary);
 
 // ========== REVIEW ROUTES ==========
 // Người dùng đã đăng nhập mới được viết đánh giá
-router.post('/locations/:locationId/reviews', requireAuth, reviewController.createReview);
+const handleReviewUpload = (req, res, next) => {
+  const upload = reviewUpload.array('mediaFiles', 5);
+  upload(req, res, (err) => {
+    if (err) {
+      console.error('Review upload error:', err);
+      req.flash('error', err.message || 'Không thể tải tệp lên. Vui lòng thử lại.');
+      return res.redirect(`/locations/${req.params.locationId}`);
+    }
+    next();
+  });
+};
+
+router.post('/locations/:locationId/reviews', requireAuth, handleReviewUpload, reviewController.createReview);
 
 // ========== OWNER ROUTES ==========
 // Chỉ chủ địa điểm mới được thêm, sửa, xóa địa điểm

@@ -76,7 +76,20 @@
                                         <% } %>
                                     </div>
                                     <% if (review.comment) { %>
-                                        <p class="mb-0 text-muted"><%= review.comment %></p>
+                                        <p class="mb-2 text-muted"><%= review.comment %></p>
+                                    <% } %>
+                                    <% if (review.media && review.media.length > 0) { %>
+                                        <div class="review-media-grid">
+                                            <% review.media.forEach(function(item) { %>
+                                                <% if (item.type === 'image') { %>
+                                                    <a href="<%= item.url %>" target="_blank" rel="noopener" class="review-media-thumb" title="Xem ảnh">
+                                                        <img src="<%= item.url %>" alt="Ảnh đánh giá" loading="lazy">
+                                                    </a>
+                                                <% } else { %>
+                                                    <video src="<%= item.url %>" controls preload="metadata"></video>
+                                                <% } %>
+                                            <% }) %>
+                                        </div>
                                     <% } %>
                                 </div>
                                 <div class="text-end">
@@ -173,7 +186,7 @@
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <form action="/reviews/<%= review._id %>" method="POST">
+                    <form action="/reviews/<%= review._id %>" method="POST" enctype="multipart/form-data">
                         <input type="hidden" name="_method" value="PUT">
                         <div class="modal-body">
                             <div class="mb-3">
@@ -191,6 +204,27 @@
                                 <label for="comment_<%= review._id %>" class="form-label">Nhận xét:</label>
                                 <textarea class="form-control" id="comment_<%= review._id %>" name="comment" rows="3"><%= review.comment || '' %></textarea>
                             </div>
+                            <% if (review.media && review.media.length > 0) { %>
+                                <div class="mb-3">
+                                    <label class="form-label">Tệp đã tải lên</label>
+                                    <div class="review-media-grid">
+                                        <% review.media.forEach(function(item) { %>
+                                            <% if (item.type === 'image') { %>
+                                                <a href="<%= item.url %>" target="_blank" rel="noopener" class="review-media-thumb" title="Xem ảnh">
+                                                    <img src="<%= item.url %>" alt="Ảnh đánh giá" loading="lazy">
+                                                </a>
+                                            <% } else { %>
+                                                <video src="<%= item.url %>" controls preload="metadata"></video>
+                                            <% } %>
+                                        <% }) %>
+                                    </div>
+                                </div>
+                            <% } %>
+                            <div class="mb-3">
+                                <label for="mediaFiles_<%= review._id %>" class="form-label">Thêm hình ảnh / video</label>
+                                <input type="file" class="form-control" id="mediaFiles_<%= review._id %>" name="mediaFiles" accept="image/*,video/*" multiple>
+                                <small class="text-muted">Có thể bổ sung tối đa 5 tệp, dung lượng mỗi tệp không vượt quá 15MB.</small>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
@@ -204,3 +238,33 @@
         </div>
     <% }) %>
 <% } %>
+
+<style>
+.review-media-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.review-media-thumb {
+    display: inline-block;
+    width: 110px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.review-media-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.review-media-grid video {
+    width: 160px;
+    max-height: 120px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+</style>

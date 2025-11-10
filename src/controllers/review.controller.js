@@ -3,8 +3,36 @@
  * Mô tả: Xử lý logic tạo, sửa, xóa và quản lý đánh giá (review)
  */
 
+const fs = require('fs');
+const path = require('path');
 const Review = require('../models/review.model');
 const Location = require('../models/location.model');
+
+const buildMediaPayload = (file, userId) => {
+  const type = file.mimetype.startsWith('video/') ? 'video' : 'image';
+  const relativeUrl = path.join('uploads', 'reviews', String(userId), file.filename).replace(/\\/g, '/');
+  return {
+    type,
+    url: `/${relativeUrl}`,
+    filename: file.filename,
+    mimetype: file.mimetype,
+    size: file.size
+  };
+};
+
+const removeReviewMedia = async (media = []) => {
+  await Promise.all(media.map(async (item) => {
+    if (!item?.url) return;
+    try {
+      const absolutePath = path.join(__dirname, '..', item.url.replace(/^\//, ''));
+      await fs.promises.unlink(absolutePath);
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        console.warn('Không thể xóa tệp media của review:', error.message);
+      }
+    }
+  }));
+};
 
 /**
  * Hàm: createReview
@@ -15,10 +43,16 @@ const createReview = async (req, res) => {
     const { locationId } = req.params;
     const { rating, comment } = req.body;
     const userId = req.session.userId;
+    const files = req.files || [];
 
     if (!userId) {
       req.flash('error', 'Vui lòng đăng nhập để đánh giá');
       return res.redirect('/auth');
+    }
+
+    if (!files.length) {
+      req.flash('error', 'Vui lòng tải lên ít nhất một hình ảnh hoặc video cho đánh giá');
+      return res.redirect(`/locations/${locationId}`);
     }
 
     const existingReview = await Review.findOne({ user: userId, location: locationId });
@@ -27,7 +61,9 @@ const createReview = async (req, res) => {
       return res.redirect(`/locations/${locationId}`);
     }
 
-    const review = new Review({ user: userId, location: locationId, rating, comment });
+    const media = files.map(file => buildMediaPayload(file, userId));
+
+    const review = new Review({ user: userId, location: locationId, rating, comment, media });
     await review.save();
     await updateLocationRating(locationId);
 
@@ -49,6 +85,7 @@ const updateReview = async (req, res) => {
     const { reviewId } = req.params;
     const { rating, comment } = req.body;
     const userId = req.session.userId;
+    const files = req.files || [];
 
     const review = await Review.findOne({ _id: reviewId, user: userId });
     if (!review) {
@@ -58,6 +95,17 @@ const updateReview = async (req, res) => {
 
     review.rating = rating;
     review.comment = comment;
+
+    if (files.length) {
+      const media = files.map(file => buildMediaPayload(file, userId));
+      review.media = [...(review.media || []), ...media];
+    }
+
+    if (!review.media || review.media.length === 0) {
+      req.flash('error', 'Đánh giá cần ít nhất một hình ảnh hoặc video. Vui lòng tải tệp lên.');
+      return res.redirect('/profile');
+    }
+
     await review.save();
     await updateLocationRating(review.location);
 
@@ -86,6 +134,7 @@ const deleteReview = async (req, res) => {
     }
 
     const locationId = review.location;
+    await removeReviewMedia(review.media);
     await Review.findByIdAndDelete(reviewId);
     await updateLocationRating(locationId);
 
@@ -135,6 +184,7 @@ const adminDeleteReview = async (req, res) => {
     }
 
     const locationId = review.location;
+    await removeReviewMedia(review.media);
     await Review.findByIdAndDelete(reviewId);
     await updateLocationRating(locationId);
 
@@ -170,10 +220,113 @@ const updateLocationRating = async (locationId) => {
   }
 };
 
+/**
+ * Hàm: getOwnerReviews
+ * Mô tả: Chủ sở hữu xem tất cả đánh giá của các địa điểm thuộc quyền sở hữu
+ */
+const getOwnerReviews = async (req, res) => {
+  try {
+    const ownerId = req.session.userId;
+    if (!ownerId || req.session.userRole !== 'owner') {
+      req.flash('error', 'Bạn không có quyền truy cập');
+      return res.redirect('/');
+    }
+
+    const locationIds = await Location.find({ owner: ownerId }).distinct('_id');
+
+    const reviews = await Review.find({ location: { $in: locationIds } })
+      .populate('user', 'username email')
+      .populate('location', 'name')
+      .sort({ createdAt: -1 });
+
+    res.render('owner/manage_review', {
+      title: 'Đánh giá địa điểm của tôi',
+      reviews
+    });
+  } catch (error) {
+    console.error('Get owner reviews error:', error);
+    req.flash('error', 'Có lỗi xảy ra khi tải danh sách đánh giá');
+    res.redirect('/owner/dashboard');
+  }
+};
+
+/**
+ * Helper: Lấy chi tiết một đánh giá theo ID, kèm user và location(owner)
+ */
+const findReviewWithRelations = async (reviewId) => {
+  return Review.findById(reviewId)
+    .populate('user', 'username email')
+    .populate({ path: 'location', select: 'name owner', populate: { path: 'owner', select: 'username' } });
+};
+
+/**
+ * Hàm: ownerGetReviewDetail
+ * Mô tả: Chủ sở hữu xem chi tiết đánh giá (chỉ những đánh giá thuộc địa điểm của mình)
+ */
+const ownerGetReviewDetail = async (req, res) => {
+  try {
+    const ownerId = req.session.userId;
+    if (!ownerId || req.session.userRole !== 'owner') {
+      req.flash('error', 'Bạn không có quyền truy cập');
+      return res.redirect('/');
+    }
+
+    const { reviewId } = req.params;
+    const review = await findReviewWithRelations(reviewId);
+
+    if (!review) {
+      req.flash('error', 'Không tìm thấy đánh giá');
+      return res.redirect('/owner/reviews');
+    }
+
+    if (String(review.location?.owner) !== String(ownerId)) {
+      req.flash('error', 'Bạn không có quyền xem đánh giá này');
+      return res.redirect('/owner/reviews');
+    }
+
+    res.render('owner/review_detail', {
+      title: 'Chi tiết đánh giá',
+      review
+    });
+  } catch (error) {
+    console.error('Owner review detail error:', error);
+    req.flash('error', 'Có lỗi xảy ra khi tải chi tiết đánh giá');
+    res.redirect('/owner/reviews');
+  }
+};
+
+/**
+ * Hàm: adminGetReviewDetail
+ * Mô tả: Admin xem chi tiết đánh giá
+ */
+const adminGetReviewDetail = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const review = await findReviewWithRelations(reviewId);
+
+    if (!review) {
+      req.flash('error', 'Không tìm thấy đánh giá');
+      return res.redirect('/admin/reviews');
+    }
+
+    res.render('admin/review_detail', {
+      title: 'Chi tiết đánh giá',
+      review
+    });
+  } catch (error) {
+    console.error('Admin review detail error:', error);
+    req.flash('error', 'Có lỗi xảy ra khi tải chi tiết đánh giá');
+    res.redirect('/admin/reviews');
+  }
+};
+
 module.exports = {
   createReview,
   updateReview,
   deleteReview,
   getAllReviews,
-  adminDeleteReview
+  adminDeleteReview,
+  getOwnerReviews,
+  ownerGetReviewDetail,
+  adminGetReviewDetail
 };

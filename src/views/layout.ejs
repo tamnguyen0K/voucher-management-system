@@ -18,7 +18,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" 
+            <a class="navbar-brand"
             <% if (!user || user.role !== 'owner') { %>href="/"<% } %>
             >
                 <i class="fas fa-ticket-alt me-2"></i>
@@ -46,7 +46,7 @@
                     </ul>
                 <% } %>
                 
-                <ul class="navbar-nav">
+                <ul class="navbar-nav <%= user && user.role === 'owner' ? 'ms-auto' : '' %>">
                     <% if (user) { %>
                         <% if (user.role === 'admin') { %>
                             <li class="nav-item dropdown">
@@ -77,13 +77,8 @@
                         <% } %>
                         
                         <li class="nav-item">
-                            <a class="nav-link" href="<%= user.role === 'owner' ? '/owner/profile' : '/profile' %>">
-                                <i class="fas fa-user me-1"></i><%= user.username %>
-                            </a>
-                        </li>
-                        <li class="nav-item">
                             <form action="/logout" method="POST" class="d-inline">
-                                <button type="submit" class="btn btn-outline-light btn-sm">
+                                <button type="submit" class="btn btn-outline-light btn-sm" style="top:5px">
                                     <i class="fas fa-sign-out-alt me-1"></i>Đăng xuất
                                 </button>
                             </form>

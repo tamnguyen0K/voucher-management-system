@@ -1,0 +1,84 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h2">
+    <i class="fas fa-eye text-primary me-2"></i>
+    Chi tiết đánh giá
+  </h1>
+  <a href="/owner/reviews" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-1"></i>Quay lại danh sách
+  </a>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-8">
+        <h5 class="mb-1">
+          <i class="fas fa-map-marker-alt me-2"></i>
+          <%= review.location?.name %>
+        </h5>
+        <div class="d-flex align-items-center mb-2">
+          <div class="rating me-2">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <i class="fas fa-star <%= i <= review.rating ? 'text-warning' : 'text-muted' %>"></i>
+            <% } %>
+          </div>
+          <span class="badge bg-secondary"><%= review.rating %>/5</span>
+        </div>
+        <% if (review.comment) { %>
+          <p class="mb-2"><%= review.comment %></p>
+        <% } %>
+        <small class="text-muted">
+          <i class="fas fa-clock me-1"></i>
+          <%= new Date(review.createdAt).toLocaleDateString('vi-VN') %>
+        </small>
+      </div>
+      <div class="col-md-4">
+        <div class="border rounded p-3 bg-light">
+          <div class="d-flex align-items-center mb-2">
+            <i class="fas fa-user-circle me-2"></i>
+            <strong><%= review.user?.username || 'Người dùng' %></strong>
+          </div>
+          <% if (review.user?.email) { %>
+            <div class="text-muted small"><%= review.user.email %></div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">
+      <i class="fas fa-photo-video me-2"></i>
+      Ảnh/Video trong đánh giá (<%= review.media?.length || 0 %>)
+    </h5>
+  </div>
+  <div class="card-body">
+    <% if (review.media && review.media.length > 0) { %>
+      <div class="review-media-grid">
+        <% review.media.forEach(function(item) { %>
+          <% if (item.type === 'image') { %>
+            <a href="<%= item.url %>" target="_blank" rel="noopener" class="review-media-thumb" title="Xem ảnh">
+              <img src="<%= item.url %>" alt="Ảnh đánh giá" loading="lazy">
+            </a>
+          <% } else { %>
+            <video src="<%= item.url %>" controls preload="metadata"></video>
+          <% } %>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <div class="text-center py-4 text-muted">
+        <i class="fas fa-image fa-2x mb-2"></i>
+        <div>Không có tệp đính kèm</div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<style>
+.review-media-grid { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.review-media-thumb { display:inline-block; width: 150px; height: 110px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+.review-media-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.review-media-grid video { width: 260px; max-height: 180px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+</style>

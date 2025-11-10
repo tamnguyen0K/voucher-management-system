@@ -97,7 +97,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="/owner/locations" method="POST" data-confirm="Xác nhận tạo địa điểm mới?">
+            <form action="/owner/locations" method="POST" enctype="multipart/form-data" data-confirm="Xác nhận tạo địa điểm mới?">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6">
@@ -126,10 +126,36 @@
                         <label for="description" class="form-label">Mô tả *</label>
                         <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label for="imageUrl" class="form-label">URL hình ảnh</label>
-                        <input type="url" class="form-control" id="imageUrl" name="imageUrl" placeholder="https://example.com/image.jpg">
-                        <small class="text-muted">Nếu để trống, sẽ sử dụng hình ảnh mặc định</small>
+                    <div class="mb-3" data-image-picker data-picker-id="create" data-initial-urls="[]" data-primary-input="#primaryImageUrl_create">
+                        <label class="form-label">Hình ảnh địa điểm</label>
+                        <div class="nav nav-pills mb-3" role="tablist">
+                            <button class="nav-link active" id="imageTab-create-url" data-bs-toggle="pill" data-bs-target="#imagePane-create-url" type="button" role="tab">Thêm URL</button>
+                            <button class="nav-link" id="imageTab-create-upload" data-bs-toggle="pill" data-bs-target="#imagePane-create-upload" type="button" role="tab">Tải từ máy</button>
+                            <button class="nav-link" id="imageTab-create-drop" data-bs-toggle="pill" data-bs-target="#imagePane-create-drop" type="button" role="tab">Kéo & Thả</button>
+                        </div>
+                        <div class="tab-content">
+                            <div class="tab-pane fade show active" id="imagePane-create-url" role="tabpanel" aria-labelledby="imageTab-create-url">
+                                <div class="d-flex gap-2">
+                                    <input type="url" class="form-control" placeholder="https://example.com/image.jpg" data-url-input>
+                                    <button type="button" class="btn btn-outline-primary" data-add-url><i class="fas fa-plus me-1"></i>Thêm</button>
+                                </div>
+                                <div class="mt-2" data-url-list></div>
+                            </div>
+                            <div class="tab-pane fade" id="imagePane-create-upload" role="tabpanel" aria-labelledby="imageTab-create-upload">
+                                <input type="file" class="form-control" name="imageFiles" accept="image/*" multiple data-file-input>
+                                <small class="text-muted">Chọn nhiều ảnh để tải lên máy chủ. Hệ thống sẽ tự tạo thư mục theo chủ sở hữu.</small>
+                            </div>
+                            <div class="tab-pane fade" id="imagePane-create-drop" role="tabpanel" aria-labelledby="imageTab-create-drop">
+                                <div class="rounded p-4 text-center bg-light" style="cursor:pointer;border:2px dashed rgba(13,110,253,0.35);" data-dropzone>
+                                    <i class="fas fa-cloud-upload-alt fa-2x mb-2 text-primary"></i>
+                                    <p class="mb-1">Kéo và thả ảnh vào đây</p>
+                                    <p class="text-muted small mb-0">Có thể kéo nhiều ảnh cùng lúc hoặc nhấp để chọn tệp</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-2 small text-muted" data-file-list></div>
+                        <div class="mt-2 small text-muted" data-picker-summary>Chưa chọn ảnh nào</div>
+                        <input type="hidden" name="imageUrl" id="primaryImageUrl_create" value="">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -155,7 +181,7 @@
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <form action="/owner/locations/<%= location._id %>" method="POST" data-confirm="Xác nhận cập nhật địa điểm?">
+                    <form action="/owner/locations/<%= location._id %>" method="POST" enctype="multipart/form-data" data-confirm="Xác nhận cập nhật địa điểm?">
                         <input type="hidden" name="_method" value="PUT">
                         <div class="modal-body">
                             <div class="row">
@@ -184,9 +210,37 @@
                                 <label for="description_<%= location._id %>" class="form-label">Mô tả *</label>
                                 <textarea class="form-control" id="description_<%= location._id %>" name="description" rows="3" required><%= location.description %></textarea>
                             </div>
-                            <div class="mb-3">
-                                <label for="imageUrl_<%= location._id %>" class="form-label">URL hình ảnh</label>
-                                <input type="url" class="form-control" id="imageUrl_<%= location._id %>" name="imageUrl" value="<%= location.imageUrl %>">
+                            <% const existingImages = (location.images && location.images.length ? location.images : (location.imageUrl ? [location.imageUrl] : [])); %>
+                            <div class="mb-3" data-image-picker data-picker-id="edit-<%= location._id %>" data-initial-urls='<%- JSON.stringify(existingImages) %>' data-primary-input="#primaryImageUrl_<%= location._id %>">
+                                <label class="form-label">Hình ảnh địa điểm</label>
+                                <div class="nav nav-pills mb-3" role="tablist">
+                                    <button class="nav-link active" id="imageTab-edit-<%= location._id %>-url" data-bs-toggle="pill" data-bs-target="#imagePane-edit-<%= location._id %>-url" type="button" role="tab">Thêm URL</button>
+                                    <button class="nav-link" id="imageTab-edit-<%= location._id %>-upload" data-bs-toggle="pill" data-bs-target="#imagePane-edit-<%= location._id %>-upload" type="button" role="tab">Tải từ máy</button>
+                                    <button class="nav-link" id="imageTab-edit-<%= location._id %>-drop" data-bs-toggle="pill" data-bs-target="#imagePane-edit-<%= location._id %>-drop" type="button" role="tab">Kéo & Thả</button>
+                                </div>
+                                <div class="tab-content">
+                                    <div class="tab-pane fade show active" id="imagePane-edit-<%= location._id %>-url" role="tabpanel" aria-labelledby="imageTab-edit-<%= location._id %>-url">
+                                        <div class="d-flex gap-2">
+                                            <input type="url" class="form-control" placeholder="https://example.com/image.jpg" data-url-input>
+                                            <button type="button" class="btn btn-outline-primary" data-add-url><i class="fas fa-plus me-1"></i>Thêm</button>
+                                        </div>
+                                        <div class="mt-2" data-url-list></div>
+                                    </div>
+                                    <div class="tab-pane fade" id="imagePane-edit-<%= location._id %>-upload" role="tabpanel" aria-labelledby="imageTab-edit-<%= location._id %>-upload">
+                                        <input type="file" class="form-control" name="imageFiles" accept="image/*" multiple data-file-input>
+                                        <small class="text-muted">Chọn nhiều ảnh để tải lên máy chủ. Hệ thống sẽ tự tạo thư mục theo chủ sở hữu.</small>
+                                    </div>
+                                    <div class="tab-pane fade" id="imagePane-edit-<%= location._id %>-drop" role="tabpanel" aria-labelledby="imageTab-edit-<%= location._id %>-drop">
+                                        <div class="rounded p-4 text-center bg-light" style="cursor:pointer;border:2px dashed rgba(13,110,253,0.35);" data-dropzone>
+                                            <i class="fas fa-cloud-upload-alt fa-2x mb-2 text-primary"></i>
+                                            <p class="mb-1">Kéo và thả ảnh vào đây</p>
+                                            <p class="text-muted small mb-0">Có thể kéo nhiều ảnh cùng lúc hoặc nhấp để chọn tệp</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-2 small text-muted" data-file-list></div>
+                                <div class="mt-2 small text-muted" data-picker-summary>Chưa chọn ảnh nào</div>
+                                <input type="hidden" name="imageUrl" id="primaryImageUrl_<%= location._id %>" value="<%= existingImages[0] || '' %>">
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -201,3 +255,180 @@
         </div>
     <% }) %>
 <% } %>
+
+<script>
+(function() {
+    function initImagePicker(container) {
+        const primarySelector = container.dataset.primaryInput || '';
+        const form = container.closest('form');
+        const primaryInput = primarySelector && form ? form.querySelector(primarySelector) : null;
+        const defaultPrimary = primaryInput ? primaryInput.value : '';
+        const urlListEl = container.querySelector('[data-url-list]');
+        const urlInput = container.querySelector('[data-url-input]');
+        const addUrlBtn = container.querySelector('[data-add-url]');
+        const fileInput = container.querySelector('[data-file-input]');
+        const dropzone = container.querySelector('[data-dropzone]');
+        const fileListEl = container.querySelector('[data-file-list]');
+        const summaryEl = container.querySelector('[data-picker-summary]');
+        const filesBuffer = new DataTransfer();
+        const urlValues = [];
+
+        function parseInitialUrls() {
+            try {
+                const raw = container.getAttribute('data-initial-urls') || '[]';
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) parsed.forEach(url => addUrl(url));
+            } catch (err) {
+                console.warn('Không thể đọc danh sách ảnh khởi tạo', err);
+            }
+        }
+
+        function handleAddUrl() {
+            if (!urlInput) return;
+            const value = (urlInput.value || '').trim();
+            if (!value) return;
+            addUrl(value);
+            urlInput.value = '';
+        }
+
+        function addUrl(url) {
+            if (!url || urlValues.includes(url)) return;
+            urlValues.push(url);
+            if (urlListEl) {
+                const row = document.createElement('div');
+                row.className = 'd-flex align-items-center gap-2 mb-2 flex-wrap';
+                row.dataset.urlEntry = url;
+
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-light text-dark text-truncate';
+                badge.style.maxWidth = '260px';
+                badge.textContent = url;
+
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'imageUrls[]';
+                hidden.value = url;
+
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'btn btn-sm btn-outline-danger';
+                removeBtn.setAttribute('data-remove-url', url);
+                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+
+                row.appendChild(badge);
+                row.appendChild(hidden);
+                row.appendChild(removeBtn);
+                urlListEl.appendChild(row);
+            }
+            updatePrimaryImage();
+            updateSummary();
+        }
+
+        function removeUrl(url, rowEl) {
+            const idx = urlValues.indexOf(url);
+            if (idx !== -1) urlValues.splice(idx, 1);
+            if (rowEl) rowEl.remove();
+            updatePrimaryImage();
+            updateSummary();
+        }
+
+        function addFiles(fileList) {
+            if (!fileList || !fileList.length) return;
+            Array.from(fileList).forEach(file => {
+                const exists = Array.from(filesBuffer.files).some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified);
+                if (!exists) filesBuffer.items.add(file);
+            });
+            if (fileInput) fileInput.files = filesBuffer.files;
+            renderFileList();
+            updateSummary();
+        }
+
+        function renderFileList() {
+            if (!fileListEl) return;
+            if (!filesBuffer.files.length) {
+                fileListEl.textContent = 'Chưa chọn tệp tải lên';
+                return;
+            }
+            fileListEl.innerHTML = Array.from(filesBuffer.files).map(file => {
+                const sizeKb = Math.max(1, Math.round(file.size / 1024));
+                return `<span class="badge bg-secondary me-2 mb-2">${file.name} (${sizeKb} KB)</span>`;
+            }).join('');
+        }
+
+        function updateSummary() {
+            if (!summaryEl) return;
+            const urlCount = urlValues.length;
+            const fileCount = filesBuffer.files.length;
+            if (!urlCount && !fileCount) {
+                summaryEl.textContent = 'Chưa chọn ảnh nào';
+                return;
+            }
+            summaryEl.textContent = `Đã thêm ${urlCount} URL và ${fileCount} tệp tải lên`;
+        }
+
+        function updatePrimaryImage() {
+            if (!primaryInput) return;
+            primaryInput.value = urlValues.length ? urlValues[0] : defaultPrimary;
+        }
+
+        if (addUrlBtn && urlInput) {
+            addUrlBtn.addEventListener('click', handleAddUrl);
+            urlInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    handleAddUrl();
+                }
+            });
+        }
+
+        if (container && urlListEl) {
+            container.addEventListener('click', function(event) {
+                const btn = event.target.closest('[data-remove-url]');
+                if (!btn) return;
+                const row = btn.closest('[data-url-entry]');
+                const url = row ? row.dataset.urlEntry : btn.getAttribute('data-remove-url');
+                removeUrl(url, row);
+            });
+        }
+
+        if (fileInput) {
+            fileInput.addEventListener('change', function(event) {
+                addFiles(event.target.files);
+                fileInput.value = '';
+            });
+        }
+
+        if (dropzone) {
+            const baseBorder = dropzone.style.borderColor;
+            dropzone.addEventListener('click', () => fileInput && fileInput.click());
+            dropzone.addEventListener('dragover', function(event) {
+                event.preventDefault();
+                dropzone.style.borderColor = '#0d6efd';
+                dropzone.style.backgroundColor = 'rgba(13,110,253,0.05)';
+            });
+            ['dragleave', 'dragend'].forEach(evt => {
+                dropzone.addEventListener(evt, function() {
+                    dropzone.style.borderColor = baseBorder;
+                    dropzone.style.backgroundColor = '';
+                });
+            });
+            dropzone.addEventListener('drop', function(event) {
+                event.preventDefault();
+                dropzone.style.borderColor = baseBorder;
+                dropzone.style.backgroundColor = '';
+                if (event.dataTransfer && event.dataTransfer.files) {
+                    addFiles(event.dataTransfer.files);
+                }
+            });
+        }
+
+        parseInitialUrls();
+        renderFileList();
+        updateSummary();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('[data-image-picker]').forEach(initImagePicker);
+    });
+})();
+</script>

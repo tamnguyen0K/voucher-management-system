@@ -287,6 +287,7 @@ router.delete('/admin/vouchers/:id', requireAuth, requireAdmin, async (req, res)
 });
 
 router.get('/admin/reviews', requireAuth, requireAdmin, reviewController.getAllReviews);
+router.get('/admin/reviews/:reviewId', requireAuth, requireAdmin, reviewController.adminGetReviewDetail);
 router.delete('/admin/reviews/:reviewId', requireAuth, requireAdmin, reviewController.adminDeleteReview);
 
 module.exports = router;

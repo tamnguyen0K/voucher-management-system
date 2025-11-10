@@ -70,7 +70,20 @@
                                 </small>
                             </div>
                             <% if (review.comment) { %>
-                                <p class="mb-0"><%= review.comment %></p>
+                                <p class="mb-2"><%= review.comment %></p>
+                            <% } %>
+                            <% if (review.media && review.media.length > 0) { %>
+                                <div class="review-media-grid">
+                                    <% review.media.forEach(function(item) { %>
+                                        <% if (item.type === 'image') { %>
+                                            <a href="<%= item.url %>" target="_blank" rel="noopener" class="review-media-thumb" title="Xem ảnh">
+                                                <img src="<%= item.url %>" alt="Ảnh đánh giá" loading="lazy">
+                                            </a>
+                                        <% } else { %>
+                                            <video src="<%= item.url %>" controls preload="metadata"></video>
+                                        <% } %>
+                                    <% }) %>
+                                </div>
                             <% } %>
                         </div>
                     <% }) %>
@@ -175,7 +188,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="/locations/<%= location._id %>/reviews" method="POST">
+            <form action="/locations/<%= location._id %>/reviews" method="POST" enctype="multipart/form-data">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Đánh giá:</label>
@@ -191,6 +204,11 @@
                     <div class="mb-3">
                         <label for="comment" class="form-label">Nhận xét (tùy chọn):</label>
                         <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Chia sẻ trải nghiệm của bạn..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="mediaFiles" class="form-label">Hình ảnh / Video *</label>
+                        <input type="file" class="form-control" id="mediaFiles" name="mediaFiles" accept="image/*,video/*" multiple required>
+                        <small class="text-muted">Có thể chọn tối đa 5 tệp, dung lượng mỗi tệp không vượt quá 15MB.</small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -271,5 +289,33 @@ document.addEventListener('DOMContentLoaded', function() {
 .rating-input .stars {
     display: flex;
     gap: 0.25rem;
+}
+
+.review-media-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.review-media-thumb {
+    display: inline-block;
+    width: 110px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.review-media-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.review-media-grid video {
+    width: 160px;
+    max-height: 120px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 </style>

@@ -462,6 +462,9 @@ function initializeLocationQuickView() {
             const data = await fetchWithLoading(`/locations/${id}/summary`);
             const html = renderLocationQuickView(data);
             openCenterModal(html);
+            // Gắn slider sau khi modal mở
+            const sliderEl = document.querySelector('#center-modal-content .lv-slider');
+            if (sliderEl) attachSimpleSlider(sliderEl);
         } catch {}
     });
 }
@@ -473,31 +476,160 @@ function initializeLocationQuickView() {
 function renderLocationQuickView(data) {
     if (!data || !data.location) return '<div class="p-3">Không có dữ liệu</div>';
     const loc = data.location;
-    const vouchers = data.vouchers || [];
     const reviews = data.reviews || [];
-    const voucherList = vouchers.length ? vouchers.map(v => `
-        <div class="d-flex align-items-center justify-content-between border rounded p-2 mb-2">
-            <div><div class="fw-semibold text-success"><i class="fas fa-ticket-alt me-1"></i>${v.code || ''} - ${v.discountPct || 0}%</div>
-            ${v.conditions ? `<div class="text-muted small">${v.conditions}</div>` : ''}</div>
-            <a class="btn btn-sm btn-success" href="/vouchers">Dùng</a></div>`).join('') : '<div class="text-muted">Chưa có voucher hoạt động</div>';
-    const reviewList = reviews.length ? reviews.map(r => `
-        <div class="border-bottom py-2">
-            <div class="small text-muted">${(r.user && r.user.username) || 'Ẩn danh'} • ${'★'.repeat(r.rating || 0)}${'☆'.repeat(Math.max(0, 5 - (r.rating || 0)))}</div>
-            <div>${r.comment || ''}</div></div>`).join('') : '<div class="text-muted">Chưa có đánh giá</div>';
+
+    // Ảnh của chủ
+    const ownerImages = Array.isArray(loc.images) && loc.images.length ? loc.images : (loc.imageUrl ? [loc.imageUrl] : []);
+    // Ảnh của user lấy từ reviews (nếu có)
+    const userImageEntries = [];
+    reviews.forEach(r => {
+        const imgs = extractReviewImages(r);
+        if (imgs && imgs.length) {
+            imgs.forEach(src => userImageEntries.push({
+                src,
+                username: (r.user && r.user.username) || 'Ẩn danh',
+                rating: r.rating || 0,
+                comment: r.comment || ''
+            }));
+        }
+    });
+
+    const slidesHtml = [
+        ...ownerImages.map(src => `
+            <div class="lv-slide" style="min-width:100%;height:100%;position:relative;">
+                <img src="${src}" alt="${loc.name}" style="width:100%;height:100%;object-fit:cover;">
+            </div>`),
+        ...userImageEntries.map(u => `
+            <div class="lv-slide" style="min-width:100%;height:100%;position:relative;">
+                <img src="${u.src}" alt="${loc.name}" style="width:100%;height:100%;object-fit:cover;">
+                <div class="lv-overlay" style="position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,0.45);color:#fff;padding:6px 8px;border-radius:6px;max-width:85%;">
+                    <div class="small fw-semibold">${u.username} • ${'★'.repeat(u.rating)}${'☆'.repeat(Math.max(0, 5 - u.rating))}</div>
+                    <div class="small" style="opacity:.9;">${escapeHtml(truncateText(u.comment, 60))}</div>
+                </div>
+            </div>`)
+    ].join('');
+
+    const hasAnyImage = slidesHtml.trim().length > 0;
+
     return `
-        <div>
-            <img src="${loc.imageUrl}" alt="${loc.name}" style="width:100%;height:180px;object-fit:cover;">
-            <div class="p-3">
+        <div style="max-width:680px;">
+            <div class="lv-slider" style="position:relative;overflow:hidden;width:100%;height:220px;${hasAnyImage ? '' : 'display:none;'}">
+                <div class="lv-track" style="display:flex;height:100%;will-change:transform;transition:transform .3s ease;">
+                    ${slidesHtml}
+                </div>
+                <button type="button" class="lv-prev" aria-label="Prev" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.45);border:none;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;">‹</button>
+                <button type="button" class="lv-next" aria-label="Next" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.45);border:none;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;">›</button>
+            </div>
+            <div class="p-3" style="padding-top:10px !important;">
                 <h5 class="mb-1">${loc.name}</h5>
                 <div class="text-muted small mb-2"><i class="fas fa-map-marker-alt me-1"></i>${loc.address || ''}</div>
-                <div class="mb-2"><span class="badge bg-secondary">${loc.type || ''}</span> 
-                <span class="ms-2 text-warning">${data.averageRating || 0} ★ (${data.reviewCount || 0})</span></div>
-                <div class="text-muted">${loc.description || ''}</div>
-                <h6 class="mt-3">Voucher</h6>${voucherList}
-                <h6 class="mt-3">Đánh giá gần đây</h6>${reviewList}
-                <div class="button_popup mt-3 d-flex">
+                <div class="mb-0"><span class="badge bg-secondary">${loc.type || ''}</span>
+                <span class="ms-2 text-warning">${data.averageRating || 0} ★</span></div>
+                <div class="mt-3 d-flex gap-2">
+                    <a class="btn btn-primary flex-fill" href="/locations/${loc.id || loc._id || ''}">Xem chi tiết</a>
                     <button type="button" class="btn btn-outline-secondary flex-fill" onclick="(${closeCenterModal.toString()})()">Đóng</button>
                 </div>
             </div>
         </div>`;
+}
+
+// Tiện ích: rút gọn chuỗi
+function truncateText(text, maxLen) {
+    const t = (text || '').toString();
+    return t.length > maxLen ? t.slice(0, maxLen - 1) + '…' : t;
+}
+
+// Tiện ích: escape HTML đơn giản
+function escapeHtml(str) {
+    return (str || '').replace(/[&<>"]/g, function(c) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] || c;
+    });
+}
+
+// Lấy ảnh từ review với nhiều khả năng key khác nhau
+function extractReviewImages(review) {
+    if (!review) return [];
+    const candidates = [];
+    if (Array.isArray(review.media)) {
+        review.media.forEach(item => {
+            if (item && item.type === 'image' && item.url) {
+                candidates.push(item.url);
+            }
+        });
+    }
+    if (Array.isArray(review.images)) candidates.push(...review.images);
+    if (Array.isArray(review.photos)) candidates.push(...review.photos);
+    if (Array.isArray(review.photoUrls)) candidates.push(...review.photoUrls);
+    if (review.imageUrl) candidates.push(review.imageUrl);
+    return candidates.filter(Boolean);
+}
+
+// Slider đơn giản: hỗ trợ click và vuốt
+function attachSimpleSlider(sliderEl) {
+    const track = sliderEl.querySelector('.lv-track');
+    const slides = sliderEl.querySelectorAll('.lv-slide');
+    const prevBtn = sliderEl.querySelector('.lv-prev');
+    const nextBtn = sliderEl.querySelector('.lv-next');
+    if (!track || !slides.length) return;
+    let index = 0;
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+
+    const update = () => {
+        const offsetPct = -index * 100;
+        track.style.transition = 'transform .3s ease';
+        track.style.transform = `translateX(${offsetPct}%)`;
+        prevBtn && (prevBtn.style.display = index === 0 ? 'none' : 'flex');
+        nextBtn && (nextBtn.style.display = index === slides.length - 1 ? 'none' : 'flex');
+    };
+
+    const go = (i) => {
+        index = Math.max(0, Math.min(slides.length - 1, i));
+        update();
+    };
+
+    const onTouchStart = (x) => {
+        isDragging = true;
+        startX = x;
+        currentX = x;
+        track.style.transition = 'none';
+    };
+    const onTouchMove = (x) => {
+        if (!isDragging) return;
+        currentX = x;
+        const dx = currentX - startX;
+        const width = sliderEl.clientWidth || 1;
+        const deltaPct = (dx / width) * 100;
+        const offsetPct = -index * 100 + deltaPct;
+        track.style.transform = `translateX(${offsetPct}%)`;
+    };
+    const onTouchEnd = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        const dx = currentX - startX;
+        const threshold = (sliderEl.clientWidth || 300) * 0.2;
+        if (dx > threshold) go(index - 1);
+        else if (dx < -threshold) go(index + 1);
+        else update();
+    };
+
+    // Mouse
+    sliderEl.addEventListener('mousedown', (e) => {
+        onTouchStart(e.clientX);
+        e.preventDefault();
+    });
+    window.addEventListener('mousemove', (e) => onTouchMove(e.clientX));
+    window.addEventListener('mouseup', onTouchEnd);
+
+    // Touch
+    sliderEl.addEventListener('touchstart', (e) => onTouchStart(e.touches[0].clientX), { passive: true });
+    sliderEl.addEventListener('touchmove', (e) => onTouchMove(e.touches[0].clientX), { passive: true });
+    sliderEl.addEventListener('touchend', onTouchEnd);
+
+    prevBtn && prevBtn.addEventListener('click', () => go(index - 1));
+    nextBtn && nextBtn.addEventListener('click', () => go(index + 1));
+
+    // Khởi tạo
+    update();
 }

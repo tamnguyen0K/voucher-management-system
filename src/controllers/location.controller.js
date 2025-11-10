@@ -56,7 +56,7 @@ const getLocationById = async (req, res) => {
       location: id,
       startDate: { $lte: new Date() },
       endDate: { $gte: new Date() },
-      quantityClaimed: { $lt: { $expr: '$quantityTotal' } }
+      $expr: { $lt: ['$quantityClaimed', '$quantityTotal'] }
     }).sort({ createdAt: -1 });
 
     let averageRating = 0;

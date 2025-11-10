@@ -28,6 +28,7 @@ connectDB();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key-here',
@@ -171,6 +172,36 @@ app.get('/owner/locations', async (req, res) => {
     console.error('Owner locations error:', error);
     req.flash('error', 'Có lỗi xảy ra khi tải danh sách địa điểm');
     res.redirect('/owner/dashboard');
+  }
+});
+
+/**
+ * Route: GET /owner/reviews
+ * Mô tả: Hiển thị danh sách đánh giá của các địa điểm thuộc owner
+ */
+app.get('/owner/reviews', async (req, res) => {
+  try {
+    const reviewController = require('./controllers/review.controller');
+    return reviewController.getOwnerReviews(req, res);
+  } catch (error) {
+    console.error('Owner reviews route error:', error);
+    req.flash('error', 'Có lỗi xảy ra khi tải danh sách đánh giá');
+    return res.redirect('/owner/dashboard');
+  }
+});
+
+/**
+ * Route: GET /owner/reviews/:reviewId
+ * Mô tả: Hiển thị chi tiết một đánh giá (owner)
+ */
+app.get('/owner/reviews/:reviewId', async (req, res) => {
+  try {
+    const reviewController = require('./controllers/review.controller');
+    return reviewController.ownerGetReviewDetail(req, res);
+  } catch (error) {
+    console.error('Owner review detail route error:', error);
+    req.flash('error', 'Có lỗi xảy ra khi tải chi tiết đánh giá');
+    return res.redirect('/owner/reviews');
   }
 });
 

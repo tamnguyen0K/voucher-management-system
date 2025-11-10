@@ -28,6 +28,22 @@ const reviewSchema = new mongoose.Schema({
     trim: true,
     maxlength: [500, 'Comment cannot exceed 500 characters']
   },
+  media: [
+    {
+      type: {
+        type: String,
+        enum: ['image', 'video'],
+        required: true
+      },
+      url: {
+        type: String,
+        required: true
+      },
+      filename: String,
+      mimetype: String,
+      size: Number
+    }
+  ],
   createdAt: {
     type: Date,
     default: Date.now

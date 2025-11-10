@@ -87,15 +87,20 @@
                                     </small>
                                 </td>
 
-                                <!-- Cột: Xóa đánh giá -->
+                                <!-- Cột: Thao tác -->
                                 <td>
-                                    <form action="/admin/reviews/<%= review._id %>" method="POST" class="d-inline" 
-                                          data-confirm="Bạn có chắc muốn xóa đánh giá này?">
-                                          <input type="hidden" name="_method" value="DELETE">
-                                          <button type="submit" class="btn btn-sm btn-outline-danger">
-                                            <i class="fas fa-trash"></i> Xóa
-                                        </button>
-                                    </form>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/admin/reviews/<%= review._id %>" class="btn btn-outline-primary">
+                                            <i class="fas fa-eye"></i> Chi tiết
+                                        </a>
+                                        <form action="/admin/reviews/<%= review._id %>" method="POST" class="d-inline" 
+                                              data-confirm="Bạn có chắc muốn xóa đánh giá này?">
+                                              <input type="hidden" name="_method" value="DELETE">
+                                              <button type="submit" class="btn btn-outline-danger">
+                                                <i class="fas fa-trash"></i> Xóa
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <% }) %>

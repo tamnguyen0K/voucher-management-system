@@ -708,12 +708,13 @@ footer {
 /* Khung modal hình vuông, kích thước dựa trên cạnh nhỏ hơn của màn hình */
 .center-modal {
     position: relative;
-    width: calc(min(90vw, 90vh));
-    height: calc(min(90vw, 90vh));
+    display: inline-block; /* hoặc block tùy layout mong muốn */
     background: #ffffff;
     border-radius: 16px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
-    overflow: auto;
+    overflow: hidden; /* giữ ảnh gọn trong khung */
+    max-width: 90vw;  /* vẫn giới hạn nếu nội dung quá lớn */
+    max-height: 90vh; /* tương tự */
 }
 
 /* Nội dung bên trong modal */
