@@ -1,91 +1,49 @@
 /**
  * File: middleware/auth.js
- * Mô tả: Cung cấp các middleware kiểm tra đăng nhập và phân quyền người dùng
+ * Purpose: Authentication and authorization helpers/middlewares
  */
 
-const User = require('../models/user.model');
+const redirectUnauthorized = (req, res) => {
+  if (!req.session || !req.session.userId) {
+    req.flash('error', 'Vui long dang nhap de tiep tuc');
+    return res.redirect('/auth');
+  }
 
-/**
- * Middleware: requireAuth
- * Mô tả: Kiểm tra người dùng đã đăng nhập hay chưa
- * Nếu chưa đăng nhập, chuyển hướng về trang đăng nhập
- */
+  req.flash('error', 'Ban khong co quyen truy cap trang nay');
+  return res.redirect('/');
+};
+
+const requireRole = (...roles) => (req, res, next) => {
+  if (req.session && roles.includes(req.session.userRole)) {
+    return next();
+  }
+  return redirectUnauthorized(req, res);
+};
+
 const requireAuth = (req, res, next) => {
   if (req.session && req.session.userId) {
     return next();
-  } else {
-    req.flash('error', 'Vui lòng đăng nhập để tiếp tục');
-    res.redirect('/auth');
   }
+  return redirectUnauthorized(req, res);
 };
 
-/**
- * Middleware: requireAdmin
- * Mô tả: Kiểm tra quyền truy cập của người dùng là "admin"
- * Nếu không phải admin, chặn truy cập và chuyển hướng về trang chủ
- */
-const requireAdmin = (req, res, next) => {
-  if (req.session && req.session.userRole === 'admin') {
-    return next();
-  } else {
-    req.flash('error', 'Bạn không có quyền truy cập trang này');
-    res.redirect('/');
-  }
-};
+const requireAdmin = requireRole('admin');
+const requireOwner = requireRole('owner', 'admin');
+const requireUser = requireRole('user', 'owner', 'admin');
 
-/**
- * Middleware: requireOwner
- * Mô tả: Cho phép truy cập nếu người dùng là "owner" hoặc "admin"
- * Dùng cho các trang quản lý của chủ cửa hàng
- */
-const requireOwner = (req, res, next) => {
-  if (req.session && (req.session.userRole === 'owner' || req.session.userRole === 'admin')) {
-    return next();
-  } else {
-    req.flash('error', 'Bạn không có quyền truy cập trang này');
-    res.redirect('/');
-  }
-};
-
-/**
- * Middleware: requireUser
- * Mô tả: Cho phép truy cập nếu người dùng thuộc 1 trong 3 nhóm: "user", "owner", "admin"
- * Dùng cho các trang yêu cầu người dùng đăng nhập
- */
-const requireUser = (req, res, next) => {
-  if (req.session && req.session.userRole && ['user', 'owner', 'admin'].includes(req.session.userRole)) {
-    return next();
-  } else {
-    req.flash('error', 'Vui lòng đăng nhập để tiếp tục');
-    res.redirect('/auth');
-  }
-};
-
-/**
- * Middleware: redirectIfAuthenticated
- * Mô tả: Nếu người dùng đã đăng nhập, chuyển hướng họ đến trang phù hợp
- * admin → /admin/dashboard, owner → /owner/dashboard, user → /
- * Dùng cho các trang login/register để tránh login lại khi đã đăng nhập
- */
 const redirectIfAuthenticated = (req, res, next) => {
   if (req.session && req.session.userId) {
     if (req.session.userRole === 'admin') {
       return res.redirect('/admin/dashboard');
-    } else if (req.session.userRole === 'owner') {
-      return res.redirect('/owner/dashboard');
-    } else {
-      return res.redirect('/');
     }
+    if (req.session.userRole === 'owner') {
+      return res.redirect('/owner/dashboard');
+    }
+    return res.redirect('/');
   }
   next();
 };
 
-/**
- * Middleware: addUserToLocals
- * Mô tả: Thêm thông tin người dùng hiện tại vào biến res.locals.user
- * Giúp EJS truy cập trực tiếp thông tin user trong view
- * Nếu chưa đăng nhập thì đặt user = null
- */
 const addUserToLocals = (req, res, next) => {
   if (req.session && req.session.userId) {
     res.locals.user = {
@@ -104,6 +62,7 @@ module.exports = {
   requireAdmin,
   requireOwner,
   requireUser,
+  requireRole,
   redirectIfAuthenticated,
   addUserToLocals
 };

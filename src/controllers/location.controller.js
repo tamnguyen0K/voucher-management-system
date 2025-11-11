@@ -42,7 +42,7 @@ const getLocationById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const location = await Location.findById(id).populate('owner', 'username');
+    const location = await Location.findById(id).populate('owner', 'username email phoneNumber');
     if (!location) {
       req.flash('error', 'Không tìm thấy địa điểm');
       return res.redirect('/locations');

@@ -12,7 +12,7 @@
   <div class="card-header">
     <h5 class="mb-0">
       <i class="fas fa-list me-2"></i>
-      Danh sách Đánh giá (<%= reviews ? reviews.length : 0 %>)
+      Danh sách đánh giá (<%= reviews ? reviews.length : 0 %>)
     </h5>
   </div>
   <div class="card-body">
@@ -32,16 +32,15 @@
           <tbody>
             <% reviews.forEach(review => { %>
               <tr>
-                <td><strong><%= review.location?.name || 'Đã xóa' %></strong></td>
+                <td><strong><%= review.location?.name || 'Đã xoá' %></strong></td>
                 <td>
                   <% if (review.user) { %>
                     <div>
-                      <strong><%= review.user.username %></strong>
-                      <br>
+                      <strong><%= review.user.username %></strong><br>
                       <small class="text-muted"><%= review.user.email %></small>
                     </div>
                   <% } else { %>
-                    <span class="text-muted">Người dùng đã bị xóa</span>
+                    <span class="text-muted">Người dùng đã bị xoá</span>
                   <% } %>
                 </td>
                 <td>
@@ -62,12 +61,19 @@
                   <% } %>
                 </td>
                 <td>
-                  <small class="text-muted"><%= new Date(review.createdAt).toLocaleDateString('vi-VN') %></small>
+                  <small class="text-muted"><%= new Date(review.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'medium' }) %></small>
                 </td>
                 <td>
-                  <a href="/owner/reviews/<%= review._id %>" class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-eye"></i> Chi tiết
-                  </a>
+                  <% if (review.location && review.location._id) { %>
+                    <a
+                      href="/locations/<%= review.location._id %>#review-<%= review._id %>"
+                      class="btn btn-sm btn-outline-primary"
+                    >
+                      <i class="fas fa-eye"></i> Chi tiết
+                    </a>
+                  <% } else { %>
+                    <span class="text-muted small">Địa điểm đã xoá</span>
+                  <% } %>
                 </td>
               </tr>
             <% }) %>

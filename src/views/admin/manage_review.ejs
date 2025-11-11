@@ -83,7 +83,7 @@
                                 <!-- Cột: Ngày tạo -->
                                 <td>
                                     <small class="text-muted">
-                                        <%= new Date(review.createdAt).toLocaleDateString('vi-VN') %>
+                                        <%= new Date(review.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'medium' }) %>
                                     </small>
                                 </td>
 

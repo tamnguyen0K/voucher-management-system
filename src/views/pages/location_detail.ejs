@@ -1,9 +1,15 @@
-
+﻿
 <div class="row">
     <div class="col-lg-8">
         <!-- Location Info -->
-        <div class="card mb-4">
+        <div class="card mb-4 position-relative location-hero-card">
             <img src="<%= location.imageUrl %>" class="card-img-top" alt="<%= location.name %>" style="height: 300px; object-fit: cover;">
+            <% if (location.owner) { %>
+                <button type="button" class="btn btn-light btn-sm owner-chip shadow-sm" data-bs-toggle="modal" data-bs-target="#ownerProfileModal">
+                    <div class="text-muted small mb-1">Chủ sở hữu</div>
+                    <div class="fw-semibold text-uppercase"><%= location.owner.username %></div>
+                </button>
+            <% } %>
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
@@ -22,16 +28,9 @@
                 
                 <p class="card-text"><%= location.description %></p>
                 
-                <div class="row">
-                    <div class="col-md-6">
                         <h6><i class="fas fa-map-marker-alt me-2"></i>Địa chỉ:</h6>
                         <p class="text-muted"><%= location.address %></p>
-                    </div>
-                    <div class="col-md-6">
-                        <h6><i class="fas fa-user me-2"></i>Chủ sở hữu:</h6>
-                        <p class="text-muted"><%= location.owner.username %></p>
-                    </div>
-                </div>
+
             </div>
         </div>
 
@@ -42,7 +41,7 @@
                     <i class="fas fa-comments me-2"></i>
                     Đánh giá (<%= reviewCount %>)
                 </h5>
-                <% if (user) { %>
+                <% if (user && user.role === "user") { %>
                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#reviewModal">
                         <i class="fas fa-plus me-1"></i>Viết đánh giá
                     </button>
@@ -51,7 +50,7 @@
             <div class="card-body">
                 <% if (reviews && reviews.length > 0) { %>
                     <% reviews.forEach(review => { %>
-                        <div class="review-item border-bottom pb-3 mb-3">
+                        <div id="review-<%= review._id %>" class="review-item border-bottom pb-3 mb-3">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <h6 class="mb-1">
@@ -66,7 +65,7 @@
                                 </div>
                                 <small class="text-muted">
                                     <i class="fas fa-clock me-1"></i>
-                                    <%= new Date(review.createdAt).toLocaleDateString('vi-VN') %>
+                                    <%= new Date(review.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'medium' }) %>
                                 </small>
                             </div>
                             <% if (review.comment) { %>
@@ -178,50 +177,83 @@
 </div>
 
 <!-- Review Modal -->
-<% if (user) { %>
-<div class="modal fade" id="reviewModal" tabindex="-1">
-    <div class="modal-dialog">
+<% if (user && user.role === "user") { %>
+    <div class="modal fade" id="reviewModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-star me-2"></i>Viết đánh giá
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="/locations/<%= location._id %>/reviews" method="POST" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Đánh giá:</label>
+                            <div class="rating-input">
+                                <input type="hidden" name="rating" id="ratingValue" value="5" required>
+                                <div class="stars">
+                                    <% for (let i = 1; i <= 5; i++) { %>
+                                        <i class="fas fa-star star-rating" data-rating="<%= i %>"></i>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Nhận xét (tùy chọn):</label>
+                            <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Chia sẻ trải nghiệm của bạn..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mediaFiles" class="form-label">Hình ảnh / Video *</label>
+                            <input type="file" class="form-control" id="mediaFiles" name="mediaFiles" accept="image/*,video/*" multiple required>
+                            <small class="text-muted">Có thể chọn tối đa 5 tệp, dung lượng mỗi tệp không vượt quá 15MB.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-1"></i>Gửi đánh giá
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+<% } %>
+
+<% function maskReviewerName(name) { %>
+<%   if (!name) { %>
+Ẩn danh
+<%   } else if ((user && user.role !== 'user')) { %>
+<%= name %>
+<%   } else { %>
+<%= name.length <= 2 ? name[0] + '*' : name.slice(0, Math.min(3, name.length)) + '***' %>
+<%   } %>
+<% } %>
+
+<div class="modal fade" id="ownerProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="fas fa-star me-2"></i>Viết đánh giá
+                    <i class="fas fa-id-card me-2"></i>Hồ sơ chủ sở hữu
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="/locations/<%= location._id %>/reviews" method="POST" enctype="multipart/form-data">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Đánh giá:</label>
-                        <div class="rating-input">
-                            <input type="hidden" name="rating" id="ratingValue" value="5" required>
-                            <div class="stars">
-                                <% for (let i = 1; i <= 5; i++) { %>
-                                    <i class="fas fa-star star-rating" data-rating="<%= i %>"></i>
-                                <% } %>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="comment" class="form-label">Nhận xét (tùy chọn):</label>
-                        <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Chia sẻ trải nghiệm của bạn..."></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="mediaFiles" class="form-label">Hình ảnh / Video *</label>
-                        <input type="file" class="form-control" id="mediaFiles" name="mediaFiles" accept="image/*,video/*" multiple required>
-                        <small class="text-muted">Có thể chọn tối đa 5 tệp, dung lượng mỗi tệp không vượt quá 15MB.</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-paper-plane me-1"></i>Gửi đánh giá
-                    </button>
-                </div>
-            </form>
+            <div class="modal-body">
+                <% if (location.owner) { %>
+                    <p class="mb-2"><strong>Tên chủ sở hữu:</strong> <%= location.owner.username %></p>
+                    <% if (location.owner.email) { %>
+                        <p class="mb-2"><strong>Email:</strong> <%= location.owner.email %></p>
+                    <% } %>
+                <% } else { %>
+                    <p class="text-muted mb-0">Không tìm thấy thông tin chủ sở hữu.</p>
+                <% } %>
+            </div>
         </div>
     </div>
 </div>
-<% } %>
 
 <script>
 // Rating stars interaction
@@ -317,5 +349,21 @@ document.addEventListener('DOMContentLoaded', function() {
     max-height: 120px;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.location-hero-card {
+    border: none;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.owner-chip {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 0.75rem;
+    padding: 0.4rem 0.9rem;
+    text-align: right;
+    backdrop-filter: blur(6px);
 }
 </style>

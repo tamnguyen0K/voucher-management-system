@@ -4,11 +4,9 @@
         <i class="fas fa-percent text-warning me-2"></i>
         Quản lý Voucher
     </h1>
-    <% if (!isAdmin) { %>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createVoucherModal">
-            <i class="fas fa-plus me-1"></i>Tạo voucher mới
-        </button>
-    <% } %>
+    <a href="/admin/dashboard" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Quay lại Dashboard
+    </a>
 </div>
 
 <!-- Bảng danh sách voucher -->

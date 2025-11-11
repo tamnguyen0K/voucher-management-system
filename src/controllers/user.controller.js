@@ -174,7 +174,7 @@ const getProfile = async (req, res) => {
 
     res.render('pages/profile', {
       title: 'Thông tin cá nhân',
-      user: {
+      profile: {
         _id: user._id,
         username: user.username,
         email: user.email,
@@ -223,7 +223,7 @@ const getOwnerProfile = async (req, res) => {
 
     res.render('owner/profile', {
       title: 'Thông tin cá nhân',
-      user: {
+      profile: {
         _id: user._id,
         username: user.username,
         email: user.email,
@@ -249,3 +249,4 @@ module.exports = {
   getProfile,
   getOwnerProfile
 };
+

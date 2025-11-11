@@ -43,16 +43,11 @@ const createReview = async (req, res) => {
     const { locationId } = req.params;
     const { rating, comment } = req.body;
     const userId = req.session.userId;
-    const files = req.files || [];
+    const files = Array.isArray(req.files) ? req.files : [];
 
     if (!userId) {
       req.flash('error', 'Vui lòng đăng nhập để đánh giá');
       return res.redirect('/auth');
-    }
-
-    if (!files.length) {
-      req.flash('error', 'Vui lòng tải lên ít nhất một hình ảnh hoặc video cho đánh giá');
-      return res.redirect(`/locations/${locationId}`);
     }
 
     const existingReview = await Review.findOne({ user: userId, location: locationId });
@@ -85,7 +80,7 @@ const updateReview = async (req, res) => {
     const { reviewId } = req.params;
     const { rating, comment } = req.body;
     const userId = req.session.userId;
-    const files = req.files || [];
+    const files = Array.isArray(req.files) ? req.files : [];
 
     const review = await Review.findOne({ _id: reviewId, user: userId });
     if (!review) {
@@ -99,11 +94,6 @@ const updateReview = async (req, res) => {
     if (files.length) {
       const media = files.map(file => buildMediaPayload(file, userId));
       review.media = [...(review.media || []), ...media];
-    }
-
-    if (!review.media || review.media.length === 0) {
-      req.flash('error', 'Đánh giá cần ít nhất một hình ảnh hoặc video. Vui lòng tải tệp lên.');
-      return res.redirect('/profile');
     }
 
     await review.save();
@@ -330,3 +320,6 @@ module.exports = {
   ownerGetReviewDetail,
   adminGetReviewDetail
 };
+
+
+

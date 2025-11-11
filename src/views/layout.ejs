@@ -18,9 +18,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand"
-            <% if (!user || user.role !== 'owner') { %>href="/"<% } %>
-            >
+            <a class="navbar-brand" <% if (!user || user.role !== 'owner') { %>href="/"<% } %>>
                 <i class="fas fa-ticket-alt me-2"></i>
                 Voucher System
             </a>
@@ -72,17 +70,26 @@
                                     <li><a class="dropdown-item" href="/owner/dashboard">Dashboard</a></li>
                                     <li><a class="dropdown-item" href="/owner/locations">Địa điểm của tôi</a></li>
                                     <li><a class="dropdown-item" href="/owner/vouchers">Voucher của tôi</a></li>
+                                    <li><a class="dropdown-item" href="/owner/reviews">Đánh giá mới nhất</a></li>
                                 </ul>
                             </li>
+                        <% } else { %>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-store me-1"></i>User
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/profile">Thông tin cá nhân</a></li>
+                                </ul>
                         <% } %>
-                        
                         <li class="nav-item">
                             <form action="/logout" method="POST" class="d-inline">
-                                <button type="submit" class="btn btn-outline-light btn-sm" style="top:5px">
+                                <button type="submit" class="btn btn-outline-light btn-sm" style="top:4px">
                                     <i class="fas fa-sign-out-alt me-1"></i>Đăng xuất
                                 </button>
                             </form>
                         </li>
+                        
                     <% } else { %>
                         <li class="nav-item">
                             <a class="nav-link" href="/auth">

@@ -19,6 +19,7 @@ const userRoutes = require('./routes/user.routes');
 const locationRoutes = require('./routes/location.routes');
 const voucherRoutes = require('./routes/voucher.routes');
 const adminRoutes = require('./routes/admin.routes');
+const ownerRoutes = require('./routes/owner.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -55,6 +56,7 @@ app.use('/', userRoutes);
 app.use('/', locationRoutes);
 app.use('/', voucherRoutes);
 app.use('/', adminRoutes);
+app.use('/owner', ownerRoutes);
 
 /**
  * Route: GET /
@@ -93,115 +95,6 @@ app.get('/', async (req, res) => {
       locations: [],
       vouchers: []
     });
-  }
-});
-
-const userController = require('./controllers/user.controller');
-const { requireAuth: requireAuthMiddleware } = require('./middleware/auth');
-
-/**
- * Route: GET /owner/profile
- * Mô tả: Hiển thị trang profile của owner
- */
-app.get('/owner/profile', requireAuthMiddleware, userController.getOwnerProfile);
-
-/**
- * Route: GET /owner/dashboard
- * Mô tả: Hiển thị dashboard quản lý của owner với thống kê địa điểm và voucher
- */
-app.get('/owner/dashboard', async (req, res) => {
-  try {
-    if (!req.session.userId || req.session.userRole !== 'owner') {
-      req.flash('error', 'Bạn không có quyền truy cập');
-      return res.redirect('/');
-    }
-
-    const Location = require('./models/location.model');
-    const Voucher = require('./models/voucher.model');
-
-    const locations = await Location.find({ owner: req.session.userId });
-    const locationIds = locations.map(loc => loc._id);
-
-    const vouchers = await Voucher.find({
-      location: { $in: locationIds }
-    })
-      .populate('location', 'name')
-      .sort({ createdAt: -1 });
-
-    const totalVouchers = vouchers.length;
-    const activeVouchers = vouchers.filter(v => v.status === 'active').length;
-    const totalClaims = vouchers.reduce((sum, v) => sum + v.quantityClaimed, 0);
-
-    res.render('owner/dashboard', {
-      title: 'Owner Dashboard',
-      stats: {
-        totalLocations: locations.length,
-        totalVouchers,
-        activeVouchers,
-        totalClaims
-      },
-      locations,
-      vouchers: vouchers.slice(0, 5)
-    });
-  } catch (error) {
-    console.error('Owner dashboard error:', error);
-    req.flash('error', 'Có lỗi xảy ra khi tải dashboard');
-    res.redirect('/');
-  }
-});
-
-/**
- * Route: GET /owner/locations
- * Mô tả: Hiển thị danh sách địa điểm của owner
- */
-app.get('/owner/locations', async (req, res) => {
-  try {
-    if (!req.session.userId || req.session.userRole !== 'owner') {
-      req.flash('error', 'Bạn không có quyền truy cập');
-      return res.redirect('/');
-    }
-
-    const Location = require('./models/location.model');
-    const locations = await Location.find({ owner: req.session.userId }).sort({ createdAt: -1 });
-
-    res.render('owner/manage_location', {
-      title: 'Quản lý Địa điểm',
-      locations
-    });
-  } catch (error) {
-    console.error('Owner locations error:', error);
-    req.flash('error', 'Có lỗi xảy ra khi tải danh sách địa điểm');
-    res.redirect('/owner/dashboard');
-  }
-});
-
-/**
- * Route: GET /owner/reviews
- * Mô tả: Hiển thị danh sách đánh giá của các địa điểm thuộc owner
- */
-app.get('/owner/reviews', async (req, res) => {
-  try {
-    const reviewController = require('./controllers/review.controller');
-    return reviewController.getOwnerReviews(req, res);
-  } catch (error) {
-    console.error('Owner reviews route error:', error);
-    req.flash('error', 'Có lỗi xảy ra khi tải danh sách đánh giá');
-    return res.redirect('/owner/dashboard');
-  }
-});
-
-/**
- * Route: GET /owner/reviews/:reviewId
- * Mô tả: Hiển thị chi tiết một đánh giá (owner)
- */
-app.get('/owner/reviews/:reviewId', async (req, res) => {
-  try {
-    const reviewController = require('./controllers/review.controller');
-    return reviewController.ownerGetReviewDetail(req, res);
-  } catch (error) {
-    console.error('Owner review detail route error:', error);
-    req.flash('error', 'Có lỗi xảy ra khi tải chi tiết đánh giá');
-    return res.redirect('/owner/reviews');
   }
 });
 
