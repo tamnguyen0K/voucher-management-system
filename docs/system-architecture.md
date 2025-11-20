@@ -258,16 +258,6 @@ sequenceDiagram
     VC-->>U: redirect + flash success
 ```
 
-### 6.3 Owner location lifecycle
-```mermaid
-flowchart LR
-    A[Owner UI /owner/manage_location] --> B[location.controller.create/update]
-    B --> C[Validate form + ensure description length]
-    C --> D[Enrich metadata </br>feature/menu/price/city/keywords]
-    D --> E[(MongoDB.locations)]
-    E --> F[Dashboards + search APIs]
-```
-
 ---
 
 ## 7. Cross-cutting concerns
@@ -315,7 +305,3 @@ flowchart LR
 2. `review.controller` validate rating/comment, gắn metadata review + media.
 3. Khi review bị xóa (owner/admin), `removeReviewMedia` dọn file vật lý tránh rác.
 4. Review xuất hiện trên trang location, owner dashboard và admin module để phản hồi chất lượng dịch vụ.
-
----
-
-Tài liệu này phản ánh hiện trạng kiến trúc và có thể làm guideline cho cả phát triển và vận hành. Khi phát sinh thay đổi lớn (thêm microservice, đổi DB, …), vui lòng cập nhật lại các mục tương ứng để giữ tài liệu đồng bộ với hướng triển khai dự án.*** End Patch
