@@ -47,6 +47,38 @@ const locationSchema = new mongoose.Schema({
     ref: 'User',
     required: [true, 'Owner is required']
   },
+  city: {
+    type: String,
+    trim: true,
+    default: 'Chưa cập nhật'
+  },
+  priceLevel: {
+    type: String,
+    enum: ['budget', 'standard', 'premium'],
+    default: 'standard'
+  },
+  priceRange: {
+    min: {
+      type: Number,
+      default: 0
+    },
+    max: {
+      type: Number,
+      default: 0
+    }
+  },
+  features: {
+    type: [String],
+    default: []
+  },
+  menuHighlights: {
+    type: [String],
+    default: []
+  },
+  keywords: {
+    type: [String],
+    default: []
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -60,6 +92,14 @@ locationSchema.virtual('averageRating').get(function() {
 
 // Cho phép hiển thị các trường ảo khi chuyển sang JSON
 locationSchema.set('toJSON', { virtuals: true });
+
+locationSchema.index({
+  name: 'text',
+  description: 'text',
+  address: 'text',
+  city: 'text',
+  keywords: 'text'
+});
 
 // Xuất model Location (tương ứng với collection "locations")
 module.exports = mongoose.model('Location', locationSchema);

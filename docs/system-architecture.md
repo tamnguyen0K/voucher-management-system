@@ -1,327 +1,272 @@
 # Voucher Management System - System Architecture
 
-## 1. System Overview Diagram (Sơ đồ tổng quan hệ thống)
+Tài liệu này mô tả cấu trúc hiện tại của hệ thống quản lý voucher được xây dựng bằng Node.js, Express, MongoDB và EJS. Nội dung tập trung vào cách các lớp giao diện, dịch vụ và dữ liệu phối hợp để phục vụ admin, chủ địa điểm (owner) và người dùng cuối.
+
+## 1. Scope & Personas (Bối cảnh & vai trò)
+
+- Nền tảng web đơn nhất (monolith) phục vụ người dùng cuối, chủ địa điểm và admin thông qua giao diện EJS responsive.
+- Admin kiểm soát toàn bộ dữ liệu (người dùng, địa điểm, voucher, review) và xem dashboard thống kê trong `views/admin`.
+- Owner quản lý địa điểm, voucher và theo dõi phản hồi khách hàng trong `views/owner`.
+- Regular user đăng ký/đăng nhập, duyệt địa điểm, claim voucher và gửi review có media.
+- Tài liệu tập trung vào các thành phần server-side (`src/**`) và dữ liệu (MongoDB + filesystem uploads); client-side thuần EJS/Bootstrap nên không có framework riêng.
+
+## 2. Layered Architecture Overview (Kiến trúc phân lớp)
 
 ```mermaid
 graph TB
-    subgraph "Frontend Layer"
-        A["EJS Templates<br/>Mẫu EJS"] --> B["Bootstrap 5 UI<br/>Giao diện Bootstrap"]
-        B --> C["User Interface<br/>Giao diện người dùng"]
+    subgraph "Client Layer"
+        B["Browsers<br/>(EJS pages + fetch APIs)"]
     end
-    
-    subgraph "Backend Layer"
-        D["Express.js Server<br/>Máy chủ Express"] --> E["Controllers<br/>Bộ điều khiển"]
-        E --> F["Business Logic<br/>Logic nghiệp vụ"]
-        F --> G["Authentication Middleware<br/>Middleware xác thực"]
+    subgraph "Server Layer (Express app)"
+        R[Route modules</br>user/location/voucher/owner/admin] --> C[Controllers & services]
+        C --> MW["Middleware<br/>(auth, flash, upload)"]
+        C --> V["View rendering<br/>(EJS + layouts)"]
     end
-    
     subgraph "Data Layer"
-        H["MongoDB Database<br/>Cơ sở dữ liệu MongoDB"] --> I["User Collection<br/>Bộ sưu tập người dùng"]
-        H --> J["Location Collection<br/>Bộ sưu tập địa điểm"]
-        H --> K["Voucher Collection<br/>Bộ sưu tập voucher"]
-        H --> L["Review Collection<br/>Bộ sưu tập đánh giá"]
+        DB[(MongoDB</br>Mongoose models)]
+        SS[(Mongo-backed session store)]
+        FS[(Uploads on disk</br>src/uploads/reviews)]
     end
-    
-    subgraph "User Roles"
-        M["Admin User<br/>Người dùng quản trị"] --> N["Full System Access<br/>Truy cập toàn hệ thống"]
-        O["Owner User<br/>Người dùng chủ quán"] --> P["Business Management<br/>Quản lý kinh doanh"]
-        Q["Regular User<br/>Người dùng thường"] --> R["Browse & Claim Vouchers<br/>Duyệt và nhận voucher"]
-    end
-    
-    C --> D
-    D --> H
-    M --> C
-    O --> C
-    Q --> C
+    B --> R
+    B <-->|HTML/JSON| V
+    C --> DB
+    C --> FS
+    MW --> SS
 ```
 
-## 2. Database Schema Diagram (Sơ đồ cấu trúc cơ sở dữ liệu)
+- **Client layer**: trình duyệt tải EJS render sẵn kết hợp Bootstrap 5, Font Awesome và các fetch API nhẹ.
+- **Server layer**: `src/app.js` bootstraps Express, đăng ký routes, middleware, layout engine và inject metadata (`app.locals.locationMeta`).
+- **Data layer**: MongoDB lưu toàn bộ entities và đồng thời làm session store thông qua `connect-mongo`; media review được lưu trên ổ đĩa (`src/uploads`).
+
+## 3. Runtime Components
+
+### 3.1 Application shell (`src/app.js`)
+
+- Nạp biến môi trường từ `src/config/dotenv`, kết nối Mongo thông qua `src/config/db.js`, sau đó khởi tạo Express.
+- Chuỗi middleware chuẩn: `express.json/urlencoded`, static assets (`src/public`), static uploads (`/uploads`), session (`express-session` + `connect-mongo`), `connect-flash`, `addUserToLocals` để EJS biết thông tin người dùng hiện tại.
+- Dùng `express-ejs-layouts` với layout mặc định `views/layout.ejs`; `app.locals.locationMeta` cung cấp metadata cho mọi view.
+- Định tuyến: `/` hiển thị trang chủ (lấy location/voucher mới), sau đó mount `userRoutes`, `locationRoutes`, `voucherRoutes`, `adminRoutes`, `ownerRoutes`.
+- Bộ xử lý 404 và lỗi tổng hợp đảm bảo trả về trang thân thiện, đồng thời log lỗi ra console.
+
+### 3.2 Routing & domain controllers
+
+| Domain | Route entry | Controller(s) | Responsibilities | Output |
+| --- | --- | --- | --- | --- |
+| Authentication & profile | `src/routes/user.routes.js` | `controllers/user.controller.js` | Render trang login/register, đăng ký, đăng nhập, logout, profile user/owner | `views/pages/login_register.ejs`, `pages/profile.ejs`, `owner/profile.ejs` |
+| Locations & discovery | `src/routes/location.routes.js` | `controllers/location.controller.js` | Danh sách/chi tiết địa điểm, summary API, CRUD location cho owner | `views/pages/locations.ejs`, `pages/location_detail.ejs`, JSON API (`/locations/:id/summary`) |
+| Reviews | `location.routes.js` + owner/admin routes | `controllers/review.controller.js` | Tạo/sửa/xóa review, quản lý media, dashboard review cho owner/admin | `views/pages/location_detail.ejs`, `owner/manage_review.ejs`, `admin/review_detail.ejs` |
+| Vouchers | `src/routes/voucher.routes.js` | `controllers/voucher.controller.js` | List voucher đang hoạt động, user claim voucher, owner CRUD voucher, render bảng quản lý | `views/pages/voucher_list.ejs`, `admin/manage_voucher.ejs` |
+| Owner area | `src/routes/owner.routes.js` | `controllers/owner.controller.js`, `user.controller`, `review.controller` | Dashboard owner, danh sách địa điểm, hồ sơ, review thuộc địa điểm của mình | `views/owner/*.ejs` |
+| Admin area | `src/routes/admin.routes.js` | Inline route handlers + `review.controller` | Dashboard tổng quan, quản lý user/location/voucher/review, JSON endpoints nhỏ | `views/admin/*.ejs`, JSON |
+
+> Các controller chia sẻ Mongoose models (`src/models/*.js`) để truy xuất dữ liệu theo domain.
+
+### 3.3 Middleware & session services
+
+- `middleware/auth.js` cung cấp `requireAuth`, `requireAdmin`, `requireOwner`, `requireRole`, `redirectIfAuthenticated` và `addUserToLocals`. Tất cả route nhạy cảm (owner/admin/claim voucher/review) đều sử dụng guard này.
+- Session lưu trong MongoDB thông qua `connect-mongo`, cookie 1 ngày, có thể bật `cookie.secure` khi deploy HTTPS.
+- `middleware/upload.js` (multer) xử lý upload media review: tạo thư mục theo `uploads/reviews/<userId>`, giới hạn 15 MB/tệp và tối đa 5 file, chỉ nhận ảnh/video.
+- Flash message (`connect-flash`) + `req.session` cung cấp phản hồi người dùng nhất quán sau redirect.
+
+### 3.4 View layer & static assets
+
+- Layout chính `views/layout.ejs` bao bọc các trang trong `views/pages`, `views/admin`, `views/owner`, cùng partials (navbar, alerts, cards).
+- UI dựa trên Bootstrap 5 + Font Awesome, CSS/JS tùy biến nằm ở `src/public/css` và `src/public/js`. Static assets được phục vụ từ `/` thông qua `express.static`.
+- Upload người dùng không đi qua CDN; Express phục vụ trực tiếp thư mục `src/uploads` dưới prefix `/uploads`.
+
+### 3.5 Services & utilities
+
+- `utils/locationMetadata.js` chứa thư viện feature/menu/price, hàm chuẩn hóa text (remove tone), phân tích menu, suy luận price level, city, keywords. Module này được dùng trong controller, script enrich và `app.locals`.
+- Helper trong `location.controller` đảm bảo mô tả/đặc điểm địa điểm đạt chuẩn trước khi ghi DB (ví dụ `ensureDetailedDescription`, `ensureFeatureCoverage`).
+
+### 3.6 Support scripts & tooling
+
+- `src/config/db.js`: helper kết nối Mongo (dùng bởi app và scripts).
+- `src/config/migrate.js`: migration thêm `phoneNumber`/`idName` cho user thiếu dữ liệu.
+- `src/config/enrich_locations.js`: chuẩn hóa & làm giàu location hiện có (feature, menu, price, city, keyword) với chế độ dry-run.
+- npm scripts: `npm run dev` (nodemon), `npm start`, `npm run migrate`, `npm run enrich:locations[:dry]`, `npm run seed` (đưa dữ liệu mẫu như mô tả trong README).
+
+## 4. Data model & storage
 
 ```mermaid
 erDiagram
+    USER ||--o{ LOCATION : owns
+    USER ||--o{ REVIEW : writes
+    USER ||--o{ CLAIMEDVOUCHER : claims
+    LOCATION ||--o{ REVIEW : receives
+    LOCATION ||--o{ VOUCHER : offers
+
     USER {
-        ObjectId _id PK
-        String username
-        String email
-        String password
-        String role
-        Date createdAt
+        ObjectId _id
+        string username
+        string email
+        string phoneNumber
+        string role
+        date createdAt
     }
-    
+
+    CLAIMEDVOUCHER {
+        string voucherCode
+        ObjectId voucherId
+        date claimedAt
+        date expiryDate
+        string locationName
+        number discountPct
+    }
+
     LOCATION {
-        ObjectId _id PK
-        String name
-        String description
-        String address
-        String type
-        Number rating
-        String imageUrl
-        ObjectId owner FK
-        Date createdAt
+        ObjectId _id
+        string name
+        string address
+        string type
+        string city
+        string priceLevel
+        object priceRange
+        number rating
+        array features
+        array menuHighlights
+        array keywords
+        ObjectId owner
+        date createdAt
     }
-    
+
     VOUCHER {
-        ObjectId _id PK
-        String code
-        Number discountPct
-        Number quantityTotal
-        Number quantityClaimed
-        Date startDate
-        Date endDate
-        ObjectId location FK
-        String conditions
-        Date createdAt
+        ObjectId _id
+        string code
+        number discountPct
+        number quantityTotal
+        number quantityClaimed
+        date startDate
+        date endDate
+        string conditions
+        ObjectId location
+        date createdAt
     }
-    
+
     REVIEW {
-        ObjectId _id PK
-        ObjectId user FK
-        ObjectId location FK
-        Number rating
-        String comment
-        Date createdAt
+        ObjectId _id
+        ObjectId user
+        ObjectId location
+        number rating
+        string comment
+        array media
+        date createdAt
     }
-    
-    USER ||--o{ LOCATION : "owns"
-    LOCATION ||--o{ VOUCHER : "has"
-    LOCATION ||--o{ REVIEW : "receives"
-    USER ||--o{ REVIEW : "writes"
 ```
 
-## 3. User Flow Diagram (Sơ đồ luồng người dùng)
+| Store | Important fields | Indexes/Constraints | Notes |
+| --- | --- | --- | --- |
+| `users` | `username`, `email`, `phoneNumber`, `role`, `claimedVouchers[]` | Unique indexes trên `username`, `email`, `phoneNumber`; bcrypt hash trong hook `pre('save')` | Session lưu `_id`, `role`, `username`; `claimedVouchers` được dọn khi hết hạn |
+| `locations` | `name`, `description`, `address`, `type`, `city`, `priceLevel`, `features`, `menuHighlights`, `keywords`, `owner`, `rating` | Text index trên `name/description/address/city/keywords`; index `owner` | Metadata chuẩn hóa giúp search và dashboard thống kê hoạt động ổn định |
+| `vouchers` | `code`, `discountPct`, `quantityTotal/Claimed`, `startDate/endDate`, `location`, `conditions` | Index `code`, `location`, `startDate`, `endDate` | Virtual fields `quantityRemaining`, `status`; owner CRUD kiểm tra quyền sở hữu location |
+| `reviews` | `user`, `location`, `rating`, `comment`, `media[]` | Unique compound index `(user, location)`; index `location`, `createdAt` | `media[]` lưu metadata file; helper xóa file khi review bị xóa |
+| Filesystem uploads | `src/uploads/reviews/<userId>/<filename>` | Directory per user; tên file đã sanitized | Đảm bảo backup vì chứa bằng chứng tương tác người dùng |
 
-```mermaid
-flowchart TD
-    A["User visits website<br/>Người dùng truy cập website"] --> B{"User logged in?<br/>Đã đăng nhập?"}
-    B -->|No| C["Show Login/Register<br/>Hiển thị đăng nhập/đăng ký"]
-    B -->|Yes| D["Show Dashboard<br/>Hiển thị bảng điều khiển"]
-    
-    C --> E["Register/Login<br/>Đăng ký/Đăng nhập"]
-    E --> F{"Login successful?<br/>Đăng nhập thành công?"}
-    F -->|No| C
-    F -->|Yes| D
-    
-    D --> G{"User Role?<br/>Vai trò người dùng?"}
-    G -->|Admin| H["Admin Dashboard<br/>Bảng điều khiển quản trị"]
-    G -->|Owner| I["Owner Dashboard<br/>Bảng điều khiển chủ quán"]
-    G -->|User| J["User Dashboard<br/>Bảng điều khiển người dùng"]
-    
-    H --> K["Manage Users<br/>Quản lý người dùng"]
-    H --> L["Manage Locations<br/>Quản lý địa điểm"]
-    H --> M["Manage Vouchers<br/>Quản lý voucher"]
-    H --> N["Manage Reviews<br/>Quản lý đánh giá"]
-    
-    I --> O["My Locations<br/>Địa điểm của tôi"]
-    I --> P["My Vouchers<br/>Voucher của tôi"]
-    I --> Q["Create Location<br/>Tạo địa điểm"]
-    I --> R["Create Voucher<br/>Tạo voucher"]
-    
-    J --> S["Browse Locations<br/>Duyệt địa điểm"]
-    J --> T["Browse Vouchers<br/>Duyệt voucher"]
-    J --> U["Claim Voucher<br/>Nhận voucher"]
-    J --> V["Write Review<br/>Viết đánh giá"]
-```
+## 5. Key request flows (Luồng chính)
 
-## 4. Component Architecture Diagram (Sơ đồ kiến trúc component)
-
-```mermaid
-graph TB
-    subgraph "Presentation Layer"
-        A["Home Page<br/>Trang chủ"] --> B["Location Detail<br/>Chi tiết địa điểm"]
-        A --> C["Voucher List<br/>Danh sách voucher"]
-        A --> D["Login/Register<br/>Đăng nhập/Đăng ký"]
-        A --> E["User Profile<br/>Hồ sơ người dùng"]
-    end
-    
-    subgraph "Admin Interface"
-        F["Admin Dashboard<br/>Bảng điều khiển quản trị"] --> G["User Management<br/>Quản lý người dùng"]
-        F --> H["Location Management<br/>Quản lý địa điểm"]
-        F --> I["Voucher Management<br/>Quản lý voucher"]
-        F --> J["Review Management<br/>Quản lý đánh giá"]
-    end
-    
-    subgraph "Owner Interface"
-        K["Owner Dashboard<br/>Bảng điều khiển chủ quán"] --> L["My Locations<br/>Địa điểm của tôi"]
-        K --> M["My Vouchers<br/>Voucher của tôi"]
-        K --> N["Create Location<br/>Tạo địa điểm"]
-        K --> O["Create Voucher<br/>Tạo voucher"]
-    end
-    
-    subgraph "Business Logic Layer"
-        P["User Controller<br/>Bộ điều khiển người dùng"] --> Q["Authentication<br/>Xác thực"]
-        R["Location Controller<br/>Bộ điều khiển địa điểm"] --> S["CRUD Operations<br/>Thao tác CRUD"]
-        T["Voucher Controller<br/>Bộ điều khiển voucher"] --> U["Claim Logic<br/>Logic nhận voucher"]
-        V["Review Controller<br/>Bộ điều khiển đánh giá"] --> W["Rating System<br/>Hệ thống đánh giá"]
-    end
-    
-    subgraph "Data Access Layer"
-        X["User Model<br/>Mô hình người dùng"] --> Y["User Schema<br/>Lược đồ người dùng"]
-        Z["Location Model<br/>Mô hình địa điểm"] --> AA["Location Schema<br/>Lược đồ địa điểm"]
-        BB["Voucher Model<br/>Mô hình voucher"] --> CC["Voucher Schema<br/>Lược đồ voucher"]
-        DD["Review Model<br/>Mô hình đánh giá"] --> EE["Review Schema<br/>Lược đồ đánh giá"]
-    end
-    
-    A --> P
-    F --> P
-    K --> R
-    P --> X
-    R --> Z
-    T --> BB
-    V --> DD
-```
-
-## 5. Authentication Flow Diagram (Sơ đồ luồng xác thực)
+### 5.1 Session authentication
 
 ```mermaid
 sequenceDiagram
-    participant U as User
-    participant F as Frontend
-    participant B as Backend
-    participant D as Database
-    participant S as Session
-    
-    U->>F: Access protected route
-    F->>B: Check authentication
-    B->>S: Verify session
-    S-->>B: Session status
-    B-->>F: Authentication result
-    
-    alt Not authenticated
-        F->>U: Redirect to login
-        U->>F: Enter credentials
-        F->>B: POST /login
-        B->>D: Validate credentials
-        D-->>B: User data
-        B->>S: Create session
-        S-->>B: Session created
-        B-->>F: Success response
-        F->>U: Redirect to dashboard
-    else Authenticated
-        F->>U: Show protected content
-    end
+    participant B as Browser
+    participant R as /auth route
+    participant C as user.controller.login
+    participant DB as MongoDB (users)
+    participant SS as Session store (Mongo)
+    B->>R: POST /login (email, password)
+    R->>C: Invoke login()
+    C->>DB: findOne({ email })
+    DB-->>C: user doc
+    C->>C: bcrypt.compare(password)
+    C-->>SS: req.session = { userId, role, username }
+    C-->>B: Redirect + flash message
 ```
 
-## 6. Voucher Claim Process Diagram (Sơ đồ quy trình nhận voucher)
+- Nếu xác thực thất bại, controller ghi flash error và redirect về `/auth?tab=login`.
+- Tùy vai trò, user được redirect sang `/admin/dashboard`, `/owner/dashboard` hoặc `/`.
+
+### 5.2 Voucher claim flow
 
 ```mermaid
-flowchart TD
-    A["User clicks Claim Voucher<br/>Người dùng nhấn Nhận voucher"] --> B{"User logged in?<br/>Đã đăng nhập?"}
-    B -->|No| C["Redirect to Login<br/>Chuyển hướng đến đăng nhập"]
-    B -->|Yes| D["Check voucher validity<br/>Kiểm tra tính hợp lệ của voucher"]
-    
-    D --> E{"Voucher active?<br/>Voucher có hoạt động?"}
-    E -->|No| F["Show error message<br/>Hiển thị thông báo lỗi"]
-    E -->|Yes| G{"Quantity available?<br/>Còn số lượng?"}
-    
-    G -->|No| H["Show sold out message<br/>Hiển thị thông báo hết hàng"]
-    G -->|Yes| I["Update quantityClaimed<br/>Cập nhật số lượng đã nhận"]
-    
-    I --> J["Save to database<br/>Lưu vào cơ sở dữ liệu"]
-    J --> K["Show success message<br/>Hiển thị thông báo thành công"]
-    K --> L["Update UI<br/>Cập nhật giao diện"]
-    
-    C --> M["User logs in<br/>Người dùng đăng nhập"]
-    M --> A
+sequenceDiagram
+    participant U as User browser
+    participant VR as POST /vouchers/:id/claim
+    participant VC as voucher.controller
+    participant VDB as MongoDB (vouchers)
+    participant UDB as MongoDB (users)
+    U->>VR: Claim voucher
+    VR->>VC: requireAuth + requireUser guard
+    VC->>VDB: findById(voucherId)
+    VDB-->>VC: Voucher doc
+    VC->>VC: Validate window + quantity
+    VC->>UDB: load user
+    VC->>VC: Ensure not already claimed
+    VC->>UDB: push claimedVouchers entry
+    VC->>VDB: increment quantityClaimed
+    VC-->>U: Redirect + success flash
 ```
 
-## 7. File Structure Diagram (Sơ đồ cấu trúc thư mục)
+- Cả user doc và voucher doc được cập nhật trong cùng request; logic đơn giản, chưa dùng transaction nhưng đủ vì số lượng claim nhỏ.
+
+### 5.3 Owner location lifecycle
 
 ```mermaid
-graph TD
-    A["Project Root<br/>Thư mục gốc"] --> B["src/<br/>Mã nguồn"]
-    A --> C["package.json<br/>Cấu hình dự án"]
-    A --> D["README.md<br/>Tài liệu"]
-    A --> E[".gitignore<br/>Bỏ qua Git"]
-    
-    B --> F["models/<br/>Mô hình"]
-    B --> G["controllers/<br/>Bộ điều khiển"]
-    B --> H["routes/<br/>Định tuyến"]
-    B --> I["views/<br/>Giao diện"]
-    B --> J["middleware/<br/>Middleware"]
-    B --> K["config/<br/>Cấu hình"]
-    B --> L["public/<br/>Tài nguyên công khai"]
-    B --> M["app.js<br/>Ứng dụng chính"]
-    
-    F --> N["user.model.js<br/>Mô hình người dùng"]
-    F --> O["location.model.js<br/>Mô hình địa điểm"]
-    F --> P["voucher.model.js<br/>Mô hình voucher"]
-    F --> Q["review.model.js<br/>Mô hình đánh giá"]
-    
-    G --> R["user.controller.js<br/>Bộ điều khiển người dùng"]
-    G --> S["location.controller.js<br/>Bộ điều khiển địa điểm"]
-    G --> T["voucher.controller.js<br/>Bộ điều khiển voucher"]
-    G --> U["review.controller.js<br/>Bộ điều khiển đánh giá"]
-    
-    H --> V["user.routes.js<br/>Định tuyến người dùng"]
-    H --> W["location.routes.js<br/>Định tuyến địa điểm"]
-    H --> X["voucher.routes.js<br/>Định tuyến voucher"]
-    H --> Y["admin.routes.js<br/>Định tuyến quản trị"]
-    
-    I --> Z["pages/<br/>Trang"]
-    I --> AA["admin/<br/>Quản trị"]
-    I --> BB["owner/<br/>Chủ quán"]
-    I --> CC["layout.ejs<br/>Bố cục"]
-    
-    L --> DD["css/<br/>Biểu định kiểu"]
-    L --> EE["js/<br/>JavaScript"]
-    L --> FF["images/<br/>Hình ảnh"]
+flowchart LR
+    A[Owner UI\n/owner/manage_location] --> B[location.controller.createLocation/updateLocation]
+    B --> C[Validate form + ensure description length]
+    C --> D[Enrich metadata\nfeatures/menu/price/city/keywords]
+    D --> E[(MongoDB.locations)]
+    E --> F[Dashboards + search APIs]
+    F --> G[Tìm kiếm & dashboard]
 ```
 
-## 8. API Endpoints Diagram (Sơ đồ các endpoint API)
+- Owner chỉ định city, price range, features; controller đảm bảo mô tả đủ dài (>= `DESCRIPTION_MIN_LENGTH`) và đủ đặc điểm (`FEATURE_MIN_COUNT`).
+- Metadata được suy luận bằng `locationMetadata` để phục vụ search và thống kê.
 
-```mermaid
-graph LR
-    subgraph "Public Routes"
-        A["GET /"] --> B["Home Page<br/>Trang chủ"]
-        C["GET /locations"] --> D["Location List<br/>Danh sách địa điểm"]
-        E["GET /vouchers"] --> F["Voucher List<br/>Danh sách voucher"]
-        G["GET /auth"] --> H["Login/Register<br/>Đăng nhập/Đăng ký"]
-    end
-    
-    subgraph "User Routes"
-        I["POST /login"] --> J["User Login<br/>Đăng nhập người dùng"]
-        K["POST /register"] --> L["User Registration<br/>Đăng ký người dùng"]
-        M["POST /logout"] --> N["User Logout<br/>Đăng xuất người dùng"]
-        O["GET /profile"] --> P["User Profile<br/>Hồ sơ người dùng"]
-    end
-    
-    subgraph "Voucher Routes"
-        Q["POST /vouchers/:id/claim"] --> R["Claim Voucher<br/>Nhận voucher"]
-    end
-    
-    subgraph "Admin Routes"
-        S["GET /admin/dashboard"] --> T["Admin Dashboard<br/>Bảng điều khiển quản trị"]
-        U["GET /admin/users"] --> V["User Management<br/>Quản lý người dùng"]
-        W["GET /admin/locations"] --> X["Location Management<br/>Quản lý địa điểm"]
-        Y["GET /admin/vouchers"] --> Z["Voucher Management<br/>Quản lý voucher"]
-    end
-    
-    subgraph "Owner Routes"
-        AA["GET /owner/dashboard"] --> BB["Owner Dashboard<br/>Bảng điều khiển chủ quán"]
-        CC["GET /owner/locations"] --> DD["My Locations<br/>Địa điểm của tôi"]
-        EE["GET /owner/vouchers"] --> FF["My Vouchers<br/>Voucher của tôi"]
-    end
-```
+## 6. Cross-cutting concerns (Các mối quan tâm ngang)
 
-## Cách sử dụng:
+- **Authentication & RBAC**: session-based auth với `express-session`; middleware đảm bảo admin, owner, user truy cập đúng phạm vi. Logout hủy session server-side.
+- **Data validation & messaging**: controller kiểm tra dữ liệu (ví dụ so sánh password, validate phone, enforce `DESCRIPTION_MIN_LENGTH`, `FEATURE_MIN_COUNT`). Flash message + highlight tab giúp UX rõ ràng.
+- **Security & privacy**: mật khẩu hash bằng bcrypt; session secret cần cấu hình mạnh; uploads được đặt tên an toàn (`sanitizeFilename`) và kiểm soát MIME để tránh thực thi; owner/admin không thể thao tác entity không thuộc quyền.
+- **Search & discovery**: `locations` có text index trên name/description/address/city/keywords; metadata builder đảm bảo feature/menu chuẩn hóa để filter.
+- **File/media handling**: media review lưu trên disk và liên kết qua URL tương đối, helper `removeReviewMedia` xóa file khi review bị xóa; giới hạn kích thước và số lượng file đảm bảo tài nguyên máy chủ.
+- **Error handling & resiliency**: home + controller đều wrap `try/catch` và chuyển hướng về trang phù hợp; enrichment script hỗ trợ `--dry` để tránh làm hỏng dữ liệu thật.
 
-1. **Copy code Mermaid** từ các diagram trên
-2. **Paste vào Mermaid editor** (mermaid.live) hoặc VS Code với Mermaid extension
-3. **Render diagram** để xem kết quả
-4. **Export** thành PNG/SVG nếu cần
+## 7. Deployment & environment
 
-## Các diagram này bao gồm:
-- ✅ **System Architecture**: Kiến trúc tổng thể
-- ✅ **Database Schema**: Cấu trúc cơ sở dữ liệu
-- ✅ **User Flow**: Luồng người dùng
-- ✅ **Component Architecture**: Kiến trúc component
-- ✅ **Authentication Flow**: Luồng xác thực
-- ✅ **Voucher Claim Process**: Quy trình claim voucher
-- ✅ **File Structure**: Cấu trúc thư mục
-- ✅ **API Endpoints**: Các endpoint API
+- **Environment variables**: `NODE_ENV`, `PORT` (mặc định 3000), `MONGODB_URI`, `SESSION_SECRET`. Tất cả được đọc từ `src/config/dotenv`.
+- **Process management**: `npm run dev` dùng nodemon cho phát triển; `npm start` chạy Node thường; có thể dùng PM2/systemd để giữ tiến trình sống trong sản xuất.
+- **Data operations**: `npm run migrate` đồng bộ user cũ; `npm run enrich:locations` (hoặc `--dry`) chuẩn hóa metadata; `npm run seed` nạp dữ liệu demo được mô tả trong README.
+- **Persistent storage**: MongoDB lưu dữ liệu chính lẫn session store (có thể tách URI riêng nếu cần). `src/uploads` phải tồn tại và được backup khi triển khai vì chứa media người dùng.
+- **Observability & logging**: log qua `console.log/error` (có prefix theo module). Khi triển khai thực tế nên chuyển sang một logger tập trung (Winston/Pino) và thêm metrics (active voucher, review rate...).
+- **Hardening đề xuất**: bật HTTPS + `cookie.secure`, bổ sung CSRF token cho form quan trọng, thêm rate limit cho các API public, và cân nhắc CDN/static host cho `public` để giảm tải Express.
 
-Bạn có thể sử dụng các diagram này để:
-- 📊 **Trình bày project** trong báo cáo
-- 🔧 **Hiểu rõ kiến trúc** hệ thống
-- 📝 **Tài liệu hóa** cho team
-- 🎯 **Phân tích** và cải thiện hệ thống
+## 8. Use cases (Tình huống sử dụng chính)
+
+### 8.1 User duyệt địa điểm và claim voucher
+
+1. User truy cập `/locations` để duyệt danh sách; controller gọi MongoDB với text search + metadata filter để trả về kết quả phù hợp.
+2. Khi chọn địa điểm, trang chi tiết render thông tin location, review và voucher còn hiệu lực.
+3. User bấm claim trên một voucher → `POST /vouchers/:id/claim` (có `requireAuth`). Controller xác nhận thời gian hiệu lực, số lượng còn lại, và đảm bảo user chưa claim trước đó.
+4. Voucher được ghi vào `claimedVouchers[]` của user, `quantityClaimed` của voucher tăng lên, flash message hiển thị trên trang kết quả.
+
+### 8.2 Owner quản lý địa điểm và voucher
+
+1. Owner đăng nhập và vào `/owner/dashboard`; middleware `requireOwner` đảm bảo đúng vai trò.
+2. Owner tạo/cập nhật địa điểm thông qua form `owner/manage_location`. Controller kiểm tra mô tả, enrich metadata bằng `utils/locationMetadata` rồi lưu vào `locations`.
+3. Owner tạo voucher mới trong `owner/manage_voucher`, thiết lập `quantity`, `startDate`, `endDate`, `conditions`. Controller xác nhận ownership của location được chọn.
+4. Dashboard cung cấp bảng theo dõi claim và review liên quan đến các location mà owner sở hữu.
+
+### 8.3 Admin giám sát hệ thống
+
+1. Admin đăng nhập và truy cập `/admin/dashboard`. Bộ lọc `requireAdmin` đảm bảo chỉ admin vào được.
+2. Từ dashboard, admin xem số liệu tổng quan (user/location/voucher/review), duyệt danh sách chi tiết trong các trang quản lý tương ứng (`views/admin/*.ejs`).
+3. Admin có thể khóa user, xóa hoặc chỉnh sửa location/voucher/review khi phát hiện bất thường; mọi thao tác cập nhật trực tiếp trên các collection MongoDB.
+4. Các API hỗ trợ (ví dụ JSON thống kê) được bảo vệ bởi RBAC và chủ yếu dùng bởi EJS dashboard.
+
+### 8.4 Review lifecycle với media
+
+1. User hoặc owner truy cập trang review thuộc địa điểm; khi gửi review mới, `middleware/upload` lưu file media vào `src/uploads/reviews/<userId>`.
+2. `review.controller` validate rating/comment, cập nhật metadata review và liên kết media.
+3. Khi review bị xóa (owner/admin), helper `removeReviewMedia` xóa file vật lý tương ứng để tránh rác.
+4. Các review hiện diện trên trang location và trang quản lý owner/admin, hỗ trợ phản hồi chất lượng dịch vụ.

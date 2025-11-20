@@ -1,4 +1,22 @@
 
+<% const featureOptions = (locationMeta && locationMeta.FEATURE_LIBRARY) || [
+    { value: 'View đẹp', hint: 'Rooftop, hướng biển, sông' },
+    { value: 'Không gian yên tĩnh', hint: 'Đọc sách, học bài' },
+    { value: 'Phù hợp làm việc', hint: 'Có ổ điện, wifi mạnh' },
+    { value: 'Không gian ngoài trời', hint: 'Sân vườn, ban công' },
+    { value: 'Phục vụ bánh ngọt / pastry', hint: 'Croissant, dessert' },
+    { value: 'Đồ uống signature', hint: 'Cold brew, signature drink' },
+    { value: 'Phù hợp gia đình / nhóm', hint: 'Không gian rộng rãi' },
+    { value: 'Sống ảo / check-in', hint: 'Nhiều góc chụp đẹp' }
+]; %>
+<% const priceLevelOptions = (locationMeta && locationMeta.PRICE_LEVELS) || [
+    { value: 'budget', label: 'Tiết kiệm (< 80k/người)' },
+    { value: 'standard', label: 'Phổ biến (80k - 150k/người)' },
+    { value: 'premium', label: 'Cao cấp (> 150k/người)' }
+]; %>
+<% const descriptionMin = (locationMeta && locationMeta.DESCRIPTION_MIN_LENGTH) || 80; %>
+<% const featureMin = (locationMeta && locationMeta.FEATURE_MIN_COUNT) || 2; %>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h2">
         <i class="fas fa-map-marker-alt text-primary me-2"></i>
@@ -118,13 +136,103 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="city" class="form-label">Thành phố / Tỉnh *</label>
+                                <input type="text" class="form-control" id="city" name="city" placeholder="VD: Đà Nẵng" required>
+                                <small class="text-muted">Giúp khách hàng lọc được khu vực nhanh chóng.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="priceLevel" class="form-label">Mức giá trung bình *</label>
+                                <select class="form-select" id="priceLevel" name="priceLevel" required>
+                                    <option value="">Chọn mức giá</option>
+                                    <% priceLevelOptions.forEach(option => { %>
+                                        <option value="<%= option.value %>"><%= option.label %></option>
+                                    <% }) %>
+                                </select>
+                                <small class="text-muted">Ước tính theo giá trung bình mỗi khách.</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="priceMin" class="form-label">Giá tối thiểu (VND)</label>
+                                <input type="number" class="form-control" id="priceMin" name="priceMin" min="0" placeholder="Ví dụ: 55000">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="priceMax" class="form-label">Giá tối đa (VND)</label>
+                                <input type="number" class="form-control" id="priceMax" name="priceMax" min="0" placeholder="Ví dụ: 110000">
+                            </div>
+                        </div>
+                    </div>
                     <div class="mb-3">
                         <label for="address" class="form-label">Địa chỉ *</label>
                         <input type="text" class="form-control" id="address" name="address" required>
                     </div>
                     <div class="mb-3">
-                        <label for="description" class="form-label">Mô tả *</label>
-                        <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                        <label for="description" class="form-label">Mô tả chi tiết *</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" minlength="<%= descriptionMin %>" required></textarea>
+                        <small class="text-muted">Tối thiểu <%= descriptionMin %> ký tự, mô tả rõ view, không gian và thực đơn nổi bật.</small>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="city_<%= location._id %>" class="form-label">Thành phố / Tỉnh *</label>
+                                <input type="text" class="form-control" id="city_<%= location._id %>" name="city" value="<%= cityValue %>" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="priceLevel_<%= location._id %>" class="form-label">Mức giá trung bình *</label>
+                                <select class="form-select" id="priceLevel_<%= location._id %>" name="priceLevel" required>
+                                    <option value="">Chọn mức giá</option>
+                                    <% priceLevelOptions.forEach(option => { %>
+                                        <option value="<%= option.value %>" <%= location.priceLevel === option.value ? 'selected' : '' %>><%= option.label %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="priceMin_<%= location._id %>" class="form-label">Giá tối thiểu (VND)</label>
+                                <input type="number" class="form-control" id="priceMin_<%= location._id %>" name="priceMin" min="0" value="<%= priceInfo.min || '' %>">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="priceMax_<%= location._id %>" class="form-label">Giá tối đa (VND)</label>
+                                <input type="number" class="form-control" id="priceMax_<%= location._id %>" name="priceMax" min="0" value="<%= priceInfo.max || '' %>">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Đặc điểm nổi bật *</label>
+                        <small class="text-muted d-block">Chọn tối thiểu <%= featureMin %> đặc điểm hoặc bổ sung trong phần mô tả.</small>
+                        <div class="row row-cols-1 row-cols-sm-2 g-2 mt-2">
+                            <% featureOptions.forEach((feature, index) => { const inputId = `feature_create_${index}`; %>
+                                <div class="col">
+                                    <div class="form-check border rounded p-2 h-100">
+                                        <input class="form-check-input" type="checkbox" name="features[]" value="<%= feature.value %>" id="<%= inputId %>">
+                                        <label class="form-check-label fw-semibold" for="<%= inputId %>"><%= feature.value %></label>
+                                        <% if (feature.hint) { %>
+                                            <small class="text-muted d-block"><%= feature.hint %></small>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="menuHighlights" class="form-label">Điểm nhấn thực đơn</label>
+                        <textarea class="form-control" id="menuHighlights" name="menuHighlights" rows="2" placeholder="Ngăn cách bằng dấu phẩy, ví dụ: Croissant bơ, Cold brew cam sả"></textarea>
                     </div>
                     <div class="mb-3" data-image-picker data-picker-id="create" data-initial-urls="[]" data-primary-input="#primaryImageUrl_create">
                         <label class="form-label">Hình ảnh địa điểm</label>
@@ -171,7 +279,12 @@
 
 <!-- Edit Location Modals -->
 <% if (locations && locations.length > 0) { %>
-    <% locations.forEach(location => { %>
+    <% locations.forEach(location => {
+        const selectedFeatures = location.features || [];
+        const menuHighlightText = (location.menuHighlights || []).join(', ');
+        const priceInfo = location.priceRange || {};
+        const cityValue = location.city || '';
+    %>
         <div class="modal fade" id="editLocationModal<%= location._id %>" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -207,8 +320,33 @@
                                 <input type="text" class="form-control" id="address_<%= location._id %>" name="address" value="<%= location.address %>" required>
                             </div>
                             <div class="mb-3">
-                                <label for="description_<%= location._id %>" class="form-label">Mô tả *</label>
-                                <textarea class="form-control" id="description_<%= location._id %>" name="description" rows="3" required><%= location.description %></textarea>
+                                <label for="description_<%= location._id %>" class="form-label">Mô tả chi tiết *</label>
+                                <textarea class="form-control" id="description_<%= location._id %>" name="description" rows="4" minlength="<%= descriptionMin %>" required><%= location.description %></textarea>
+                                <small class="text-muted">Tối thiểu <%= descriptionMin %> ký tự để trợ lý có đủ dữ liệu gợi ý.</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Đặc điểm nổi bật *</label>
+                                <small class="text-muted d-block">Chọn tối thiểu <%= featureMin %> đặc điểm mô tả đúng không gian.</small>
+                                <div class="row row-cols-1 row-cols-sm-2 g-2 mt-2">
+                                    <% featureOptions.forEach((feature, featureIndex) => {
+                                        const inputId = `feature_edit_${location._id}_${featureIndex}`;
+                                        const isChecked = selectedFeatures.includes(feature.value);
+                                    %>
+                                        <div class="col">
+                                            <div class="form-check border rounded p-2 h-100">
+                                                <input class="form-check-input" type="checkbox" name="features[]" value="<%= feature.value %>" id="<%= inputId %>" <%= isChecked ? 'checked' : '' %>>
+                                                <label class="form-check-label fw-semibold" for="<%= inputId %>"><%= feature.value %></label>
+                                                <% if (feature.hint) { %>
+                                                    <small class="text-muted d-block"><%= feature.hint %></small>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    <% }) %>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="menuHighlights_<%= location._id %>" class="form-label">Điểm nhấn thực đơn</label>
+                                <textarea class="form-control" id="menuHighlights_<%= location._id %>" name="menuHighlights" rows="2" placeholder="Ngăn cách bằng dấu phẩy"><%= menuHighlightText %></textarea>
                             </div>
                             <% const existingImages = (location.images && location.images.length ? location.images : (location.imageUrl ? [location.imageUrl] : [])); %>
                             <div class="mb-3" data-image-picker data-picker-id="edit-<%= location._id %>" data-initial-urls='<%- JSON.stringify(existingImages) %>' data-primary-input="#primaryImageUrl_<%= location._id %>">

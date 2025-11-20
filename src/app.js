@@ -14,6 +14,7 @@ require('dotenv').config({ path: './src/config/dotenv' });
 
 const connectDB = require('./config/db');
 const { addUserToLocals } = require('./middleware/auth');
+const locationMeta = require('./utils/locationMetadata');
 
 const userRoutes = require('./routes/user.routes');
 const locationRoutes = require('./routes/location.routes');
@@ -51,6 +52,7 @@ app.use(expressLayouts);
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.set('layout', 'layout');
+app.locals.locationMeta = locationMeta;
 
 app.use('/', userRoutes);
 app.use('/', locationRoutes);

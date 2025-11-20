@@ -7,6 +7,32 @@
 const Location = require('../models/location.model');
 const Review = require('../models/review.model');
 const Voucher = require('../models/voucher.model');
+const {
+  parseListInput,
+  mergeFeatureList,
+  inferMenuHighlightsFromText,
+  normalizePriceRange,
+  inferPriceLevelFromRange,
+  inferPriceLevelFromText,
+  buildKeywordSet,
+  DESCRIPTION_MIN_LENGTH,
+  FEATURE_MIN_COUNT
+} = require('../utils/locationMetadata');
+
+const normalizeDescription = (text = '') => text.replace(/\s+/g, ' ').trim();
+
+const ensureDetailedDescription = (description) => {
+  const normalized = normalizeDescription(description);
+  if (!normalized || normalized.length < DESCRIPTION_MIN_LENGTH) {
+    return null;
+  }
+  return normalized;
+};
+
+const ensureFeatureCoverage = (manualFeatures, description) => {
+  const merged = mergeFeatureList(manualFeatures, description);
+  return merged.slice(0, 10);
+};
 
 /**
  * Hàm: getAllLocations
@@ -86,16 +112,69 @@ const getLocationById = async (req, res) => {
  */
 const createLocation = async (req, res) => {
   try {
-    const { name, description, address, type, imageUrl } = req.body;
-    const ownerId = req.session.userId;
-
-    const location = new Location({
+    const {
       name,
       description,
       address,
       type,
+      imageUrl,
+      city,
+      priceLevel,
+      priceMin,
+      priceMax,
+      features,
+      menuHighlights
+    } = req.body;
+    const ownerId = req.session.userId;
+
+    const detailedDescription = ensureDetailedDescription(description);
+    if (!detailedDescription) {
+      req.flash('error', `Mô tả cần tối thiểu ${DESCRIPTION_MIN_LENGTH} ký tự với chi tiết về không gian, dịch vụ.`);
+      return res.redirect('/owner/locations');
+    }
+
+    const cityName = (city || '').trim();
+    if (!cityName) {
+      req.flash('error', 'Vui lòng nhập thành phố/tỉnh để khách dễ tìm kiếm.');
+      return res.redirect('/owner/locations');
+    }
+
+    const normalizedFeatures = ensureFeatureCoverage(features, detailedDescription);
+    if (normalizedFeatures.length < FEATURE_MIN_COUNT) {
+      req.flash('error', `Hãy chọn hoặc mô tả ít nhất ${FEATURE_MIN_COUNT} đặc điểm nổi bật để hỗ trợ tìm kiếm.`);
+      return res.redirect('/owner/locations');
+    }
+
+    const manualMenus = parseListInput(menuHighlights);
+    const inferredMenus = manualMenus.length ? manualMenus : inferMenuHighlightsFromText(detailedDescription);
+    const priceRange = normalizePriceRange(priceMin, priceMax);
+    const priceLevelFromRange = inferPriceLevelFromRange(priceRange);
+    const resolvedPriceLevel = priceLevel || priceLevelFromRange || inferPriceLevelFromText(detailedDescription);
+
+    const keywordSet = buildKeywordSet({
+      name,
+      city: cityName,
+      address,
+      type,
+      description: detailedDescription,
+      features: normalizedFeatures,
+      menuHighlights: inferredMenus,
+      priceLevel: resolvedPriceLevel
+    });
+
+    const location = new Location({
+      name,
+      description: detailedDescription,
+      address,
+      type,
       imageUrl: imageUrl || 'https://via.placeholder.com/400x300?text=No+Image',
-      owner: ownerId
+      owner: ownerId,
+      city: cityName,
+      priceLevel: resolvedPriceLevel,
+      priceRange,
+      features: normalizedFeatures,
+      menuHighlights: inferredMenus,
+      keywords: keywordSet
     });
 
     await location.save();
@@ -115,7 +194,19 @@ const createLocation = async (req, res) => {
 const updateLocation = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, address, type, imageUrl } = req.body;
+    const {
+      name,
+      description,
+      address,
+      type,
+      imageUrl,
+      city,
+      priceLevel,
+      priceMin,
+      priceMax,
+      features,
+      menuHighlights
+    } = req.body;
     const ownerId = req.session.userId;
 
     const location = await Location.findOne({
@@ -128,10 +219,50 @@ const updateLocation = async (req, res) => {
       return res.redirect('/owner/locations');
     }
 
+    const detailedDescription = ensureDetailedDescription(description);
+    if (!detailedDescription) {
+      req.flash('error', `Mô tả cần tối thiểu ${DESCRIPTION_MIN_LENGTH} ký tự với chi tiết về không gian, dịch vụ.`);
+      return res.redirect('/owner/locations');
+    }
+
+    const cityName = (city || '').trim();
+    if (!cityName) {
+      req.flash('error', 'Vui lòng nhập thành phố/tỉnh để khách dễ tìm kiếm.');
+      return res.redirect('/owner/locations');
+    }
+
+    const normalizedFeatures = ensureFeatureCoverage(features, detailedDescription);
+    if (normalizedFeatures.length < FEATURE_MIN_COUNT) {
+      req.flash('error', `Hãy chọn hoặc mô tả ít nhất ${FEATURE_MIN_COUNT} đặc điểm nổi bật để hỗ trợ tìm kiếm.`);
+      return res.redirect('/owner/locations');
+    }
+
+    const manualMenus = parseListInput(menuHighlights);
+    const inferredMenus = manualMenus.length ? manualMenus : inferMenuHighlightsFromText(detailedDescription);
+    const priceRange = normalizePriceRange(priceMin, priceMax);
+    const priceLevelFromRange = inferPriceLevelFromRange(priceRange);
+    const resolvedPriceLevel = priceLevel || priceLevelFromRange || inferPriceLevelFromText(detailedDescription);
+    const keywordSet = buildKeywordSet({
+      name,
+      city: cityName,
+      address,
+      type,
+      description: detailedDescription,
+      features: normalizedFeatures,
+      menuHighlights: inferredMenus,
+      priceLevel: resolvedPriceLevel
+    });
+
     location.name = name;
-    location.description = description;
+    location.description = detailedDescription;
     location.address = address;
     location.type = type;
+    location.city = cityName;
+    location.priceLevel = resolvedPriceLevel;
+    location.priceRange = priceRange;
+    location.features = normalizedFeatures;
+    location.menuHighlights = inferredMenus;
+    location.keywords = keywordSet;
     if (imageUrl) location.imageUrl = imageUrl;
 
     await location.save();
@@ -210,7 +341,12 @@ const getLocationSummary = async (req, res) => {
         description: location.description,
         address: location.address,
         type: location.type,
-        imageUrl: location.imageUrl
+        imageUrl: location.imageUrl,
+        city: location.city,
+        priceLevel: location.priceLevel,
+        priceRange: location.priceRange,
+        features: location.features,
+        menuHighlights: location.menuHighlights
       },
       vouchers,
       reviews,
