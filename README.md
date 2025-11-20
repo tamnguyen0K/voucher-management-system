@@ -1,232 +1,178 @@
 # Voucher Management System
 
-Hệ thống quản lý voucher và địa điểm được xây dựng với Node.js, Express, MongoDB và EJS.
+Nền tảng web giúp quản trị voucher và địa điểm ăn uống/giải trí. Ứng dụng monolith Node.js + Express, render giao diện bằng EJS, lưu trữ dữ liệu trên MongoDB và phục vụ ba nhóm người dùng: khách thường, chủ địa điểm và admin.
 
-## 🚀 Tính năng
+---
 
-### 👤 Người dùng
-- Đăng ký, đăng nhập, đăng xuất
-- Xem danh sách địa điểm và voucher đang hoạt động
-- Claim voucher (giảm số lượng, thêm vào lịch sử)
-- Đánh giá địa điểm (rating + comment)
+## 📚 Mục lục
+1. [Tính năng chính](#-tính-năng-chính)
+2. [Kiến trúc & công nghệ](#-kiến-trúc--công-nghệ)
+3. [Yêu cầu hệ thống](#-yêu-cầu-hệ-thống)
+4. [Hướng dẫn cài đặt nhanh](#-hướng-dẫn-cài-đặt-nhanh)
+5. [.env mẫu & giải thích](#-env-mẫu--giải-thích)
+6. [Seed dữ liệu & tài khoản demo](#-seed-dữ-liệu--tài-khoản-demo)
+7. [Chạy project & scripts hữu ích](#-chạy-project--scripts-hữu-ích)
+8. [Cấu trúc thư mục](#-cấu-trúc-thư-mục)
+9. [Luồng người dùng tiêu biểu](#-luồng-người-dùng-tiêu-biểu)
+10. [Troubleshooting](#-troubleshooting)
+11. [Triển khai production](#-triển-khai-production)
+12. [Đóng góp](#-đóng-góp)
 
-### 🏪 Chủ quán (Owner)
-- Đăng nhập với role = owner
-- Quản lý voucher của địa điểm mình sở hữu (CRUD)
-- Xem thống kê lượt claim voucher
-- Quản lý địa điểm
+---
 
-### 🧰 Admin
-- Quản lý tất cả người dùng, voucher, địa điểm, và review
-- Xóa, chỉnh sửa nội dung sai phạm
-- Dashboard thống kê tổng quan
+## 🚀 Tính năng chính
 
-## 🛠 Công nghệ sử dụng
+| Nhóm người dùng | Khả năng |
+| --- | --- |
+| 👤 **User** | Đăng ký/đăng nhập, duyệt địa điểm, xem & claim voucher, viết review kèm media |
+| 🏪 **Owner** | Quản lý địa điểm sở hữu, tạo/cập nhật voucher, theo dõi review & lượt claim |
+| 🛡 **Admin** | Toàn quyền quản lý user/location/voucher/review, dashboard thống kê, kiểm duyệt nội dung |
 
-- **Backend**: Node.js + Express.js
-- **Frontend**: EJS template engine + Bootstrap 5
-- **Database**: MongoDB (Mongoose)
-- **Authentication**: Express-session
-- **Styling**: Bootstrap 5 + Custom CSS
-- **Icons**: Font Awesome
+Năng lực chung:
+- Session-based auth + RBAC (user / owner / admin)
+- Review giới hạn 1 review/user/location, hỗ trợ upload media
+- Flash message nhất quán, giao diện responsive Bootstrap 5
 
-## 📦 Cài đặt
+---
 
-### Yêu cầu hệ thống
-- Node.js (v14 trở lên)
-- MongoDB (v4.4 trở lên)
-- NPM hoặc Yarn
+## 🧱 Kiến trúc & công nghệ
+- **Backend**: Node.js 18+, Express 4, express-session, connect-mongo, multer
+- **Database**: MongoDB 6 (Atlas hoặc local)
+- **View layer**: EJS + express-ejs-layouts, Bootstrap 5, Font Awesome
+- **Upload**: Multer lưu file vào `src/uploads/reviews/<userId>`
+- **Tổ chức mã nguồn**:
+  - `controllers/` xử lý business logic từng domain
+  - `routes/` gom route theo vai trò/domain
+  - `middleware/auth.js` cho RBAC, flash helpers
+  - `utils/locationMetadata.js` chuẩn hóa dữ liệu location (menu/price/features)
 
-### Bước 1: Clone repository
+---
+
+## 🖥 Yêu cầu hệ thống
+- Node.js ≥ 18.x
+- npm ≥ 9.x
+- MongoDB ≥ 6.0 (local hoặc Atlas)
+- Git
+- Trên Windows: chạy terminal với quyền Admin khi khởi động dịch vụ hoặc thao tác file hệ thống
+
+---
+
+## ⚙️ Hướng dẫn cài đặt nhanh
 ```bash
+# 1. Clone code
 git clone <repository-url>
 cd voucher-management-system
-```
 
-### Bước 2: Cài đặt dependencies
-```bash
+# 2. Cài dependencies
 npm install
-```
 
-### Bước 3: Cấu hình môi trường
-Tạo file `.env` trong thư mục `src/config/` với nội dung:
+# 3. Tạo file môi trường
+cp src/config/.env.example src/config/.env  # hoặc tạo thủ công (xem phần .env)
+
+# 4. Khởi động MongoDB
+# Windows:  net start MongoDB
+# macOS:    brew services start mongodb/brew/mongodb-community
+# Ubuntu:   sudo systemctl start mongod
+
+# 5. Seed dữ liệu mẫu
+npm run seed
+
+# 6. Khởi chạy
+npm run dev   # Dev mode dùng nodemon
+# hoặc
+npm start     # Production mode
 ```
-NODE_ENV=development
-PORT=3000
+Truy cập `http://localhost:3000`.
+
+---
+
+## 🧾 .env mẫu & giải thích
+Tạo `src/config/.env`:
+```
+NODE_ENV=development          # development | production
+PORT=3000                     # Cổng Express
 MONGODB_URI=mongodb://localhost:27017/voucher_system
-SESSION_SECRET=your-secret-key-here
+SESSION_SECRET=change-me-please-very-long
 ```
+> Gợi ý tạo secret mạnh: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`.
 
-### Bước 4: Khởi động MongoDB
-Đảm bảo MongoDB đang chạy trên máy của bạn:
-```bash
-# Windows
-net start MongoDB
+---
 
-# macOS/Linux
-sudo systemctl start mongod
+## 🌱 Seed dữ liệu & tài khoản demo
 ```
-
-### Bước 5: Seed dữ liệu mẫu
-```bash
 npm run seed
 ```
+Script tạo:
+- 1 admin (`admin@example.com` / `admin123`)
+- 2 owner (`owner1@example.com`, `owner2@example.com` / `owner123`)
+- 2 regular user (`user1@example.com`, `user2@example.com` / `user123`)
+- 6 địa điểm, 6 voucher, 9 review mẫu
 
-### Bước 6: Khởi động ứng dụng
-```bash
-# Development mode
-npm run dev
+> Lệnh seed sẽ **ghi đè** dữ liệu liên quan, cân nhắc backup trước khi chạy trong môi trường thật.
 
-# Production mode
-npm start
-```
+---
 
-Truy cập ứng dụng tại: `http://localhost:3000`
+## 🏃‍♂️ Chạy project & scripts hữu ích
+| Lệnh | Mô tả |
+| --- | --- |
+| `npm run dev` | Khởi chạy với nodemon, auto reload khi đổi code |
+| `npm start` | Khởi chạy production (node `src/app.js`) |
+| `npm run seed` | Ghi dữ liệu mẫu |
+| `npm run migrate` | Chạy script migration (ví dụ đồng bộ field user) |
+| `npm run enrich:locations` | Chuẩn hóa metadata location hiện có |
+| `npm run enrich:locations:dry` | Enrich ở chế độ xem trước (không ghi DB) |
 
-## 👥 Tài khoản demo
+Luôn chắc chắn MongoDB đang chạy trước khi dùng các script thao tác DB.
 
-Sau khi chạy seed, bạn có thể sử dụng các tài khoản sau:
-
-### Admin
-- **Email**: admin@example.com
-- **Password**: admin123
-
-### Owner
-- **Email**: owner1@example.com
-- **Password**: owner123
-
-### User
-- **Email**: user1@example.com
-- **Password**: user123
+---
 
 ## 📁 Cấu trúc thư mục
-
 ```
-project/
-├── src/
-│   ├── models/           # MongoDB models
-│   ├── controllers/      # Business logic
-│   ├── routes/          # Route handlers
-│   ├── views/           # EJS templates
-│   │   ├── pages/       # Public pages
-│   │   └── admin/       # Admin pages
-│   ├── middleware/      # Custom middleware
-│   ├── config/          # Configuration files
-│   ├── public/          # Static files
-│   │   ├── css/
-│   │   ├── js/
-│   │   └── images/
-│   └── app.js           # Main application file
-├── package.json
-└── README.md
+src/
+├── app.js                # Bootstrap Express, mount middleware & routes
+├── config/               # db helper, dotenv loader, seed/enrich/migrate scripts
+├── controllers/          # Business logic (location, voucher, review, user, owner)
+├── middleware/           # auth guards, upload handler
+├── models/               # User, Location, Voucher, Review schemas
+├── public/               # CSS/JS/static assets
+├── routes/               # user/location/voucher/owner/admin router
+├── uploads/              # Media upload (gitignored)
+├── utils/                # location metadata helper
+└── views/                # EJS layout + pages (pages/admin/owner)
 ```
 
-## 🗄 Mô hình dữ liệu
+---
 
-### User
-- username, email, password
-- role: 'user' | 'owner' | 'admin'
-- createdAt
+## 🔄 Luồng người dùng tiêu biểu
+1. **User**: đăng nhập → duyệt `/locations` → xem chi tiết → claim voucher (`POST /vouchers/:id/claim`) → voucher ghi vào hồ sơ cá nhân.
+2. **Owner**: vào `/owner/dashboard` → tạo/cập nhật địa điểm & voucher → theo dõi review/claim thuộc địa điểm của mình.
+3. **Admin**: vào `/admin/dashboard` → xem thống kê → quản lý users/locations/vouchers/reviews để duyệt hoặc xử lý vi phạm.
 
-### Location
-- name, description, address
-- type: 'restaurant' | 'cafe' | 'tourist_spot'
-- rating, imageUrl
-- owner (ref: User)
-- createdAt
+---
 
-### Voucher
-- code (unique)
-- discountPct, quantityTotal, quantityClaimed
-- startDate, endDate
-- location (ref: Location)
-- conditions
-- createdAt
+## 🛠 Troubleshooting
+| Lỗi | Cách khắc phục |
+| --- | --- |
+| `connect ECONNREFUSED 127.0.0.1:27017` | MongoDB chưa chạy → khởi động service (net start / brew services / systemctl) |
+| `listen EADDRINUSE :::3000` | Port 3000 đã dùng → đổi `PORT` trong `.env` hoặc kill process đang chạy |
+| `Cannot find module ...` | Thiếu dependency → chạy lại `npm install` |
+| Warning `connect.session() MemoryStore` | Chỉ xuất hiện khi dev; production nên dùng Mongo store (app đã config `connect-mongo`) |
 
-### Review
-- user (ref: User)
-- location (ref: Location)
-- rating (1-5), comment
-- createdAt
+---
 
-## 🔧 API Endpoints
+## ☁️ Triển khai production
+- **Build**: monolith Express nên chỉ cần `npm install --production` + `npm start`.
+- **Process manager**: dùng PM2 hoặc systemd để tự restart + log rotation.
+- **Static assets**: có thể phục vụ qua Express hoặc reverse proxy (Nginx) + cache.
+- **Security khuyến nghị**:
+  - đặt `SESSION_SECRET` mạnh, bật HTTPS và `cookie.secure=true`
+  - khóa port MongoDB, chỉ cho phép app server truy cập
+  - backup định kỳ MongoDB và thư mục `src/uploads`
+- **Monitoring**: tích hợp logger (Winston/Pino) và central log/metrics nếu triển khai thực tế.
 
-### Authentication
-- `GET /auth` - Login/Register page
-- `POST /register` - Register new user
-- `POST /login` - Login user
-- `POST /logout` - Logout user
+---
 
-### Locations
-- `GET /locations` - Get all locations
-- `GET /locations/:id` - Get location by ID
-- `POST /locations/:id/reviews` - Create review
-
-### Vouchers
-- `GET /vouchers` - Get all active vouchers
-- `POST /vouchers/:id/claim` - Claim voucher
-
-### Admin
-- `GET /admin/dashboard` - Admin dashboard
-- `GET /admin/users` - Manage users
-- `GET /admin/locations` - Manage locations
-- `GET /admin/vouchers` - Manage vouchers
-- `GET /admin/reviews` - Manage reviews
-
-### Owner
-- `GET /owner/dashboard` - Owner dashboard
-- `GET /owner/locations` - Manage own locations
-- `GET /owner/vouchers` - Manage own vouchers
-
-## 🎨 Giao diện
-
-- **Responsive design** với Bootstrap 5
-- **Modern UI/UX** với custom CSS
-- **Interactive elements** với JavaScript
-- **Real-time feedback** với flash messages
-- **Mobile-friendly** design
-
-## 🔒 Bảo mật
-
-- Password hashing với bcrypt
-- Session-based authentication
-- Role-based access control
-- Input validation và sanitization
-- CSRF protection
-
-## 🚀 Deployment
-
-### Heroku
-1. Tạo app trên Heroku
-2. Cấu hình MongoDB Atlas
-3. Set environment variables
-4. Deploy code
-
-### VPS/Server
-1. Cài đặt Node.js và MongoDB
-2. Clone repository
-3. Cài đặt dependencies
-4. Cấu hình reverse proxy (Nginx)
-5. Sử dụng PM2 để quản lý process
-
-## 🧪 Testing
-
-```bash
-# Chạy seed để test
-npm run seed
-
-# Test các chức năng:
-# 1. Đăng ký/đăng nhập
-# 2. Claim voucher
-# 3. Viết review
-# 4. Quản lý admin/owner
-```
-
-## 📝 Scripts
-
-```bash
-npm start          # Start production server
-npm run dev        # Start development server với nodemon
-npm run seed       # Seed dữ liệu mẫu
-```
-
+## 🤝 Đóng góp
+1. Fork repo & tạo branch feature/bugfix.
+2. Mô tả rõ issue/feature trong PR.
+3. Chạy lại `npm run seed` + smoke test nhanh các flow chính trước khi gửi PR
