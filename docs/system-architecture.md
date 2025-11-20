@@ -263,7 +263,7 @@ sequenceDiagram
 flowchart LR
     A[Owner UI /owner/manage_location] --> B[location.controller.create/update]
     B --> C[Validate form + ensure description length]
-    C --> D[Enrich metadata (feature/menu/price/city/keywords)]
+    C --> D[Enrich metadata </br>feature/menu/price/city/keywords]
     D --> E[(MongoDB.locations)]
     E --> F[Dashboards + search APIs]
 ```
