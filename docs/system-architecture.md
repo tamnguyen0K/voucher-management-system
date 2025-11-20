@@ -1,16 +1,75 @@
-# Voucher Management System - System Architecture
+# Voucher Management System – Project Architecture
 
-Tài liệu này mô tả cấu trúc hiện tại của hệ thống quản lý voucher được xây dựng bằng Node.js, Express, MongoDB và EJS. Nội dung tập trung vào cách các lớp giao diện, dịch vụ và dữ liệu phối hợp để phục vụ admin, chủ địa điểm (owner) và người dùng cuối.
+Tài liệu mô tả kiến trúc và cách vận hành hiện tại của hệ thống quản lý voucher được xây dựng bằng Node.js + Express + MongoDB + EJS. Nội dung được sắp xếp theo mạch thực hiện dự án: mục tiêu → use case → kiến trúc → thiết kế chi tiết → vận hành.
 
-## 1. Scope & Personas (Bối cảnh & vai trò)
+---
 
-- Nền tảng web đơn nhất (monolith) phục vụ người dùng cuối, chủ địa điểm và admin thông qua giao diện EJS responsive.
-- Admin kiểm soát toàn bộ dữ liệu (người dùng, địa điểm, voucher, review) và xem dashboard thống kê trong `views/admin`.
-- Owner quản lý địa điểm, voucher và theo dõi phản hồi khách hàng trong `views/owner`.
-- Regular user đăng ký/đăng nhập, duyệt địa điểm, claim voucher và gửi review có media.
-- Tài liệu tập trung vào các thành phần server-side (`src/**`) và dữ liệu (MongoDB + filesystem uploads); client-side thuần EJS/Bootstrap nên không có framework riêng.
+## 1. Project summary & goals
+- **Mục tiêu**: cung cấp nền tảng web tập trung quản lý địa điểm, voucher và review; hỗ trợ user cuối claim ưu đãi, owner chăm sóc địa điểm, admin kiểm duyệt toàn hệ thống.
+- **Định hướng triển khai**:
+  - Monolith Express để tối ưu tốc độ phát triển.
+  - Render server-side với EJS + Bootstrap (không framework SPA).
+  - MongoDB làm nguồn dữ liệu chính kiêm session store; file upload lưu trên disk.
+- **Phạm vi tài liệu**: các thành phần phía server (`src/**`), dữ liệu (MongoDB + filesystem) và quy trình vận hành; phần UI thuần EJS/Bootstrap nên không trình bày chi tiết.
 
-## 2. Layered Architecture Overview (Kiến trúc phân lớp)
+---
+
+## 2. Personas & primary use cases
+
+### 2.1 Actors
+| Actor | Mục đích chính | Module |
+| --- | --- | --- |
+| User | Duyệt địa điểm, claim voucher, viết review | `views/pages`, `voucher.controller`, `review.controller` |
+| Owner | Quản lý địa điểm/voucher thuộc sở hữu, theo dõi feedback | `views/owner`, `owner.controller` |
+| Admin | Giám sát thống kê, quản lý dữ liệu và kiểm duyệt nội dung | `views/admin`, `admin.routes` |
+
+### 2.2 Use case overview
+
+```mermaid
+flowchart TB
+    U[User]
+    UC1(Duyệt địa điểm & xem voucher)
+    UC2(Claim voucher)
+    UC3(Viết review có media)
+    U --> UC1
+    U --> UC2
+    U --> UC3
+    UC3 -. include .-> UC1
+```
+Hình 1 – Use case User
+
+```mermaid
+flowchart TB
+    O[Owner]
+    OC1(Quản lý địa điểm)
+    OC2(Quản lý voucher)
+    OC3(Theo dõi review/claim)
+    O --> OC1
+    O --> OC2
+    O --> OC3
+    OC2 -. include .-> OC1
+```
+Hình 2 – Use case Owner
+
+```mermaid
+flowchart TB
+    A[Admin]
+    AC1(Giám sát dashboard)
+    AC2(Quản lý user/location/voucher/review)
+    AC3(Kiểm duyệt nội dung vi phạm)
+    A --> AC1
+    A --> AC2
+    A --> AC3
+    AC1 -. include .-> AC2
+    AC3 -. extend .-> AC2
+```
+Hình 3 – Use case Admin
+
+Chi tiết từng luồng được trình bày trong phần 9.
+
+---
+
+## 3. Architecture overview
 
 ```mermaid
 graph TB
@@ -18,14 +77,14 @@ graph TB
         B["Browsers<br/>(EJS pages + fetch APIs)"]
     end
     subgraph "Server Layer (Express app)"
-        R[Route modules</br>user/location/voucher/owner/admin] --> C[Controllers & services]
+        R[Route modules<br/>user/location/voucher/owner/admin] --> C[Controllers & services]
         C --> MW["Middleware<br/>(auth, flash, upload)"]
         C --> V["View rendering<br/>(EJS + layouts)"]
     end
     subgraph "Data Layer"
-        DB[(MongoDB</br>Mongoose models)]
+        DB[(MongoDB<br/>Mongoose models)]
         SS[(Mongo-backed session store)]
-        FS[(Uploads on disk</br>src/uploads/reviews)]
+        FS[(Uploads on disk<br/>src/uploads/reviews)]
     end
     B --> R
     B <-->|HTML/JSON| V
@@ -34,59 +93,56 @@ graph TB
     MW --> SS
 ```
 
-- **Client layer**: trình duyệt tải EJS render sẵn kết hợp Bootstrap 5, Font Awesome và các fetch API nhẹ.
-- **Server layer**: `src/app.js` bootstraps Express, đăng ký routes, middleware, layout engine và inject metadata (`app.locals.locationMeta`).
-- **Data layer**: MongoDB lưu toàn bộ entities và đồng thời làm session store thông qua `connect-mongo`; media review được lưu trên ổ đĩa (`src/uploads`).
+- **Client layer**: trình duyệt tải EJS render sẵn + Bootstrap 5/Font Awesome, có một số fetch API nhẹ (claim voucher, summary).
+- **Server layer**: `src/app.js` khởi tạo Express, mount routes, middleware và cấu hình layout (`express-ejs-layouts`).
+- **Data layer**: MongoDB lưu toàn bộ entity và session (qua `connect-mongo`); upload review lưu ở `src/uploads`.
 
-## 3. Runtime Components
+---
 
-### 3.1 Application shell (`src/app.js`)
+## 4. Backend components (implementation plan)
 
-- Nạp biến môi trường từ `src/config/dotenv`, kết nối Mongo thông qua `src/config/db.js`, sau đó khởi tạo Express.
-- Chuỗi middleware chuẩn: `express.json/urlencoded`, static assets (`src/public`), static uploads (`/uploads`), session (`express-session` + `connect-mongo`), `connect-flash`, `addUserToLocals` để EJS biết thông tin người dùng hiện tại.
-- Dùng `express-ejs-layouts` với layout mặc định `views/layout.ejs`; `app.locals.locationMeta` cung cấp metadata cho mọi view.
-- Định tuyến: `/` hiển thị trang chủ (lấy location/voucher mới), sau đó mount `userRoutes`, `locationRoutes`, `voucherRoutes`, `adminRoutes`, `ownerRoutes`.
-- Bộ xử lý 404 và lỗi tổng hợp đảm bảo trả về trang thân thiện, đồng thời log lỗi ra console.
+### 4.1 Application shell (`src/app.js`)
+- Load env (`src/config/dotenv`), kết nối Mongo (`src/config/db.js`), boot Express.
+- Middleware chuỗi: body parser, static assets (`src/public`), static uploads (`/uploads`), session + flash + `addUserToLocals`.
+- Layout mặc định `views/layout.ejs`, inject metadata qua `app.locals.locationMeta`.
+- Mount route modules: `/`, `userRoutes`, `locationRoutes`, `voucherRoutes`, `adminRoutes`, `ownerRoutes`.
+- Handlers cho 404 + error logging.
 
-### 3.2 Routing & domain controllers
+### 4.2 Routing & controllers
 
-| Domain | Route entry | Controller(s) | Responsibilities | Output |
+| Domain | Route entry | Controller | Vai trò chính | Output |
 | --- | --- | --- | --- | --- |
-| Authentication & profile | `src/routes/user.routes.js` | `controllers/user.controller.js` | Render trang login/register, đăng ký, đăng nhập, logout, profile user/owner | `views/pages/login_register.ejs`, `pages/profile.ejs`, `owner/profile.ejs` |
-| Locations & discovery | `src/routes/location.routes.js` | `controllers/location.controller.js` | Danh sách/chi tiết địa điểm, summary API, CRUD location cho owner | `views/pages/locations.ejs`, `pages/location_detail.ejs`, JSON API (`/locations/:id/summary`) |
-| Reviews | `location.routes.js` + owner/admin routes | `controllers/review.controller.js` | Tạo/sửa/xóa review, quản lý media, dashboard review cho owner/admin | `views/pages/location_detail.ejs`, `owner/manage_review.ejs`, `admin/review_detail.ejs` |
-| Vouchers | `src/routes/voucher.routes.js` | `controllers/voucher.controller.js` | List voucher đang hoạt động, user claim voucher, owner CRUD voucher, render bảng quản lý | `views/pages/voucher_list.ejs`, `admin/manage_voucher.ejs` |
-| Owner area | `src/routes/owner.routes.js` | `controllers/owner.controller.js`, `user.controller`, `review.controller` | Dashboard owner, danh sách địa điểm, hồ sơ, review thuộc địa điểm của mình | `views/owner/*.ejs` |
-| Admin area | `src/routes/admin.routes.js` | Inline route handlers + `review.controller` | Dashboard tổng quan, quản lý user/location/voucher/review, JSON endpoints nhỏ | `views/admin/*.ejs`, JSON |
+| Auth/Profile | `src/routes/user.routes.js` | `user.controller.js` | đăng ký/đăng nhập/logout, trang profile | `views/pages/login_register.ejs`, `pages/profile.ejs`, `owner/profile.ejs` |
+| Locations | `src/routes/location.routes.js` | `location.controller.js` | danh sách/chi tiết, summary API, CRUD owner | `views/pages/locations.ejs`, `pages/location_detail.ejs`, JSON `/locations/:id/summary` |
+| Reviews | `location.routes.js` + owner/admin routes | `review.controller.js` | tạo/sửa/xóa review, upload media, dashboard owner/admin | `views/pages/location_detail.ejs`, `owner/manage_review.ejs`, `admin/review_detail.ejs` |
+| Vouchers | `src/routes/voucher.routes.js` | `voucher.controller.js` | list voucher, claim flow, owner CRUD | `views/pages/voucher_list.ejs`, `admin/manage_voucher.ejs` |
+| Owner area | `src/routes/owner.routes.js` | `owner.controller.js` + phụ trợ | dashboard, hồ sơ, quản lý địa điểm/voucher của chính owner | `views/owner/*.ejs` |
+| Admin area | `src/routes/admin.routes.js` | inline handlers + `review.controller` | dashboard thống kê, CRUD user/location/voucher/review | `views/admin/*.ejs`, JSON |
 
-> Các controller chia sẻ Mongoose models (`src/models/*.js`) để truy xuất dữ liệu theo domain.
+### 4.3 Middleware & session services
+- `middleware/auth.js`: `requireAuth`, `requireAdmin`, `requireOwner`, `requireRole`, `redirectIfAuthenticated`, `addUserToLocals`.
+- Session: `express-session` + `connect-mongo`, cookie 1 ngày, hỗ trợ bật `cookie.secure`.
+- Upload: `middleware/upload.js` (multer) tạo thư mục `uploads/reviews/<userId>`, 15 MB/file, tối đa 5 file, filter ảnh/video.
+- Flash message: `connect-flash` + `req.session` hỗ trợ feedback sau redirect.
 
-### 3.3 Middleware & session services
+### 4.4 View layer & static assets
+- Layout `views/layout.ejs` bao bọc `views/pages`, `views/admin`, `views/owner`; partials dùng chung (navbar, alerts, cards).
+- UI: Bootstrap 5, Font Awesome, custom CSS/JS (`src/public/css`, `src/public/js`).
+- Upload phục vụ trực tiếp qua Express (`/uploads`).
 
-- `middleware/auth.js` cung cấp `requireAuth`, `requireAdmin`, `requireOwner`, `requireRole`, `redirectIfAuthenticated` và `addUserToLocals`. Tất cả route nhạy cảm (owner/admin/claim voucher/review) đều sử dụng guard này.
-- Session lưu trong MongoDB thông qua `connect-mongo`, cookie 1 ngày, có thể bật `cookie.secure` khi deploy HTTPS.
-- `middleware/upload.js` (multer) xử lý upload media review: tạo thư mục theo `uploads/reviews/<userId>`, giới hạn 15 MB/tệp và tối đa 5 file, chỉ nhận ảnh/video.
-- Flash message (`connect-flash`) + `req.session` cung cấp phản hồi người dùng nhất quán sau redirect.
+### 4.5 Services & utilities
+- `utils/locationMetadata.js`: chuẩn hóa feature/menu/price, remove tone, suy luận price/city/keyword; dùng trong controller và script enrich.
+- Helpers trong `location.controller`: `ensureDetailedDescription`, `ensureFeatureCoverage`, builder preview.
 
-### 3.4 View layer & static assets
+### 4.6 Support scripts & tooling
+- `src/config/db.js`: helper kết nối Mongo (app & scripts).
+- `src/config/migrate.js`: thêm `phoneNumber`/`idName` cho user cũ.
+- `src/config/enrich_locations.js`: enrich metadata location (hỗ trợ `--dry`).
+- npm scripts: `npm run dev`, `start`, `migrate`, `enrich:locations[:dry]`, `seed`.
 
-- Layout chính `views/layout.ejs` bao bọc các trang trong `views/pages`, `views/admin`, `views/owner`, cùng partials (navbar, alerts, cards).
-- UI dựa trên Bootstrap 5 + Font Awesome, CSS/JS tùy biến nằm ở `src/public/css` và `src/public/js`. Static assets được phục vụ từ `/` thông qua `express.static`.
-- Upload người dùng không đi qua CDN; Express phục vụ trực tiếp thư mục `src/uploads` dưới prefix `/uploads`.
+---
 
-### 3.5 Services & utilities
-
-- `utils/locationMetadata.js` chứa thư viện feature/menu/price, hàm chuẩn hóa text (remove tone), phân tích menu, suy luận price level, city, keywords. Module này được dùng trong controller, script enrich và `app.locals`.
-- Helper trong `location.controller` đảm bảo mô tả/đặc điểm địa điểm đạt chuẩn trước khi ghi DB (ví dụ `ensureDetailedDescription`, `ensureFeatureCoverage`).
-
-### 3.6 Support scripts & tooling
-
-- `src/config/db.js`: helper kết nối Mongo (dùng bởi app và scripts).
-- `src/config/migrate.js`: migration thêm `phoneNumber`/`idName` cho user thiếu dữ liệu.
-- `src/config/enrich_locations.js`: chuẩn hóa & làm giàu location hiện có (feature, menu, price, city, keyword) với chế độ dry-run.
-- npm scripts: `npm run dev` (nodemon), `npm start`, `npm run migrate`, `npm run enrich:locations[:dry]`, `npm run seed` (đưa dữ liệu mẫu như mô tả trong README).
-
-## 4. Data model & storage
+## 5. Data model & storage
 
 ```mermaid
 erDiagram
@@ -154,18 +210,19 @@ erDiagram
     }
 ```
 
-| Store | Important fields | Indexes/Constraints | Notes |
+| Store | Fields chính | Index/Constraint | Ghi chú |
 | --- | --- | --- | --- |
-| `users` | `username`, `email`, `phoneNumber`, `role`, `claimedVouchers[]` | Unique indexes trên `username`, `email`, `phoneNumber`; bcrypt hash trong hook `pre('save')` | Session lưu `_id`, `role`, `username`; `claimedVouchers` được dọn khi hết hạn |
-| `locations` | `name`, `description`, `address`, `type`, `city`, `priceLevel`, `features`, `menuHighlights`, `keywords`, `owner`, `rating` | Text index trên `name/description/address/city/keywords`; index `owner` | Metadata chuẩn hóa giúp search và dashboard thống kê hoạt động ổn định |
-| `vouchers` | `code`, `discountPct`, `quantityTotal/Claimed`, `startDate/endDate`, `location`, `conditions` | Index `code`, `location`, `startDate`, `endDate` | Virtual fields `quantityRemaining`, `status`; owner CRUD kiểm tra quyền sở hữu location |
-| `reviews` | `user`, `location`, `rating`, `comment`, `media[]` | Unique compound index `(user, location)`; index `location`, `createdAt` | `media[]` lưu metadata file; helper xóa file khi review bị xóa |
-| Filesystem uploads | `src/uploads/reviews/<userId>/<filename>` | Directory per user; tên file đã sanitized | Đảm bảo backup vì chứa bằng chứng tương tác người dùng |
+| `users` | `username`, `email`, `phoneNumber`, `role`, `claimedVouchers[]` | Unique `username/email/phoneNumber`; bcrypt hash trong `pre('save')` | Session lưu `_id`, `role`, `username`; dọn `claimedVouchers` khi hết hạn |
+| `locations` | `name`, `description`, `address`, `type`, `city`, `priceLevel`, `features`, `menuHighlights`, `keywords`, `owner`, `rating` | Text index `name/description/address/city/keywords`; index `owner` | Metadata chuẩn hóa giúp search + dashboard ổn định |
+| `vouchers` | `code`, `discountPct`, `quantityTotal/Claimed`, `startDate/endDate`, `location`, `conditions` | Index `code`, `location`, `startDate`, `endDate` | Có virtual `quantityRemaining`, `status`; owner CRUD kiểm tra ownership |
+| `reviews` | `user`, `location`, `rating`, `comment`, `media[]` | Unique `(user, location)`; index `location`, `createdAt` | `media[]` lưu metadata file; helper xóa file khi review bị xóa |
+| Filesystem uploads | `src/uploads/reviews/<userId>/<filename>` | Dir per user | Cần backup vì chứa bằng chứng tương tác |
 
-## 5. Key request flows (Luồng chính)
+---
 
-### 5.1 Session authentication
+## 6. Key request flows
 
+### 6.1 Session authentication
 ```mermaid
 sequenceDiagram
     participant B as Browser
@@ -174,19 +231,17 @@ sequenceDiagram
     participant DB as MongoDB (users)
     participant SS as Session store (Mongo)
     B->>R: POST /login (email, password)
-    R->>C: Invoke login()
+    R->>C: invoke login()
     C->>DB: findOne({ email })
     DB-->>C: user doc
     C->>C: bcrypt.compare(password)
     C-->>SS: req.session = { userId, role, username }
     C-->>B: Redirect + flash message
 ```
+- Fail case: flash error, redirect `/auth?tab=login`.
+- Success: redirect theo role (`/admin/dashboard`, `/owner/dashboard`, `/`).
 
-- Nếu xác thực thất bại, controller ghi flash error và redirect về `/auth?tab=login`.
-- Tùy vai trò, user được redirect sang `/admin/dashboard`, `/owner/dashboard` hoặc `/`.
-
-### 5.2 Voucher claim flow
-
+### 6.2 Voucher claim flow
 ```mermaid
 sequenceDiagram
     participant U as User browser
@@ -194,79 +249,73 @@ sequenceDiagram
     participant VC as voucher.controller
     participant VDB as MongoDB (vouchers)
     participant UDB as MongoDB (users)
-    U->>VR: Claim voucher
-    VR->>VC: requireAuth + requireUser guard
-    VC->>VDB: findById(voucherId)
-    VDB-->>VC: Voucher doc
-    VC->>VC: Validate window + quantity
-    VC->>UDB: load user
-    VC->>VC: Ensure not already claimed
+    U->>VR: claim voucher
+    VR->>VC: requireAuth + requireUser
+    VC->>VDB: findById
+    VC->>VC: validate time window + quantity + not claimed
     VC->>UDB: push claimedVouchers entry
     VC->>VDB: increment quantityClaimed
-    VC-->>U: Redirect + success flash
+    VC-->>U: redirect + flash success
 ```
 
-- Cả user doc và voucher doc được cập nhật trong cùng request; logic đơn giản, chưa dùng transaction nhưng đủ vì số lượng claim nhỏ.
-
-### 5.3 Owner location lifecycle
-
+### 6.3 Owner location lifecycle
 ```mermaid
 flowchart LR
-    A[Owner UI\n/owner/manage_location] --> B[location.controller.createLocation/updateLocation]
+    A[Owner UI /owner/manage_location] --> B[location.controller.create/update]
     B --> C[Validate form + ensure description length]
-    C --> D[Enrich metadata\nfeatures/menu/price/city/keywords]
+    C --> D[Enrich metadata (feature/menu/price/city/keywords)]
     D --> E[(MongoDB.locations)]
     E --> F[Dashboards + search APIs]
-    F --> G[Tìm kiếm & dashboard]
 ```
 
-- Owner chỉ định city, price range, features; controller đảm bảo mô tả đủ dài (>= `DESCRIPTION_MIN_LENGTH`) và đủ đặc điểm (`FEATURE_MIN_COUNT`).
-- Metadata được suy luận bằng `locationMetadata` để phục vụ search và thống kê.
+---
 
-## 6. Cross-cutting concerns (Các mối quan tâm ngang)
+## 7. Cross-cutting concerns
+- **Authentication & RBAC**: session-based auth (`express-session`); middleware bảo vệ route owner/admin/claim/review; logout hủy session server-side.
+- **Validation & messaging**: validate dữ liệu (password, phone, `DESCRIPTION_MIN_LENGTH`, `FEATURE_MIN_COUNT`), flash message + highlight tab hỗ trợ UX.
+- **Security & privacy**: bcrypt hash password, session secret mạnh, upload đặt tên an toàn (`sanitizeFilename`) + kiểm tra MIME; owner/admin không thao tác entity không thuộc quyền.
+- **Search & discovery**: text index trên `locations`; metadata builder chuẩn hóa feature/menu để filter.
+- **File/media handling**: lưu review media trên disk, `removeReviewMedia` dọn file khi review xóa; giới hạn dung lượng & số file.
+- **Error handling & resiliency**: try/catch toàn bộ controller, trả về trang thân thiện; script enrich hỗ trợ `--dry` tránh hỏng dữ liệu.
 
-- **Authentication & RBAC**: session-based auth với `express-session`; middleware đảm bảo admin, owner, user truy cập đúng phạm vi. Logout hủy session server-side.
-- **Data validation & messaging**: controller kiểm tra dữ liệu (ví dụ so sánh password, validate phone, enforce `DESCRIPTION_MIN_LENGTH`, `FEATURE_MIN_COUNT`). Flash message + highlight tab giúp UX rõ ràng.
-- **Security & privacy**: mật khẩu hash bằng bcrypt; session secret cần cấu hình mạnh; uploads được đặt tên an toàn (`sanitizeFilename`) và kiểm soát MIME để tránh thực thi; owner/admin không thể thao tác entity không thuộc quyền.
-- **Search & discovery**: `locations` có text index trên name/description/address/city/keywords; metadata builder đảm bảo feature/menu chuẩn hóa để filter.
-- **File/media handling**: media review lưu trên disk và liên kết qua URL tương đối, helper `removeReviewMedia` xóa file khi review bị xóa; giới hạn kích thước và số lượng file đảm bảo tài nguyên máy chủ.
-- **Error handling & resiliency**: home + controller đều wrap `try/catch` và chuyển hướng về trang phù hợp; enrichment script hỗ trợ `--dry` để tránh làm hỏng dữ liệu thật.
+---
 
-## 7. Deployment & environment
+## 8. Deployment & environment
+- **Environment variables**: `NODE_ENV`, `PORT` (3000), `MONGODB_URI`, `SESSION_SECRET` (đọc từ `src/config/dotenv`).
+- **Process**: dev dùng `npm run dev` (nodemon), prod `npm start`; triển khai nên dùng PM2/systemd.
+- **Data ops**: `npm run migrate` đồng bộ schema user cũ; `npm run enrich:locations[:dry]` chuẩn hóa metadata; `npm run seed` nạp demo data.
+- **Storage**: MongoDB lưu data + session (có thể tách URI), `src/uploads` phải tồn tại & backup.
+- **Observability**: log `console.log/error` theo module; đề xuất chuyển sang Winston/Pino + metrics (voucher active, review rate).
+- **Hardening**: bật HTTPS + `cookie.secure`, thêm CSRF token cho form quan trọng, rate-limit API public, cân nhắc CDN/static host cho `public`.
 
-- **Environment variables**: `NODE_ENV`, `PORT` (mặc định 3000), `MONGODB_URI`, `SESSION_SECRET`. Tất cả được đọc từ `src/config/dotenv`.
-- **Process management**: `npm run dev` dùng nodemon cho phát triển; `npm start` chạy Node thường; có thể dùng PM2/systemd để giữ tiến trình sống trong sản xuất.
-- **Data operations**: `npm run migrate` đồng bộ user cũ; `npm run enrich:locations` (hoặc `--dry`) chuẩn hóa metadata; `npm run seed` nạp dữ liệu demo được mô tả trong README.
-- **Persistent storage**: MongoDB lưu dữ liệu chính lẫn session store (có thể tách URI riêng nếu cần). `src/uploads` phải tồn tại và được backup khi triển khai vì chứa media người dùng.
-- **Observability & logging**: log qua `console.log/error` (có prefix theo module). Khi triển khai thực tế nên chuyển sang một logger tập trung (Winston/Pino) và thêm metrics (active voucher, review rate...).
-- **Hardening đề xuất**: bật HTTPS + `cookie.secure`, bổ sung CSRF token cho form quan trọng, thêm rate limit cho các API public, và cân nhắc CDN/static host cho `public` để giảm tải Express.
+---
 
-## 8. Use cases (Tình huống sử dụng chính)
+## 9. Detailed use case flows
 
-### 8.1 User duyệt địa điểm và claim voucher
+### 9.1 User duyệt địa điểm & claim voucher
+1. User mở `/locations`; controller query Mongo với text search + metadata filter.
+2. Trang chi tiết render location + review + voucher hợp lệ.
+3. User chọn claim → `POST /vouchers/:id/claim` (có `requireAuth`); controller kiểm tra thời gian, số lượng, tránh claim trùng.
+4. Voucher ghi vào `claimedVouchers[]`, tăng `quantityClaimed`, flash success.
 
-1. User truy cập `/locations` để duyệt danh sách; controller gọi MongoDB với text search + metadata filter để trả về kết quả phù hợp.
-2. Khi chọn địa điểm, trang chi tiết render thông tin location, review và voucher còn hiệu lực.
-3. User bấm claim trên một voucher → `POST /vouchers/:id/claim` (có `requireAuth`). Controller xác nhận thời gian hiệu lực, số lượng còn lại, và đảm bảo user chưa claim trước đó.
-4. Voucher được ghi vào `claimedVouchers[]` của user, `quantityClaimed` của voucher tăng lên, flash message hiển thị trên trang kết quả.
+### 9.2 Owner quản lý địa điểm & voucher
+1. Owner đăng nhập, truy cập `/owner/dashboard` (guard `requireOwner`).
+2. Tạo/cập nhật địa điểm via `owner/manage_location`; controller validate mô tả, enrich metadata (`utils/locationMetadata`) rồi lưu.
+3. Tạo voucher mới tại `owner/manage_voucher`, set `quantity`, `startDate`, `endDate`, `conditions`; controller xác thực ownership location.
+4. Dashboard hiển thị bảng review & claim liên quan tới địa điểm của owner.
 
-### 8.2 Owner quản lý địa điểm và voucher
+### 9.3 Admin giám sát hệ thống
+1. Admin đăng nhập, vào `/admin/dashboard` (guard `requireAdmin`).
+2. Xem thống kê tổng quan và truy cập từng module quản lý (`views/admin/*.ejs`).
+3. Có thể khóa user, xóa/chỉnh sửa location/voucher/review khi phát hiện bất thường; cập nhật trực tiếp collection MongoDB.
+4. Các API thống kê nhỏ được bảo vệ RBAC và chỉ dùng nội bộ EJS dashboard.
 
-1. Owner đăng nhập và vào `/owner/dashboard`; middleware `requireOwner` đảm bảo đúng vai trò.
-2. Owner tạo/cập nhật địa điểm thông qua form `owner/manage_location`. Controller kiểm tra mô tả, enrich metadata bằng `utils/locationMetadata` rồi lưu vào `locations`.
-3. Owner tạo voucher mới trong `owner/manage_voucher`, thiết lập `quantity`, `startDate`, `endDate`, `conditions`. Controller xác nhận ownership của location được chọn.
-4. Dashboard cung cấp bảng theo dõi claim và review liên quan đến các location mà owner sở hữu.
+### 9.4 Review lifecycle với media
+1. User/owner truy cập trang review của địa điểm; khi submit review, `middleware/upload` lưu media vào `src/uploads/reviews/<userId>`.
+2. `review.controller` validate rating/comment, gắn metadata review + media.
+3. Khi review bị xóa (owner/admin), `removeReviewMedia` dọn file vật lý tránh rác.
+4. Review xuất hiện trên trang location, owner dashboard và admin module để phản hồi chất lượng dịch vụ.
 
-### 8.3 Admin giám sát hệ thống
+---
 
-1. Admin đăng nhập và truy cập `/admin/dashboard`. Bộ lọc `requireAdmin` đảm bảo chỉ admin vào được.
-2. Từ dashboard, admin xem số liệu tổng quan (user/location/voucher/review), duyệt danh sách chi tiết trong các trang quản lý tương ứng (`views/admin/*.ejs`).
-3. Admin có thể khóa user, xóa hoặc chỉnh sửa location/voucher/review khi phát hiện bất thường; mọi thao tác cập nhật trực tiếp trên các collection MongoDB.
-4. Các API hỗ trợ (ví dụ JSON thống kê) được bảo vệ bởi RBAC và chủ yếu dùng bởi EJS dashboard.
-
-### 8.4 Review lifecycle với media
-
-1. User hoặc owner truy cập trang review thuộc địa điểm; khi gửi review mới, `middleware/upload` lưu file media vào `src/uploads/reviews/<userId>`.
-2. `review.controller` validate rating/comment, cập nhật metadata review và liên kết media.
-3. Khi review bị xóa (owner/admin), helper `removeReviewMedia` xóa file vật lý tương ứng để tránh rác.
-4. Các review hiện diện trên trang location và trang quản lý owner/admin, hỗ trợ phản hồi chất lượng dịch vụ.
+Tài liệu này phản ánh hiện trạng kiến trúc và có thể làm guideline cho cả phát triển và vận hành. Khi phát sinh thay đổi lớn (thêm microservice, đổi DB, …), vui lòng cập nhật lại các mục tương ứng để giữ tài liệu đồng bộ với hướng triển khai dự án.*** End Patch
