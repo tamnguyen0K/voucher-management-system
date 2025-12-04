@@ -1,4 +1,17 @@
-<!-- Header: Tiêu đề trang và nút quay lại Dashboard -->
+<!--
+  File: views/admin/manage_location.ejs
+  
+  Mô tả: Trang quản lý địa điểm dành cho admin
+  - Hiển thị danh sách tất cả locations với thông tin: name, owner, type, rating, address
+  - Xem chi tiết location
+  - Xóa location (có confirmation)
+  
+  Công nghệ sử dụng:
+  - EJS: Template engine để render HTML
+  - Bootstrap 5: Framework CSS cho UI
+  - Font Awesome: Icons
+-->
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h2">
         <i class="fas fa-map-marker-alt text-primary me-2"></i>
@@ -9,7 +22,6 @@
     </a>
 </div>
 
-<!-- Bảng danh sách địa điểm -->
 <div class="card">
     <div class="card-header">
         <h5 class="mb-0">
@@ -17,10 +29,8 @@
             Danh sách Địa điểm (<%= locations ? locations.length : 0 %>)
         </h5>
     </div>
-
     <div class="card-body">
         <% if (locations && locations.length > 0) { %>
-            <!-- Bảng hiển thị thông tin từng địa điểm -->
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -38,23 +48,16 @@
                     <tbody>
                         <% locations.forEach(location => { %>
                             <tr>
-                                <!-- Hình ảnh địa điểm -->
                                 <td>
                                     <img src="<%= location.imageUrl || '/images/default-location.jpg' %>" 
                                          class="rounded" 
                                          style="width: 60px; height: 40px; object-fit: cover;"
                                          onerror="this.src='/images/default-location.jpg'">
                                 </td>
-
-                                <!-- Tên và mô tả ngắn -->
                                 <td>
                                     <h6 class="mb-0"><%= location.name %></h6>
-                                    <small class="text-muted">
-                                        <%= location.description ? location.description.substring(0, 50) + '...' : '' %>
-                                    </small>
+                                    <small class="text-muted"><%= location.description ? location.description.substring(0, 50) + '...' : '' %></small>
                                 </td>
-
-                                <!-- Thông tin chủ sở hữu -->
                                 <td>
                                     <% if (location.owner) { %>
                                         <div>
@@ -66,11 +69,7 @@
                                         <span class="text-muted">N/A</span>
                                     <% } %>
                                 </td>
-
-                                <!-- Loại địa điểm -->
                                 <td><span class="badge bg-secondary"><%= location.type %></span></td>
-
-                                <!-- Đánh giá trung bình -->
                                 <td>
                                     <div class="rating">
                                         <% for (let i = 1; i <= 5; i++) { %>
@@ -79,22 +78,12 @@
                                         <span class="ms-1">(<%= location.rating || 0 %>)</span>
                                     </div>
                                 </td>
-
-                                <!-- Địa chỉ rút gọn -->
                                 <td>
-                                    <small class="text-muted">
-                                        <%= location.address ? location.address.substring(0, 30) + '...' : 'N/A' %>
-                                    </small>
+                                    <small class="text-muted"><%= location.address ? location.address.substring(0, 30) + '...' : 'N/A' %></small>
                                 </td>
-
-                                <!-- Ngày tạo -->
                                 <td>
-                                    <small class="text-muted">
-                                        <%= new Date(location.createdAt).toLocaleDateString('vi-VN') %>
-                                    </small>
+                                    <small class="text-muted"><%= new Date(location.createdAt).toLocaleDateString('vi-VN') %></small>
                                 </td>
-
-                                <!-- Thao tác: xem chi tiết / xóa -->
                                 <td>
                                     <div class="btn-group btn-group-sm">
                                         <a href="/locations/<%= location._id %>" class="btn btn-outline-primary" title="Xem chi tiết">
@@ -115,7 +104,6 @@
                 </table>
             </div>
         <% } else { %>
-            <!-- Thông báo khi chưa có dữ liệu -->
             <div class="text-center py-5">
                 <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
                 <h4 class="text-muted">Chưa có địa điểm nào</h4>

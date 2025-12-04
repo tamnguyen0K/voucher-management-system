@@ -1,7 +1,24 @@
-﻿
+<!--
+  File: views/pages/location_detail.ejs
+  
+  Mô tả: Trang chi tiết địa điểm
+  - Hiển thị thông tin đầy đủ của location: name, description, address, rating, owner
+  - Hiển thị danh sách reviews với media (ảnh/video)
+  - Form viết review mới (chỉ user, modal)
+  - Hiển thị danh sách vouchers khả dụng cho location
+  - Rating stars interaction (click và hover)
+  - Alert hiển thị số lần review còn lại khi page load
+  
+  Công nghệ sử dụng:
+  - EJS: Template engine để render HTML
+  - Bootstrap 5: Framework CSS cho UI và modals
+  - Font Awesome: Icons
+  - JavaScript: Rating stars interaction, fetch API để lấy review remaining count
+  - CSS: Styling cho review media grid, star rating, location hero card
+-->
+
 <div class="row">
     <div class="col-lg-8">
-        <!-- Location Info -->
         <div class="card mb-4 position-relative location-hero-card">
             <img src="<%= location.imageUrl %>" class="card-img-top" alt="<%= location.name %>" style="height: 300px; object-fit: cover;">
             <% if (location.owner) { %>
@@ -25,16 +42,12 @@
                         </div>
                     </div>
                 </div>
-                
                 <p class="card-text"><%= location.description %></p>
-                
-                        <h6><i class="fas fa-map-marker-alt me-2"></i>Địa chỉ:</h6>
-                        <p class="text-muted"><%= location.address %></p>
-
+                <h6><i class="fas fa-map-marker-alt me-2"></i>Địa chỉ:</h6>
+                <p class="text-muted"><%= location.address %></p>
             </div>
         </div>
 
-        <!-- Reviews Section -->
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
@@ -97,7 +110,6 @@
     </div>
 
     <div class="col-lg-4">
-        <!-- Vouchers Section -->
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="mb-0">
@@ -118,33 +130,29 @@
                                     <span class="badge bg-success">Giảm <%= voucher.discountPct %>%</span>
                                 </div>
                             </div>
-                            
                             <% if (voucher.conditions) { %>
                                 <p class="small text-muted mb-2">
                                     <i class="fas fa-info-circle me-1"></i>
                                     <%= voucher.conditions %>
                                 </p>
                             <% } %>
-                            
                             <div class="mb-2">
                                 <small class="text-muted">
-                                    Còn lại <%= voucher.quantityRemaining %> voucher
+                                    Còn lại <span data-remaining-for="<%= voucher._id %>"><%= voucher.quantityRemaining %></span> voucher
                                 </small>
                                 <div class="progress" style="height: 4px;">
-                                    <div class="progress-bar bg-success" data-width="<%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>"></div>
+                                    <div class="progress-bar bg-success" style="data-width:<%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>%"></div>
                                 </div>
                             </div>
-                            
                             <div class="mb-2">
                                 <small class="text-muted">
                                     <i class="fas fa-calendar me-1"></i>
                                     HSD: <%= new Date(voucher.endDate).toLocaleDateString('vi-VN') %>
                                 </small>
                             </div>
-                            
                             <% if (user) { %>
-                                <form action="/vouchers/<%= voucher._id %>/claim" method="POST">
-                                    <button type="submit" class="btn btn-success btn-sm w-100">
+                                <form action="/vouchers/<%= voucher._id %>/claim" method="POST" data-voucher-id="<%= voucher._id %>">
+                                    <button type="submit" class="btn btn-success btn-sm w-100" data-claim-btn-for="<%= voucher._id %>">
                                         <i class="fas fa-gift me-1"></i>Claim voucher
                                     </button>
                                 </form>
@@ -163,8 +171,6 @@
                 <% } %>
             </div>
         </div>
-
-        <!-- Action Buttons -->
         <div class="d-grid gap-2">
             <a href="/locations" class="btn btn-outline-primary">
                 <i class="fas fa-arrow-left me-1"></i>Quay lại danh sách
@@ -176,7 +182,6 @@
     </div>
 </div>
 
-<!-- Review Modal -->
 <% if (user && user.role === "user") { %>
     <div class="modal fade" id="reviewModal" tabindex="-1">
         <div class="modal-dialog">
@@ -201,13 +206,13 @@
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label for="comment" class="form-label">Nhận xét (tùy chọn):</label>
-                            <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Chia sẻ trải nghiệm của bạn..."></textarea>
+                            <label for="comment" class="form-label">Nhận xét <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Chia sẻ trải nghiệm của bạn..." required></textarea>
                         </div>
                         <div class="mb-3">
-                            <label for="mediaFiles" class="form-label">Hình ảnh / Video *</label>
+                            <label for="mediaFiles" class="form-label">Hình ảnh / Video <span class="text-danger">*</span></label>
                             <input type="file" class="form-control" id="mediaFiles" name="mediaFiles" accept="image/*,video/*" multiple required>
-                            <small class="text-muted">Có thể chọn tối đa 5 tệp, dung lượng mỗi tệp không vượt quá 15MB.</small>
+                            <small class="text-muted">Bắt buộc phải chọn ít nhất 1 tệp, tối đa 5 tệp, dung lượng mỗi tệp không vượt quá 15MB.</small>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -220,16 +225,6 @@
             </div>
         </div>
     </div>
-<% } %>
-
-<% function maskReviewerName(name) { %>
-<%   if (!name) { %>
-Ẩn danh
-<%   } else if ((user && user.role !== 'user')) { %>
-<%= name %>
-<%   } else { %>
-<%= name.length <= 2 ? name[0] + '*' : name.slice(0, Math.min(3, name.length)) + '***' %>
-<%   } %>
 <% } %>
 
 <div class="modal fade" id="ownerProfileModal" tabindex="-1">
@@ -256,43 +251,33 @@
 </div>
 
 <script>
-// Rating stars interaction
+(async function() {
+    const locationId = '<%= location._id %>';
+    try {
+        const response = await fetch(`/locations/${locationId}/reviews/remaining`, { credentials: 'same-origin' });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (data.success) {
+            const { remaining, currentCount, maxAllowed, canReview } = data;
+            if (canReview) {
+                if (remaining == 0) {
+                    alert(`Chào mừng bạn đến với địa điểm này, mình muốn thông báo một chút rằng là bạn có 3 lượt đánh giá cho địa điểm này và mỗi khi đánh giá bạn phải nhập đủ tất cả các ô nhé.`);
+                } else {
+                    alert(`Cảm ơn bạn đã quay lại địa điểm này. Mình chỉ muốn nhắc rằng bạn còn ${remaining} lần đánh giá cho địa điểm này.\n(Đã đánh giá: ${currentCount}/${maxAllowed})`);
+                }
+            } else {
+                alert(`Cảm ơn bạn đã quay lại địa điểm này. Mình muốn thông báo rằng nạn đã đánh giá địa điểm này ${maxAllowed} lần rồi.\nMỗi tài khoản chỉ có thể đánh giá tối đa ${maxAllowed} lần cho mỗi địa điểm.`);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading review remaining count:', error);
+    }
+})();
+
 document.addEventListener('DOMContentLoaded', function() {
     const stars = document.querySelectorAll('.star-rating');
     const ratingInput = document.getElementById('ratingValue');
-    
-    stars.forEach((star, index) => {
-        star.addEventListener('click', function() {
-            const rating = parseInt(this.dataset.rating);
-            ratingInput.value = rating;
-            
-            stars.forEach((s, i) => {
-                if (i < rating) {
-                    s.classList.add('text-warning');
-                    s.classList.remove('text-muted');
-                } else {
-                    s.classList.add('text-muted');
-                    s.classList.remove('text-warning');
-                }
-            });
-        });
-        
-        star.addEventListener('mouseenter', function() {
-            const rating = parseInt(this.dataset.rating);
-            stars.forEach((s, i) => {
-                if (i < rating) {
-                    s.classList.add('text-warning');
-                    s.classList.remove('text-muted');
-                } else {
-                    s.classList.add('text-muted');
-                    s.classList.remove('text-warning');
-                }
-            });
-        });
-    });
-    
-    document.querySelector('.rating-input').addEventListener('mouseleave', function() {
-        const rating = parseInt(ratingInput.value);
+    const updateStars = (rating) => {
         stars.forEach((s, i) => {
             if (i < rating) {
                 s.classList.add('text-warning');
@@ -302,6 +287,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 s.classList.remove('text-warning');
             }
         });
+    };
+    stars.forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.dataset.rating);
+            ratingInput.value = rating;
+            updateStars(rating);
+        });
+        star.addEventListener('mouseenter', function() {
+            updateStars(parseInt(this.dataset.rating));
+        });
+    });
+    document.querySelector('.rating-input').addEventListener('mouseleave', function() {
+        updateStars(parseInt(ratingInput.value));
     });
 });
 </script>
@@ -313,22 +311,18 @@ document.addEventListener('DOMContentLoaded', function() {
     margin-right: 0.25rem;
     transition: color 0.2s;
 }
-
 .star-rating:hover {
     transform: scale(1.1);
 }
-
 .rating-input .stars {
     display: flex;
     gap: 0.25rem;
 }
-
 .review-media-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
 }
-
 .review-media-thumb {
     display: inline-block;
     width: 110px;
@@ -337,25 +331,21 @@ document.addEventListener('DOMContentLoaded', function() {
     overflow: hidden;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
-
 .review-media-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
-
 .review-media-grid video {
     width: 160px;
     max-height: 120px;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
-
 .location-hero-card {
     border: none;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
 }
-
 .owner-chip {
     position: absolute;
     right: 1rem;

@@ -1,15 +1,22 @@
 /**
  * File: controllers/voucher.controller.js
- * Mô tả: Xử lý các thao tác CRUD và claim voucher cho user và owner
+ * 
+ * Mô tả: Controller xử lý các thao tác liên quan đến voucher
+ * - Lấy danh sách voucher đang hoạt động
+ * - Claim voucher (chỉ user)
+ * - Tạo, cập nhật, xóa voucher (owner)
+ * - Lấy trạng thái voucher (API)
+ * 
+ * Công nghệ sử dụng:
+ * - Express.js: Framework web server
+ * - Mongoose: ODM cho MongoDB
+ * - EJS: Template engine để render views
  */
 
 const Voucher = require('../models/voucher.model');
 const Location = require('../models/location.model');
+const User = require('../models/user.model');
 
-/**
- * Hàm: getAllVouchers
- * Mô tả: Lấy danh sách tất cả voucher đang hoạt động
- */
 const getAllVouchers = async (req, res) => {
   try {
     const now = new Date();
@@ -32,36 +39,24 @@ const getAllVouchers = async (req, res) => {
   }
 };
 
-/**
- * Hàm: claimVoucher
- * Mô tả: Người dùng claim voucher
- */
 const claimVoucher = async (req, res) => {
   try {
     const { voucherId } = req.params;
     const userId = req.session.userId;
     const userRole = req.session.userRole;
 
-    if (!userId) {
-      req.flash('error', 'Vui lòng đăng nhập để claim voucher');
-      return res.redirect('/auth');
+    if (!userId || userRole !== 'user') {
+      req.flash('error', userRole !== 'user' ? 'Chỉ người dùng mới có thể claim voucher' : 'Vui lòng đăng nhập để claim voucher');
+      return res.redirect(userRole !== 'user' ? '/vouchers' : '/auth');
     }
 
-    if (userRole !== 'user') {
-      req.flash('error', 'Chỉ người dùng mới có thể claim voucher');
-      return res.redirect('/vouchers');
-    }
+    const [user, voucher] = await Promise.all([
+      User.findById(userId),
+      Voucher.findById(voucherId).populate('location', 'name')
+    ]);
 
-    const User = require('../models/user.model');
-    const user = await User.findById(userId);
-    if (!user) {
-      req.flash('error', 'Không tìm thấy thông tin người dùng');
-      return res.redirect('/vouchers');
-    }
-
-    const voucher = await Voucher.findById(voucherId).populate('location', 'name');
-    if (!voucher) {
-      req.flash('error', 'Không tìm thấy voucher');
+    if (!user || !voucher) {
+      req.flash('error', !user ? 'Không tìm thấy thông tin người dùng' : 'Không tìm thấy voucher');
       return res.redirect('/vouchers');
     }
 
@@ -91,11 +86,10 @@ const claimVoucher = async (req, res) => {
       locationName: voucher.location.name,
       discountPct: voucher.discountPct
     });
-    await user.save();
 
     voucher.quantityClaimed += 1;
-    await voucher.save();
 
+    await Promise.all([user.save(), voucher.save()]);
     req.flash('success', `Claim voucher ${voucher.code} thành công! Giảm ${voucher.discountPct}%`);
     res.redirect('/vouchers');
   } catch (error) {
@@ -105,28 +99,59 @@ const claimVoucher = async (req, res) => {
   }
 };
 
-/**
- * Hàm: createVoucher
- * Mô tả: Chủ địa điểm tạo voucher mới
- */
+const getVoucherStatus = async (req, res) => {
+  try {
+    const { voucherId } = req.params;
+    const userId = req.session.userId;
+    const userRole = req.session.userRole;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'unauthorized' });
+    }
+
+    const [voucher, user] = await Promise.all([
+      Voucher.findById(voucherId).populate('location', 'name'),
+      User.findById(userId).select('claimedVouchers')
+    ]);
+
+    if (!voucher) {
+      return res.status(404).json({ success: false, error: 'not_found' });
+    }
+
+    const now = new Date();
+    const status = now < voucher.startDate ? 'upcoming'
+      : now > voucher.endDate ? 'expired'
+      : voucher.quantityClaimed >= voucher.quantityTotal ? 'soldout'
+      : 'active';
+
+    const alreadyClaimed = !!(user && user.claimedVouchers.some(
+      v => v.voucherId.toString() === voucherId && new Date(v.expiryDate) > now
+    ));
+
+    return res.json({
+      success: true,
+      eligible: userRole === 'user',
+      alreadyClaimed,
+      status,
+      quantityRemaining: Math.max(0, voucher.quantityTotal - voucher.quantityClaimed),
+      quantityTotal: voucher.quantityTotal,
+      quantityClaimed: voucher.quantityClaimed,
+      code: voucher.code,
+      discountPct: voucher.discountPct,
+      expiryDate: voucher.endDate,
+      locationName: voucher.location ? voucher.location.name : undefined
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'server_error' });
+  }
+};
+
 const createVoucher = async (req, res) => {
   try {
-    const {
-      code,
-      discountPct,
-      quantityTotal,
-      startDate,
-      endDate,
-      locationId,
-      conditions
-    } = req.body;
-
+    const { code, discountPct, quantityTotal, startDate, endDate, locationId, conditions } = req.body;
     const ownerId = req.session.userId;
 
-    const location = await Location.findOne({
-      _id: locationId,
-      owner: ownerId
-    });
+    const location = await Location.findOne({ _id: locationId, owner: ownerId });
     if (!location) {
       req.flash('error', 'Không tìm thấy địa điểm hoặc bạn không có quyền tạo voucher');
       return res.redirect('/owner/vouchers');
@@ -158,20 +183,10 @@ const createVoucher = async (req, res) => {
   }
 };
 
-/**
- * Hàm: updateVoucher
- * Mô tả: Chủ địa điểm cập nhật voucher
- */
 const updateVoucher = async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      discountPct,
-      quantityTotal,
-      startDate,
-      endDate,
-      conditions
-    } = req.body;
+    const { discountPct, quantityTotal, startDate, endDate, conditions } = req.body;
     const ownerId = req.session.userId;
 
     const voucher = await Voucher.findById(id).populate('location');
@@ -180,11 +195,13 @@ const updateVoucher = async (req, res) => {
       return res.redirect('/owner/vouchers');
     }
 
-    voucher.discountPct = discountPct;
-    voucher.quantityTotal = quantityTotal;
-    voucher.startDate = new Date(startDate);
-    voucher.endDate = new Date(endDate);
-    voucher.conditions = conditions;
+    Object.assign(voucher, {
+      discountPct,
+      quantityTotal,
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      conditions
+    });
 
     await voucher.save();
     req.flash('success', 'Cập nhật voucher thành công!');
@@ -196,10 +213,6 @@ const updateVoucher = async (req, res) => {
   }
 };
 
-/**
- * Hàm: deleteVoucher
- * Mô tả: Chủ địa điểm xóa voucher
- */
 const deleteVoucher = async (req, res) => {
   try {
     const { id } = req.params;
@@ -221,10 +234,6 @@ const deleteVoucher = async (req, res) => {
   }
 };
 
-/**
- * Hàm: getOwnerVouchers
- * Mô tả: Lấy danh sách voucher của chủ sở hữu
- */
 const getOwnerVouchers = async (req, res) => {
   try {
     const ownerId = req.session.userId;
@@ -254,5 +263,6 @@ module.exports = {
   createVoucher,
   updateVoucher,
   deleteVoucher,
-  getOwnerVouchers
+  getOwnerVouchers,
+  getVoucherStatus
 };

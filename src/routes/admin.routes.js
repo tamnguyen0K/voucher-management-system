@@ -1,6 +1,18 @@
 /**
  * File: routes/admin.routes.js
- * Mô tả: Định nghĩa các routes dành cho admin: dashboard, quản lý users, locations, vouchers, reviews
+ * 
+ * Mô tả: Định nghĩa các routes dành cho admin
+ * - Dashboard với thống kê và biểu đồ tăng trưởng
+ * - Quản lý users: xem, cập nhật role, xóa
+ * - Quản lý locations: xem, xóa
+ * - Quản lý vouchers: xem, xóa
+ * - Quản lý reviews: xem, xem chi tiết, xóa
+ * 
+ * Công nghệ sử dụng:
+ * - Express.js Router: Định nghĩa routes
+ * - Middleware requireAuth, requireAdmin: Xác thực quyền admin
+ * - Mongoose Aggregation: Tính toán thống kê và tăng trưởng
+ * - MongoDB Text Search: Tìm kiếm và lọc dữ liệu
  */
 
 const express = require('express');
@@ -12,82 +24,86 @@ const Review = require('../models/review.model');
 const reviewController = require('../controllers/review.controller');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 
-/**
- * Helper: Kiểm tra request có yêu cầu JSON response không
- */
 const wantsJson = (req) => {
-  return req.xhr ||
-    (req.headers['accept'] && req.headers['accept'].includes('application/json')) ||
-    (req.headers['content-type'] && req.headers['content-type'].includes('application/json'));
+  return req.xhr || 
+    (req.headers['accept']?.includes('application/json')) ||
+    (req.headers['content-type']?.includes('application/json'));
 };
 
-/**
- * Route: GET /admin/dashboard
- * Mô tả: Hiển thị dashboard admin với thống kê và biểu đồ tăng trưởng
- */
+const sendResponse = (req, res, success, message, redirectUrl) => {
+  if (wantsJson(req)) {
+    return res.status(success ? 200 : 400).json({ success, message });
+  }
+  if (success) req.flash('success', message);
+  else req.flash('error', message);
+  res.redirect(redirectUrl);
+};
+
+const getMonthRange = (monthsBack = 5) => {
+  const now = new Date();
+  const months = [];
+  for (let i = monthsBack; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ year: d.getFullYear(), month: d.getMonth() });
+  }
+  return months;
+};
+
+const getMonthCounts = async (Model, startDate, months) => {
+  const pipeline = [
+    { $match: { createdAt: { $gte: startDate } } },
+    {
+      $group: {
+        _id: { y: { $year: '$createdAt' }, m: { $month: '$createdAt' } },
+        count: { $sum: 1 }
+      }
+    }
+  ];
+  const results = await Model.aggregate(pipeline);
+  const map = new Map(results.map(r => [`${r._id.y}-${r._id.m}`, r.count]));
+  return months.map(({ year, month }) => map.get(`${year}-${month + 1}`) || 0);
+};
+
 router.get('/admin/dashboard', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments();
-    const totalLocations = await Location.countDocuments();
-    const totalVouchers = await Voucher.countDocuments();
-    const totalReviews = await Review.countDocuments();
-
-    const recentUsers = await User.find().sort({ createdAt: -1 }).limit(5);
-    const recentLocations = await Location.find()
-      .populate('owner', 'username')
-      .sort({ createdAt: -1 })
-      .limit(5);
-    const recentVouchers = await Voucher.find()
-      .populate('location', 'name')
-      .sort({ createdAt: -1 })
-      .limit(5);
-
-    const activeVouchersAgg = await Voucher.aggregate([
-      {
-        $match: {
-          startDate: { $lte: new Date() },
-          endDate: { $gte: new Date() },
-          $expr: { $lt: ['$quantityClaimed', '$quantityTotal'] }
-        }
-      },
-      { $count: 'count' }
-    ]);
-
-    const activeVouchers = activeVouchersAgg[0]?.count || 0;
-    const expiredVouchers = await Voucher.countDocuments({
-      endDate: { $lt: new Date() }
-    });
-
     const now = new Date();
-    const months = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push({ year: d.getFullYear(), month: d.getMonth() });
-    }
+    const months = getMonthRange(5);
+    const startOfRange = new Date(months[0].year, months[0].month, 1);
 
-    const firstMonth = months[0];
-    const startOfRange = new Date(firstMonth.year, firstMonth.month, 1);
-
-    async function monthCounts(Model) {
-      const pipeline = [
-        { $match: { createdAt: { $gte: startOfRange } } },
+    const [
+      totalUsers,
+      totalLocations,
+      totalVouchers,
+      totalReviews,
+      activeVouchersAgg,
+      expiredVouchers,
+      recentUsers,
+      recentLocations,
+      recentVouchers,
+      monthCountsMap
+    ] = await Promise.all([
+      User.countDocuments(),
+      Location.countDocuments(),
+      Voucher.countDocuments(),
+      Review.countDocuments(),
+      Voucher.aggregate([
         {
-          $group: {
-            _id: { y: { $year: '$createdAt' }, m: { $month: '$createdAt' } },
-            count: { $sum: 1 }
+          $match: {
+            startDate: { $lte: now },
+            endDate: { $gte: now },
+            $expr: { $lt: ['$quantityClaimed', '$quantityTotal'] }
           }
-        }
-      ];
-      const results = await Model.aggregate(pipeline);
-      const map = new Map(results.map(r => [`${r._id.y}-${r._id.m}`, r.count]));
-      return months.map(({ year, month }) => map.get(`${year}-${month + 1}`) || 0);
-    }
-
-    const [userGrowthCounts, locationGrowthCounts] = await Promise.all([
-      monthCounts(User),
-      monthCounts(Location)
+        },
+        { $count: 'count' }
+      ]),
+      Voucher.countDocuments({ endDate: { $lt: now } }),
+      User.find().sort({ createdAt: -1 }).limit(5),
+      Location.find().populate('owner', 'username').sort({ createdAt: -1 }).limit(5),
+      Voucher.find().populate('location', 'name').sort({ createdAt: -1 }).limit(5),
+      Promise.all([getMonthCounts(User, startOfRange, months), getMonthCounts(Location, startOfRange, months)])
     ]);
 
+    const [userGrowthCounts, locationGrowthCounts] = monthCountsMap;
     const monthLabels = months.map(({ year, month }) => {
       const d = new Date(year, month, 1);
       return `${d.toLocaleString('vi-VN', { month: 'short' })} ${String(year).slice(-2)}`;
@@ -100,7 +116,7 @@ router.get('/admin/dashboard', requireAuth, requireAdmin, async (req, res) => {
         totalLocations,
         totalVouchers,
         totalReviews,
-        activeVouchers,
+        activeVouchers: activeVouchersAgg[0]?.count || 0,
         expiredVouchers
       },
       growthData: {
@@ -119,10 +135,6 @@ router.get('/admin/dashboard', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-/**
- * Route: GET /admin/users
- * Mô tả: Hiển thị trang quản lý người dùng
- */
 router.get('/admin/users', requireAuth, requireAdmin, async (req, res) => {
   try {
     const users = await User.find().sort({ createdAt: -1 });
@@ -138,78 +150,46 @@ router.get('/admin/users', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-/**
- * Route: PUT /admin/users/:id/role
- * Mô tả: Cập nhật vai trò (role) của người dùng
- */
 router.put('/admin/users/:id/role', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
 
     if (!['user', 'owner', 'admin'].includes(role)) {
-      if (wantsJson(req)) {
-        return res.status(400).json({ success: false, message: 'Role không hợp lệ' });
-      }
-      req.flash('error', 'Role không hợp lệ');
-      return res.redirect('/admin/users');
+      return sendResponse(req, res, false, 'Role không hợp lệ', '/admin/users');
     }
 
     await User.findByIdAndUpdate(id, { role });
-
-    if (wantsJson(req)) return res.json({ success: true });
-
-    req.flash('success', 'Cập nhật role thành công!');
-    res.redirect('/admin/users');
+    return sendResponse(req, res, true, 'Cập nhật role thành công!', '/admin/users');
   } catch (error) {
     console.error('Update user role error:', error);
-    if (wantsJson(req)) {
-      return res.status(500).json({ success: false, message: 'Có lỗi xảy ra khi cập nhật role' });
-    }
-    req.flash('error', 'Có lỗi xảy ra khi cập nhật role');
-    res.redirect('/admin/users');
+    return sendResponse(req, res, false, 'Có lỗi xảy ra khi cập nhật role', '/admin/users');
   }
 });
 
-/**
- * Route: DELETE /admin/users/:id
- * Mô tả: Xóa người dùng và tất cả dữ liệu liên quan
- */
 router.delete('/admin/users/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
     if (id === String(req.session.userId)) {
-      if (wantsJson(req)) {
-        return res.status(400).json({ success: false, message: 'Không thể xóa chính mình' });
-      }
-      req.flash('error', 'Không thể xóa chính mình');
-      return res.redirect('/admin/users');
+      return sendResponse(req, res, false, 'Không thể xóa chính mình', '/admin/users');
     }
 
-    await Review.deleteMany({ user: id });
-    await Location.deleteMany({ owner: id });
-    await Voucher.deleteMany({ location: { $in: await Location.find({ owner: id }).distinct('_id') } });
-    await User.findByIdAndDelete(id);
+    const locationIds = await Location.find({ owner: id }).distinct('_id');
+    await Promise.all([
+      Review.deleteMany({ user: id }),
+      Location.deleteMany({ owner: id }),
+      Voucher.deleteMany({ location: { $in: locationIds } }),
+      User.findByIdAndDelete(id)
+    ]);
 
-    if (wantsJson(req)) return res.json({ success: true });
-
-    req.flash('success', 'Xóa người dùng thành công!');
-    res.redirect('/admin/users');
+    return sendResponse(req, res, true, 'Xóa người dùng thành công!', '/admin/users');
   } catch (error) {
     console.error('Delete user error:', error);
-    if (wantsJson(req)) {
-      return res.status(500).json({ success: false, message: 'Có lỗi xảy ra khi xóa người dùng' });
-    }
-    req.flash('error', 'Có lỗi xảy ra khi xóa người dùng');
-    res.redirect('/admin/users');
+    return sendResponse(req, res, false, 'Có lỗi xảy ra khi xóa người dùng', '/admin/users');
   }
 });
 
-/**
- * Route: GET /admin/locations
- * Mô tả: Hiển thị trang quản lý địa điểm
- */
 router.get('/admin/locations', requireAuth, requireAdmin, async (req, res) => {
   try {
     const locations = await Location.find()
@@ -227,16 +207,14 @@ router.get('/admin/locations', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-/**
- * Route: DELETE /admin/locations/:id
- * Mô tả: Xóa địa điểm và tất cả voucher, review liên quan
- */
 router.delete('/admin/locations/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    await Voucher.deleteMany({ location: id });
-    await Review.deleteMany({ location: id });
-    await Location.findByIdAndDelete(id);
+    await Promise.all([
+      Voucher.deleteMany({ location: id }),
+      Review.deleteMany({ location: id }),
+      Location.findByIdAndDelete(id)
+    ]);
 
     req.flash('success', 'Xóa địa điểm thành công!');
     res.redirect('/admin/locations');
@@ -247,10 +225,6 @@ router.delete('/admin/locations/:id', requireAuth, requireAdmin, async (req, res
   }
 });
 
-/**
- * Route: GET /admin/vouchers
- * Mô tả: Hiển thị trang quản lý voucher
- */
 router.get('/admin/vouchers', requireAuth, requireAdmin, async (req, res) => {
   try {
     const vouchers = await Voucher.find()
@@ -269,10 +243,6 @@ router.get('/admin/vouchers', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-/**
- * Route: DELETE /admin/vouchers/:id
- * Mô tả: Xóa voucher
- */
 router.delete('/admin/vouchers/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;

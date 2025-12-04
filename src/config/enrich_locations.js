@@ -1,10 +1,19 @@
 /**
- * Script: enrich_locations.js
- * Purpose: Normalize and enrich existing location documents with detailed metadata.
- *
- * Usage:
- *   node src/config/enrich_locations.js         # apply changes
- *   node src/config/enrich_locations.js --dry   # preview only
+ * File: config/enrich_locations.js
+ * 
+ * Mô tả: Script để normalize và enrich location documents với metadata chi tiết
+ * - Infer city từ address/description
+ * - Merge và enrich features từ description
+ * - Infer menuHighlights từ description
+ * - Normalize priceRange và infer priceLevel
+ * - Build keyword set cho search
+ * - Hỗ trợ dry-run mode (--dry) để preview changes
+ * 
+ * Công nghệ sử dụng:
+ * - Mongoose: MongoDB ODM
+ * - MongoDB: Database operations (find, save)
+ * - Dotenv: Quản lý biến môi trường
+ * - LocationMetadata utils: Các hàm xử lý metadata
  */
 
 const path = require('path');

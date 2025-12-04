@@ -1,12 +1,22 @@
-// ==================================
-// File: models/user.model.js
-// Mục đích: Định nghĩa schema và model cho người dùng (User)
-// ==================================
+/**
+ * File: models/user.model.js
+ * 
+ * Mô tả: Định nghĩa schema và model cho người dùng (User)
+ * - Quản lý thông tin người dùng: username, email, phoneNumber, password, role
+ * - Quản lý vouchers đã claim (claimedVouchers)
+ * - Tự động mã hóa mật khẩu trước khi lưu
+ * - Đồng bộ idName với username
+ * 
+ * Công nghệ sử dụng:
+ * - Mongoose: ODM cho MongoDB
+ * - Bcrypt: Mã hóa mật khẩu (hash password)
+ * - Mongoose Pre-save Hook: Tự động xử lý trước khi lưu
+ * - Mongoose Methods: So sánh mật khẩu khi đăng nhập
+ */
 
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
-// Định nghĩa schema người dùng
 const userSchema = new mongoose.Schema({
   username: {
     type: String,
@@ -16,19 +26,16 @@ const userSchema = new mongoose.Schema({
     minlength: [3, 'Tên đăng nhập phải có ít nhất 3 ký tự'],
     maxlength: [30, 'Tên đăng nhập không được vượt quá 30 ký tự']
   },
-
   idName: {
     type: String,
     trim: true
   },
-
   phoneNumber: {
     type: String,
     required: [true, 'Vui lòng nhập số điện thoại'],
     trim: true,
     match: [/^[0-9]{9,11}$/, 'Số điện thoại phải gồm 9 đến 11 chữ số']
   },
-
   email: {
     type: String,
     required: [true, 'Vui lòng nhập email'],
@@ -37,24 +44,20 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Email không hợp lệ']
   },
-
   password: {
     type: String,
     required: [true, 'Vui lòng nhập mật khẩu'],
     minlength: [6, 'Mật khẩu phải có ít nhất 6 ký tự']
   },
-
   role: {
     type: String,
     enum: ['user', 'owner', 'admin'],
     default: 'user'
   },
-
   createdAt: {
     type: Date,
     default: Date.now
   },
-
   claimedVouchers: [{
     voucherCode: {
       type: String,
@@ -78,7 +81,6 @@ const userSchema = new mongoose.Schema({
   }]
 });
 
-// Mã hóa mật khẩu trước khi lưu và đồng bộ idName
 userSchema.pre('save', async function (next) {
   if (!this.idName && this.username) {
     this.idName = this.username;
@@ -95,10 +97,8 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-// So sánh mật khẩu khi đăng nhập
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Xuất model User (collection "users")
 module.exports = mongoose.model('User', userSchema);

@@ -1,5 +1,19 @@
+<!--
+  File: views/pages/home.ejs
+  
+  Mô tả: Trang chủ của ứng dụng
+  - Hiển thị hero section với call-to-action buttons
+  - Hiển thị danh sách địa điểm nổi bật (featured locations)
+  - Hiển thị danh sách voucher đang hoạt động
+  - Hiển thị features section (tại sao chọn chúng tôi)
+  
+  Công nghệ sử dụng:
+  - EJS: Template engine để render HTML
+  - Bootstrap 5: Framework CSS cho UI
+  - Font Awesome: Icons
+  - JavaScript: Xử lý progress bar widths từ data attributes
+-->
 
-<!-- Hero Section -->
 <div class="hero-section bg-primary text-white py-5 mb-5 rounded">
     <div class="container text-center">
         <h1 class="display-4 fw-bold mb-3">
@@ -18,55 +32,51 @@
     </div>
 </div>
 
-<!-- Featured Locations -->
 <section class="mb-5">
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
         <h2 class="h3 mb-0"><i class="fas fa-star text-warning me-2"></i>Địa điểm nổi bật</h2>
         <a href="/locations" class="btn btn-outline-primary fixed-btn">Xem tất cả</a>
     </div>
-
     <% if (locations && locations.length > 0) { %>
         <div class="row">
-        <% locations.forEach(location => { %>
-            <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 shadow-sm">
-                <img src="<%= location.imageUrl %>" class="card-img-top" alt="<%= location.name %>" style="height: 200px; object-fit: cover;">
-                <div class="card-body d-flex flex-column">
-                <h5 class="card-title"><%= location.name %></h5>
-                <p class="card-text text-muted flex-grow-1"><%= location.description.substring(0, 100) %>...</p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="badge bg-secondary"><%= location.type %></span>
-                    <div class="rating">
-                    <% for (let i = 1; i <= 5; i++) { %>
-                        <i class="fas fa-star <%= i <= location.rating ? 'text-warning' : 'text-muted' %>"></i>
-                    <% } %>
-                    <span class="ms-1 text-muted">(<%= location.rating %>)</span>
+            <% locations.forEach(location => { %>
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <img src="<%= location.imageUrl %>" class="card-img-top" alt="<%= location.name %>" style="height: 200px; object-fit: cover;">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title"><%= location.name %></h5>
+                            <p class="card-text text-muted flex-grow-1"><%= location.description.substring(0, 100) %>...</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-secondary"><%= location.type %></span>
+                                <div class="rating">
+                                    <% for (let i = 1; i <= 5; i++) { %>
+                                        <i class="fas fa-star <%= i <= location.rating ? 'text-warning' : 'text-muted' %>"></i>
+                                    <% } %>
+                                    <span class="ms-1 text-muted">(<%= location.rating %>)</span>
+                                </div>
+                            </div>
+                            <a href="/locations/<%= location._id %>" class="btn btn-primary mt-3">
+                                <i class="fas fa-eye me-1"></i>Xem địa điểm
+                            </a>
+                        </div>
                     </div>
                 </div>
-                <a href="/locations/<%= location._id %>" class="btn btn-primary mt-3">
-                    <i class="fas fa-eye me-1"></i>Xem địa điểm
-                </a>
-                </div>
-            </div>
-            </div>
-        <% }) %>
+            <% }) %>
         </div>
     <% } else { %>
         <div class="text-center py-5">
-        <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
-        <h4 class="text-muted">Chưa có địa điểm nào</h4>
-        <p class="text-muted">Hãy quay lại sau để xem các địa điểm mới!</p>
+            <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">Chưa có địa điểm nào</h4>
+            <p class="text-muted">Hãy quay lại sau để xem các địa điểm mới!</p>
         </div>
     <% } %>
 </section>
 
-<!-- Active Vouchers -->
 <section class="mb-5">
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
         <h2 class="h3 mb-0"><i class="fas fa-star text-warning me-2"></i>Voucher đang hoạt động</h2>
         <a href="/vouchers" class="btn btn-outline-primary fixed-btn">Xem tất cả</a>
     </div>
-    
     <% if (vouchers && vouchers.length > 0) { %>
         <div class="row">
             <% vouchers.forEach(voucher => { %>
@@ -78,9 +88,7 @@
                                     <i class="fas fa-ticket-alt me-1"></i>
                                     <%= voucher.code %>
                                 </h6>
-                                <span class="badge bg-light text-success">
-                                    -<%= voucher.discountPct %>%
-                                </span>
+                                <span class="badge bg-light text-success">-<%= voucher.discountPct %>%</span>
                             </div>
                         </div>
                         <div class="card-body d-flex flex-column">
@@ -94,15 +102,15 @@
                             <div class="mb-3">
                                 <small class="text-muted">
                                     <i class="fas fa-clock me-1"></i>
-                                    Còn lại <%= voucher.quantityRemaining %> voucher
+                                    Còn lại <span data-remaining-for="<%= voucher._id %>"><%= voucher.quantityRemaining %></span> voucher
                                 </small>
                                 <div class="progress mt-1" style="height: 5px;">
-                                    <div class="progress-bar bg-success" data-width="<%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>"></div>
+                                    <div class="progress-bar bg-success" style="width:<%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>%"></div>
                                 </div>
                             </div>
                             <% if (user) { %>
-                                <form action="/vouchers/<%= voucher._id %>/claim" method="POST" class="mt-auto">
-                                    <button type="submit" class="btn btn-success w-100">
+                                <form action="/vouchers/<%= voucher._id %>/claim" method="POST" class="mt-auto" data-voucher-id="<%= voucher._id %>">
+                                    <button type="submit" class="btn btn-success w-100" data-claim-btn-for="<%= voucher._id %>">
                                         <i class="fas fa-gift me-1"></i>Claim ngay
                                     </button>
                                 </form>
@@ -125,7 +133,6 @@
     <% } %>
 </section>
 
-<!-- Features Section -->
 <section class="bg-light py-5 rounded">
     <div class="container">
         <h2 class="text-center mb-5">Tại sao chọn chúng tôi?</h2>
@@ -154,14 +161,3 @@
         </div>
     </div>
 </section>
-
-<script>
-// Apply progress bar widths from data attributes
-document.addEventListener('DOMContentLoaded', function() {
-    const progressBars = document.querySelectorAll('.progress-bar[data-width]');
-    progressBars.forEach(bar => {
-        const width = bar.getAttribute('data-width');
-        bar.style.width = width + '%';
-    });
-});
-</script>

@@ -1,12 +1,17 @@
-// =========================
-//  File: config/db.js
-//  Mục đích: Kết nối MongoDB bằng Mongoose
-// =========================
+/**
+ * File: config/db.js
+ * 
+ * Mô tả: Module kết nối MongoDB bằng Mongoose
+ * - Hàm connectDB: Kết nối đến MongoDB database
+ * - Xử lý lỗi kết nối và thoát process nếu thất bại
+ * 
+ * Công nghệ sử dụng:
+ * - Mongoose: MongoDB ODM (Object Document Mapper)
+ * - MongoDB: NoSQL database
+ */
 
 const mongoose = require('mongoose');
 
-// Hàm: connectDB
-// Chức năng: Kết nối đến cơ sở dữ liệu MongoDB
 const connectDB = async () => {
   try {
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/voucher_system';

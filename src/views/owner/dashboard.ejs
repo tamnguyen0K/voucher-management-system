@@ -1,3 +1,17 @@
+<!--
+  File: views/owner/dashboard.ejs
+  
+  Mô tả: Trang dashboard dành cho owner
+  - Hiển thị thống kê: tổng locations, vouchers, active vouchers, total claims
+  - Hiển thị đánh giá mới nhất từ khách hàng
+  - Hiển thị danh sách locations và vouchers gần đây
+  - Form tạo location mới (modal)
+  
+  Công nghệ sử dụng:
+  - EJS: Template engine để render HTML
+  - Bootstrap 5: Framework CSS cho UI và modals
+  - Font Awesome: Icons
+-->
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h2">
@@ -10,7 +24,6 @@
     </div>
 </div>
 
-<!-- Recent Reviews -->
 <div class="row mb-5">
     <div class="col-12">
         <div class="card">
@@ -19,9 +32,7 @@
                     <i class="fas fa-comments me-2"></i>
                     Đánh giá mới nhất
                 </h5>
-                <a href="/owner/reviews" class="btn btn-sm btn-outline-secondary">
-                    Xem toàn bộ
-                </a>
+                <a href="/owner/reviews" class="btn btn-sm btn-outline-secondary">Xem toàn bộ</a>
             </div>
             <div class="card-body p-0">
                 <% if (recentReviews && recentReviews.length) { %>
@@ -37,9 +48,7 @@
                                         <i class="fas fa-map-marker-alt me-1"></i>
                                         <%= review.location?.name || 'Địa điểm không xác định' %>
                                     </div>
-                                    <p class="mb-1 mt-2 text-break">
-                                        <%= review.comment || 'Người dùng không để lại nội dung' %>
-                                    </p>
+                                    <p class="mb-1 mt-2 text-break"><%= review.comment || 'Người dùng không để lại nội dung' %></p>
                                     <span class="badge bg-warning text-dark">
                                         <i class="fas fa-star me-1"></i>
                                         <%= review.rating %>/5
@@ -49,9 +58,7 @@
                                     <div class="text-muted small mb-2">
                                         <%= new Date(review.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'medium' }) %>
                                     </div>
-                                    <a href="/owner/reviews/<%= review._id %>" class="btn btn-sm btn-outline-primary">
-                                        Xem chi tiết
-                                    </a>
+                                    <a href="/owner/reviews/<%= review._id %>" class="btn btn-sm btn-outline-primary">Xem chi tiết</a>
                                 </div>
                             </div>
                         <% }) %>
@@ -67,7 +74,6 @@
     </div>
 </div>
 
-<!-- Statistics Cards -->
 <div class="row mb-5">
     <div class="col-md-3 mb-3">
         <div class="card bg-primary text-white">
@@ -131,7 +137,6 @@
     </div>
 </div>
 
-<!-- Quick Actions -->
 <div class="row mb-5">
     <div class="col-md-6">
         <div class="card">
@@ -183,7 +188,6 @@
     </div>
 </div>
 
-<!-- Recent Locations -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card">
@@ -253,7 +257,6 @@
     </div>
 </div>
 
-<!-- Recent Vouchers -->
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -291,29 +294,18 @@
                                         <td><span class="badge bg-warning text-dark">-<%= voucher.discountPct %>%</span></td>
                                         <td>
                                             <div class="progress" style="height: 20px;">
-                                                <div class="progress-bar bg-success" data-width="<%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>"></div>
+                                                <div class="progress-bar bg-success" style="width: <%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>%"></div>
                                                     <%= voucher.quantityClaimed %>/<%= voucher.quantityTotal %>
-                                                </div>
                                             </div>
                                         </td>
                                         <td>
                                             <% 
                                                 const now = new Date();
-                                                let status = 'active';
-                                                let statusClass = 'success';
-                                                let statusText = 'Hoạt động';
-                                                
-                                                if (now > voucher.endDate) {
-                                                    status = 'expired';
-                                                    statusClass = 'danger';
-                                                    statusText = 'Hết hạn';
-                                                } else if (voucher.quantityClaimed >= voucher.quantityTotal) {
-                                                    status = 'sold_out';
-                                                    statusClass = 'warning';
-                                                    statusText = 'Hết số lượng';
-                                                }
+                                                const status = now > voucher.endDate ? { class: 'danger', text: 'Hết hạn' }
+                                                    : voucher.quantityClaimed >= voucher.quantityTotal ? { class: 'warning', text: 'Hết số lượng' }
+                                                    : { class: 'success', text: 'Hoạt động' };
                                             %>
-                                            <span class="badge bg-<%= statusClass %>"><%= statusText %></span>
+                                            <span class="badge bg-<%= status.class %>"><%= status.text %></span>
                                         </td>
                                         <td>
                                             <a href="/owner/vouchers" class="btn btn-sm btn-outline-primary">
@@ -340,7 +332,6 @@
     </div>
 </div>
 
-<!-- Create Location Modal -->
 <div class="modal fade" id="createLocationModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">

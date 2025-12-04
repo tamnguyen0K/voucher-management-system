@@ -1,11 +1,20 @@
-// ==================================
-// File: models/review.model.js
-// Mục đích: Định nghĩa schema và model cho đánh giá (Review)
-// ==================================
+/**
+ * File: models/review.model.js
+ * 
+ * Mô tả: Định nghĩa schema và model cho đánh giá (Review)
+ * - Quản lý đánh giá của user cho location: rating, comment, media
+ * - Media có thể là ảnh hoặc video
+ * - Cho phép mỗi user đánh giá tối đa 3 lần cho mỗi location (giới hạn được kiểm tra trong controller)
+ * - Index để tối ưu truy vấn theo user, location và thời gian tạo
+ * 
+ * Công nghệ sử dụng:
+ * - Mongoose: ODM cho MongoDB
+ * - MongoDB Indexes: Composite index (user, location) và single indexes để tối ưu query
+ * - Mongoose Schema Types: ObjectId references, nested schemas cho media
+ */
 
 const mongoose = require('mongoose');
 
-// Định nghĩa schema cho đánh giá
 const reviewSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -29,8 +38,7 @@ const reviewSchema = new mongoose.Schema({
     maxlength: [500, 'Comment cannot exceed 500 characters']
   },
   media: {
-    type: [
-      {
+    type: [{
         type: {
           type: String,
           enum: ['image', 'video'],
@@ -43,8 +51,7 @@ const reviewSchema = new mongoose.Schema({
         filename: String,
         mimetype: String,
         size: Number
-      }
-    ],
+    }],
     default: []
   },
   createdAt: {
@@ -53,12 +60,8 @@ const reviewSchema = new mongoose.Schema({
   }
 });
 
-// Ngăn người dùng đánh giá cùng một địa điểm nhiều lần
-reviewSchema.index({ user: 1, location: 1 }, { unique: true });
-
-// Tạo chỉ mục để tăng tốc truy vấn và sắp xếp
+reviewSchema.index({ user: 1, location: 1 });
 reviewSchema.index({ location: 1 });
 reviewSchema.index({ createdAt: -1 });
 
-// Xuất model Review (tương ứng với collection "reviews")
 module.exports = mongoose.model('Review', reviewSchema);

@@ -1,4 +1,19 @@
-<!-- Quản lý Người dùng -->
+<!--
+  File: views/admin/manage_users.ejs
+  
+  Mô tả: Trang quản lý người dùng dành cho admin
+  - Hiển thị danh sách tất cả users với thông tin: username, email, phoneNumber, role
+  - Tìm kiếm và lọc users theo role
+  - Cập nhật role của user (AJAX)
+  - Xóa user (AJAX với confirmation)
+  
+  Công nghệ sử dụng:
+  - EJS: Template engine để render HTML
+  - Bootstrap 5: Framework CSS cho UI
+  - Fetch API: Gọi API để cập nhật/xóa user
+  - Font Awesome: Icons
+-->
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h2">
         <i class="fas fa-users text-primary me-2"></i>
@@ -9,8 +24,7 @@
     </a>
 </div>
 
-<!-- Bộ lọc và tìm kiếm -->
-<div class="row mt-3">
+<div class="row mt-3 mb-3">
     <div class="col-md-6">
         <input type="text" class="form-control" placeholder="Tìm kiếm theo email, username..." id="searchUser">
     </div>
@@ -27,7 +41,6 @@
     </div>
 </div>
 
-<!-- Bảng danh sách người dùng -->
 <div class="card">
     <div class="card-header">
         <h5 class="mb-0">
@@ -87,8 +100,7 @@
 </div>
 
 <script>
-// Lọc và tìm kiếm người dùng
-document.getElementById('btnFilter').addEventListener('click', function() {
+const filterUsers = () => {
     const q = (document.getElementById('searchUser').value || '').toLowerCase();
     const role = document.getElementById('filterRole').value;
     const rows = document.querySelectorAll('table.table tbody tr');
@@ -96,17 +108,11 @@ document.getElementById('btnFilter').addEventListener('click', function() {
         const username = (tr.querySelector('.user-username')?.textContent || '').toLowerCase();
         const email = (tr.querySelector('.user-email')?.textContent || '').toLowerCase();
         const selectedRole = tr.querySelector('.change-role')?.value || '';
-        const matchText = !q || username.includes(q) || email.includes(q);
-        const matchRole = !role || selectedRole === role;
-        tr.style.display = (matchText && matchRole) ? '' : 'none';
+        tr.style.display = (!q || username.includes(q) || email.includes(q)) && (!role || selectedRole === role) ? '' : 'none';
     });
-});
+};
 
-// Đổi vai trò người dùng
-document.querySelectorAll('.change-role').forEach(select => {
-    select.addEventListener('change', async function() {
-        const userId = this.dataset.userId;
-        const newRole = this.value;
+const updateUserRole = async (userId, newRole) => {
         if (!confirm(`Thay đổi vai trò người dùng thành ${newRole}?`)) return;
         try {
             const res = await fetch(`/admin/users/${userId}/role`, {
@@ -115,43 +121,36 @@ document.querySelectorAll('.change-role').forEach(select => {
                 body: JSON.stringify({ role: newRole })
             });
             const data = await res.json();
-            if (data && data.success) {
-                window.VoucherSystem?.showToast 
-                    ? window.VoucherSystem.showToast('Cập nhật vai trò thành công', 'success') 
-                    : alert('Cập nhật vai trò thành công');
-            } else {
-                alert((data && data.message) || 'Cập nhật vai trò thất bại');
-            }
+        const message = data?.success ? 'Cập nhật vai trò thành công' : (data?.message || 'Cập nhật vai trò thất bại');
+        window.VoucherSystem?.showToast ? window.VoucherSystem.showToast(message, data?.success ? 'success' : 'danger') : alert(message);
         } catch (e) {
             console.error(e);
             alert('Có lỗi xảy ra');
         }
-    });
-});
+};
 
-// Xóa người dùng
-document.querySelectorAll('.delete-user').forEach(btn => {
-    btn.addEventListener('click', async function() {
-        const userId = this.dataset.userId;
+const deleteUser = async (userId) => {
         if (!confirm('Bạn có chắc muốn xóa người dùng này?')) return;
         try {
-            const res = await fetch(`/admin/users/${userId}`, { 
-                method: 'DELETE', 
-                headers: { 'Accept': 'application/json' } 
-            });
+        const res = await fetch(`/admin/users/${userId}`, { method: 'DELETE', headers: { 'Accept': 'application/json' } });
             const data = await res.json();
-            if (data && data.success) {
-                window.VoucherSystem?.showToast 
-                    ? window.VoucherSystem.showToast('Xóa người dùng thành công', 'success') 
-                    : alert('Xóa người dùng thành công');
-                this.closest('tr').remove();
+        if (data?.success) {
+            window.VoucherSystem?.showToast ? window.VoucherSystem.showToast('Xóa người dùng thành công', 'success') : alert('Xóa người dùng thành công');
+            document.querySelector(`[data-user-id="${userId}"]`).closest('tr').remove();
             } else {
-                alert((data && data.message) || 'Xóa người dùng thất bại');
+            alert(data?.message || 'Xóa người dùng thất bại');
             }
         } catch (e) {
             console.error(e);
             alert('Có lỗi xảy ra');
         }
+};
+
+document.getElementById('btnFilter').addEventListener('click', filterUsers);
+document.querySelectorAll('.change-role').forEach(select => {
+    select.addEventListener('change', () => updateUserRole(select.dataset.userId, select.value));
     });
+document.querySelectorAll('.delete-user').forEach(btn => {
+    btn.addEventListener('click', () => deleteUser(btn.dataset.userId));
 });
 </script>

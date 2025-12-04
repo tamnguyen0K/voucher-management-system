@@ -1,4 +1,19 @@
-<!-- Quản lý Voucher -->
+<!--
+  File: views/admin/manage_voucher.ejs
+  
+  Mô tả: Trang quản lý voucher dành cho admin và owner
+  - Hiển thị danh sách vouchers với thông tin: code, location, discount, quantity, status
+  - Tạo voucher mới (chỉ owner)
+  - Chỉnh sửa voucher (chỉ owner)
+  - Xóa voucher (admin hoặc owner)
+  
+  Công nghệ sử dụng:
+  - EJS: Template engine để render HTML
+  - Bootstrap 5: Framework CSS cho UI và modals
+  - Font Awesome: Icons
+  - JavaScript: Tự động set ngày bắt đầu cho form tạo mới
+-->
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h2">
         <i class="fas fa-percent text-warning me-2"></i>
@@ -9,7 +24,6 @@
     </a>
 </div>
 
-<!-- Bảng danh sách voucher -->
 <div class="card">
     <div class="card-header">
         <h5 class="mb-0">
@@ -51,33 +65,23 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge bg-warning text-dark fs-6">
-                                        -<%= voucher.discountPct %>%
-                                    </span>
+                                    <span class="badge bg-warning text-dark fs-6">-<%= voucher.discountPct %>%</span>
                                 </td>
                                 <td>
                                     <div class="progress" style="height: 20px;">
-                                        <div class="progress-bar bg-success" data-width="<%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>"></div>
+                                        <div class="progress-bar bg-success" style="width: <%= (voucher.quantityClaimed / voucher.quantityTotal) * 100 %>%"></div>
                                         <%= voucher.quantityClaimed %>/<%= voucher.quantityTotal %>
                                     </div>
                                 </td>
                                 <td>
                                     <% 
                                         const now = new Date();
-                                        let statusClass = 'success';
-                                        let statusText = 'Hoạt động';
-                                        if (now > voucher.endDate) {
-                                            statusClass = 'danger';
-                                            statusText = 'Hết hạn';
-                                        } else if (voucher.quantityClaimed >= voucher.quantityTotal) {
-                                            statusClass = 'warning';
-                                            statusText = 'Hết số lượng';
-                                        } else if (now < voucher.startDate) {
-                                            statusClass = 'info';
-                                            statusText = 'Sắp diễn ra';
-                                        }
+                                        const status = now > voucher.endDate ? { class: 'danger', text: 'Hết hạn' }
+                                            : voucher.quantityClaimed >= voucher.quantityTotal ? { class: 'warning', text: 'Hết số lượng' }
+                                            : now < voucher.startDate ? { class: 'info', text: 'Sắp diễn ra' }
+                                            : { class: 'success', text: 'Hoạt động' };
                                     %>
-                                    <span class="badge bg-<%= statusClass %>"><%= statusText %></span>
+                                    <span class="badge bg-<%= status.class %>"><%= status.text %></span>
                                 </td>
                                 <td>
                                     <small class="text-muted">
@@ -87,24 +91,17 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
+                                        <% if (!isAdmin) { %>
                                         <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editVoucherModal<%= voucher._id %>">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <% if (isAdmin) { %>
-                                            <form action="/admin/vouchers/<%= voucher._id %>" method="POST" class="d-inline" data-confirm="Xóa voucher này?">
-                                                <input type="hidden" name="_method" value="DELETE">
-                                                <button type="submit" class="btn btn-outline-danger">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        <% } else { %>
-                                            <form action="/owner/vouchers/<%= voucher._id %>" method="POST" class="d-inline" data-confirm="Xóa voucher này?">
-                                                <input type="hidden" name="_method" value="DELETE">
-                                                <button type="submit" class="btn btn-outline-danger">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
                                         <% } %>
+                                        <form action="<%= isAdmin ? '/admin' : '/owner' %>/vouchers/<%= voucher._id %>" method="POST" class="d-inline" data-confirm="Xóa voucher này?">
+                                                <input type="hidden" name="_method" value="DELETE">
+                                                <button type="submit" class="btn btn-outline-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
                                     </div>
                                 </td>
                             </tr>
@@ -116,13 +113,14 @@
             <div class="text-center py-5">
                 <i class="fas fa-percent fa-3x text-muted mb-3"></i>
                 <h4 class="text-muted">Chưa có voucher nào</h4>
+                <% if (!isAdmin) { %>
                 <p class="text-muted">Hãy tạo voucher đầu tiên của bạn!</p>
+                <% } %>
             </div>
         <% } %>
     </div>
 </div>
 
-<!-- Form tạo voucher -->
 <% if (!isAdmin) { %>
 <div class="modal fade" id="createVoucherModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -202,8 +200,7 @@
 </div>
 <% } %>
 
-<!-- Form chỉnh sửa voucher -->
-<% if (vouchers && vouchers.length > 0) { %>
+<% if (vouchers && vouchers.length > 0 && !isAdmin) { %>
     <% vouchers.forEach(voucher => { %>
         <div class="modal fade" id="editVoucherModal<%= voucher._id %>" tabindex="-1">
             <div class="modal-dialog modal-lg">
@@ -279,11 +276,9 @@
     <% }) %>
 <% } %>
 
-<!-- Xử lý tự động set thời gian -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const now = new Date();
     const startDateInput = document.getElementById('startDate');
-    if (startDateInput) startDateInput.value = now.toISOString().slice(0, 16);
+    if (startDateInput) startDateInput.value = new Date().toISOString().slice(0, 16);
 });
 </script>

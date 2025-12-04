@@ -1,11 +1,20 @@
-// ==================================
-// File: models/location.model.js
-// Mục đích: Định nghĩa schema và model cho địa điểm (Location)
-// ==================================
+/**
+ * File: models/location.model.js
+ * 
+ * Mô tả: Định nghĩa schema và model cho địa điểm (Location)
+ * - Quản lý thông tin địa điểm: name, description, address, type, rating
+ * - Quản lý metadata: city, priceLevel, priceRange, features, menuHighlights, keywords
+ * - Text index để hỗ trợ tìm kiếm full-text
+ * - Virtual field để hiển thị rating với 1 chữ số thập phân
+ * 
+ * Công nghệ sử dụng:
+ * - Mongoose: ODM cho MongoDB
+ * - Mongoose Virtuals: Tạo trường ảo (averageRating)
+ * - MongoDB Text Index: Tìm kiếm full-text trên nhiều trường
+ */
 
 const mongoose = require('mongoose');
 
-// Định nghĩa schema cho một địa điểm
 const locationSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -58,14 +67,8 @@ const locationSchema = new mongoose.Schema({
     default: 'standard'
   },
   priceRange: {
-    min: {
-      type: Number,
-      default: 0
-    },
-    max: {
-      type: Number,
-      default: 0
-    }
+    min: { type: Number, default: 0 },
+    max: { type: Number, default: 0 }
   },
   features: {
     type: [String],
@@ -85,12 +88,10 @@ const locationSchema = new mongoose.Schema({
   }
 });
 
-// Virtual field: hiển thị điểm đánh giá trung bình (1 chữ số thập phân)
 locationSchema.virtual('averageRating').get(function() {
   return this.rating.toFixed(1);
 });
 
-// Cho phép hiển thị các trường ảo khi chuyển sang JSON
 locationSchema.set('toJSON', { virtuals: true });
 
 locationSchema.index({
@@ -101,5 +102,4 @@ locationSchema.index({
   keywords: 'text'
 });
 
-// Xuất model Location (tương ứng với collection "locations")
 module.exports = mongoose.model('Location', locationSchema);

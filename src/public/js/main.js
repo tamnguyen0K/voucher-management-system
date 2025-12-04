@@ -1,16 +1,29 @@
 /**
  * File: public/js/main.js
- * Mô tả: File JavaScript chính cho hệ thống quản lý voucher
- * Chức năng: Xử lý form validation, đánh giá sao, tìm kiếm, xác nhận, toast notification, modal, auth forms
+ * 
+ * Mô tả: Frontend JavaScript chính cho Voucher System
+ * - Khởi tạo Bootstrap components (tooltips, popovers, alerts)
+ * - Form validation, rating stars interaction
+ * - Voucher claim với realtime polling và status checking
+ * - Floating chat widget tích hợp n8n chatbot
+ * - Custom center modal (popup trung tâm)
+ * - QR code generation cho vouchers
+ * - Toast notifications
+ * - Scroll animations
+ * - Auth forms với AJAX
+ * 
+ * Công nghệ sử dụng:
+ * - Vanilla JavaScript (ES6+)
+ * - Bootstrap 5: UI components và JavaScript APIs
+ * - Fetch API: AJAX requests
+ * - LocalStorage: Lưu chat history
+ * - QRCode library: Generate QR codes
+ * - Intersection Observer API: Scroll animations
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
-
-    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-    popoverTriggerList.map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
-
+    [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]')).map(el => new bootstrap.Tooltip(el));
+    [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]')).map(el => new bootstrap.Popover(el));
     setTimeout(() => {
         document.querySelectorAll('.alert').forEach(alert => new bootstrap.Alert(alert).close());
     }, 5000);
@@ -21,18 +34,15 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeSearch();
     initializeScrollAnimations();
     initializeCenterModal();
-    initializeLocationQuickView();
     initializeAuthForms();
     initializeConfirmations();
+    initializeVoucherRealtime();
+    initializeQrButtons();
+    initializeFloatingMessageButton();
 });
 
-/**
- * Hàm: initializeFormValidation
- * Mô tả: Khởi tạo kiểm tra form hợp lệ (Bootstrap validation)
- */
 function initializeFormValidation() {
-    const forms = document.querySelectorAll('.needs-validation');
-    Array.prototype.slice.call(forms).forEach(form => {
+    document.querySelectorAll('.needs-validation').forEach(form => {
         form.addEventListener('submit', function(event) {
             if (!form.checkValidity()) {
                 event.preventDefault();
@@ -43,59 +53,41 @@ function initializeFormValidation() {
     });
 }
 
-/**
- * Hàm: initializeRatingStars
- * Mô tả: Khởi tạo hệ thống đánh giá sao (rating)
- */
 function initializeRatingStars() {
-    const ratingInputs = document.querySelectorAll('.rating-input');
-    ratingInputs.forEach(ratingInput => {
+    document.querySelectorAll('.rating-input').forEach(ratingInput => {
         const stars = ratingInput.querySelectorAll('.star-rating');
         const hiddenInput = ratingInput.querySelector('input[type="hidden"]');
+        const updateStars = (rating) => {
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('text-warning');
+                    star.classList.remove('text-muted');
+                } else {
+                    star.classList.add('text-muted');
+                    star.classList.remove('text-warning');
+                }
+            });
+        };
         stars.forEach(star => {
             star.addEventListener('click', function() {
-                const rating = parseInt(this.dataset.rating);
-                hiddenInput.value = rating;
-                updateStarDisplay(stars, rating);
+                hiddenInput.value = parseInt(this.dataset.rating);
+                updateStars(parseInt(this.dataset.rating));
             });
             star.addEventListener('mouseenter', function() {
-                const rating = parseInt(this.dataset.rating);
-                updateStarDisplay(stars, rating);
+                updateStars(parseInt(this.dataset.rating));
             });
         });
         ratingInput.addEventListener('mouseleave', function() {
-            const currentRating = parseInt(hiddenInput.value) || 0;
-            updateStarDisplay(stars, currentRating);
+            updateStars(parseInt(hiddenInput.value) || 0);
         });
     });
 }
 
-/**
- * Hàm: updateStarDisplay
- * Mô tả: Cập nhật hiển thị màu của sao (vàng = chọn, xám = chưa chọn)
- */
-function updateStarDisplay(stars, rating) {
-    stars.forEach((star, index) => {
-        if (index < rating) {
-            star.classList.add('text-warning');
-            star.classList.remove('text-muted');
-        } else {
-            star.classList.add('text-muted');
-            star.classList.remove('text-warning');
-        }
-    });
-}
-
-/**
- * Hàm: initializeVoucherClaim
- * Mô tả: Xác nhận khi claim voucher
- */
 function initializeVoucherClaim() {
-    const claimForms = document.querySelectorAll('form[action*="/claim"]');
-    claimForms.forEach(form => {
+    document.querySelectorAll('form[action*="/claim"]').forEach(form => {
         form.addEventListener('submit', function(event) {
-            const voucherCode = form.closest('.card').querySelector('.badge').textContent.trim();
-            if (!confirm(`Bạn có chắc muốn claim voucher ${voucherCode}?`)) {
+            const voucherCode = form.closest('.card')?.querySelector('.badge')?.textContent.trim();
+            if (!confirm(`Bạn có chắc muốn claim voucher ${voucherCode || ''}?`)) {
                 event.preventDefault();
                 return false;
             }
@@ -111,10 +103,231 @@ function initializeVoucherClaim() {
     });
 }
 
-/**
- * Hàm: initializeConfirmations
- * Mô tả: Xác nhận chung cho thêm/sửa/xóa (admin & owner)
- */
+function initializeVoucherRealtime() {
+    const forms = document.querySelectorAll('form[action*="/vouchers/"][data-voucher-id]');
+    forms.forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            const id = form.getAttribute('data-voucher-id');
+            if (!id) return;
+            e.preventDefault();
+            try {
+                const res = await fetch(`/vouchers/${id}/status`, { credentials: 'same-origin' });
+                if (!res.ok) { form.submit(); return; }
+                const data = await res.json();
+                if (!data.success) { form.submit(); return; }
+                if (!data.eligible) { showToast('Tài khoản không đủ quyền nhận voucher', 'warning'); return; }
+                if (data.alreadyClaimed) {
+                    const html = `<div class="p-3 text-center"><div class="mb-2"><i class="fas fa-info-circle text-primary me-2"></i>Bạn đã nhận voucher đó rồi</div><div><button type="button" class="btn btn-primary" onclick="(${closeCenterModal.toString()})()">Đóng</button></div></div>`;
+                    openCenterModal(html);
+                    return;
+                }
+                form.__confirming = true;
+                form.submit();
+            } catch { form.submit(); }
+        });
+    });
+    const ids = Array.from(forms).map(f => f.getAttribute('data-voucher-id'));
+    if (!ids.length) return;
+    const updateOne = async (id) => {
+        try {
+            const res = await fetch(`/vouchers/${id}/status`, { credentials: 'same-origin' });
+            if (!res.ok) return;
+            const data = await res.json();
+            const remainingEl = document.querySelector(`[data-remaining-for="${id}"]`);
+            if (remainingEl && typeof data.quantityRemaining === 'number') remainingEl.textContent = data.quantityRemaining;
+            const bar = document.querySelector(`[data-progress-for="${id}"]`);
+            if (bar && typeof data.quantityClaimed === 'number' && typeof data.quantityTotal === 'number') {
+                const pct = Math.min(100, Math.max(0, (data.quantityClaimed / Math.max(1, data.quantityTotal)) * 100));
+                bar.style.width = pct + '%';
+            }
+            const btn = document.querySelector(`[data-claim-btn-for="${id}"]`);
+            if (btn) {
+                btn.disabled = !!(data.status !== 'active' || data.alreadyClaimed || !data.eligible);
+            }
+        } catch {}
+    };
+    setInterval(() => ids.forEach(updateOne), 5000);
+}
+
+function initializeQrButtons() {
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.show-qr-code');
+        if (!btn) return;
+        const code = btn.getAttribute('data-code');
+        const html = `<div class="p-3 text-center"><div class="mb-2 fw-semibold">QR Voucher: ${escapeHtml(code)}</div><div id="qr-holder" class="d-flex justify-content-center"></div><div class="mt-3"><button type="button" class="btn btn-outline-secondary" onclick="(${closeCenterModal.toString()})()">Đóng</button></div></div>`;
+        openCenterModal(html);
+        const holder = document.getElementById('qr-holder');
+        if (holder && window.QRCode) {
+            const q = new QRCode({});
+            q.makeCode(code || '');
+            q.appendTo(holder);
+        }
+    });
+}
+
+function initializeFloatingMessageButton() {
+    const btn = document.getElementById('floating-message-btn');
+    const panel = document.getElementById('floating-chat-panel');
+    const form = document.getElementById('floating-chat-form');
+    const input = document.getElementById('floating-chat-input');
+    const body = document.getElementById('floating-chat-body');
+    const scrollBtn = document.getElementById('floating-chat-scroll-btn');
+    if (!btn || !panel || !form || !input || !body) return;
+    
+    btn.addEventListener('click', function() {
+        const willOpen = !panel.classList.contains('open');
+        if (willOpen) {
+            panel.classList.add('open');
+            panel.style.display = 'flex';
+            input.focus();
+        } else {
+            panel.classList.remove('open');
+            panel.style.display = 'none';
+        }
+    });
+    
+    const saved = loadChatHistory();
+    if (Array.isArray(saved) && saved.length) {
+        saved.forEach(m => {
+            const isBot = m.sender === 'bot';
+            if (isBot) {
+                const displayHtml = linkifyLocationsText(m.text || '');
+                appendChatMessage(m.sender, displayHtml, body, m.type === 'error', true, m.text);
+            } else {
+                appendChatMessage(m.sender, m.text, body, m.type === 'error', false);
+            }
+        });
+        body.scrollTop = body.scrollHeight;
+    }
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const q = (input.value || '').trim();
+        if (!q) return;
+        input.value = '';
+        await sendMessage(q, body);
+    });
+    
+    body.addEventListener('scroll', function() {
+        if (scrollBtn) scrollBtn.classList.toggle('show', !isAtBottom(body));
+    });
+    
+    if (scrollBtn) scrollBtn.addEventListener('click', () => scrollToBottom(body));
+}
+
+async function sendMessage(q, body) {
+    appendChatMessage('user', q, body, false);
+    const loading = document.createElement('div');
+    loading.className = 'small text-muted mb-2';
+    loading.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang hỏi...';
+    body.appendChild(loading);
+    scrollToBottom(body);
+    try {
+        const r = await fetch('/api/chatbot/query', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question: q, mode: 'chat', context: document.title })
+        });
+        loading.remove();
+        if (!r.ok) {
+            appendChatMessage('error', 'Có lỗi xảy ra, vui lòng thử lại.', body, true);
+            return;
+        }
+        const ct = r.headers.get('content-type') || '';
+        let text = '';
+        let displayHtml = '';
+        if (ct.includes('application/json')) {
+            const data = await r.json();
+            const rawText = (data && (data.answer || data.text || '')) || '';
+            displayHtml = (data && data.answer_html) || linkifyLocationsText(rawText);
+            text = rawText;
+        } else {
+            text = await r.text();
+            displayHtml = linkifyLocationsText(text);
+        }
+        appendChatMessage('bot', displayHtml || 'Không có câu trả lời.', body, false, true, text);
+        scrollToBottom(body);
+    } catch {
+        loading.remove();
+        appendChatMessage('error', 'Có lỗi mạng, vui lòng thử lại.', body, true);
+    }
+}
+
+function appendChatMessage(sender, text, body, isError, isHtml = false, rawText = null) {
+    const row = document.createElement('div');
+    row.className = `chat-row ${sender === 'user' ? 'chat-row-user' : 'chat-row-bot'}`;
+    if (sender === 'bot') {
+        const avatar = document.createElement('div');
+        avatar.className = 'chat-avatar-bot';
+        avatar.innerHTML = '<i class="fas fa-robot"></i>';
+        row.appendChild(avatar);
+    }
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${sender === 'user' ? 'chat-bubble-user' : 'chat-bubble-bot'}${isError ? ' text-danger' : ''}`;
+    bubble.innerHTML = isHtml ? String(text || '') : (sender === 'bot' ? linkifyLocationsText(text || '') : formatMessageText(text || ''));
+    row.appendChild(bubble);
+    body.appendChild(row);
+    saveChatItem(sender, rawText !== null ? rawText : text, isError);
+}
+
+function isAtBottom(body) {
+    return body.scrollHeight - body.scrollTop - body.clientHeight < 20;
+}
+
+function scrollToBottom(body) { body.scrollTop = body.scrollHeight; }
+
+function loadChatHistory() {
+    try {
+        const raw = localStorage.getItem('chat_history');
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.slice(-10);
+    } catch { return []; }
+}
+
+function saveChatItem(sender, text, isError) {
+    try {
+        const list = loadChatHistory();
+        list.push({ sender, text, type: isError ? 'error' : sender });
+        const trimmed = list.slice(-10);
+        localStorage.setItem('chat_history', JSON.stringify(trimmed));
+    } catch {}
+}
+
+function formatMessageText(str) {
+    return escapeHtml(str).replace(/\r?\n/g, '<br>');
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function linkifyLocationsText(raw) {
+    if (!raw) return '';
+    const re = /(?:(\d+)[.)]\s+)?([^\[\n]+?)\s*\[([0-9a-fA-F]{24})\]/g;
+    let out = '';
+    let lastIdx = 0;
+    let m;
+    while ((m = re.exec(raw)) !== null) {
+        out += escapeHtml(raw.slice(lastIdx, m.index));
+        const num = m[1] || '';
+        const name = m[2].trim();
+        const id = m[3];
+        const prefix = num ? `<b>${num}.</b> ` : '';
+        out += `${prefix}<a href="/locations/${id}" class="chat-location-link">${escapeHtml(name)}</a>`;
+        lastIdx = re.lastIndex;
+    }
+    out += escapeHtml(raw.slice(lastIdx));
+    return out.replace(/\r?\n/g, '<br>');
+}
+
 function initializeConfirmations() {
     document.addEventListener('click', async function(e) {
         const submitBtn = e.target.closest('button[type="submit"][data-confirm], input[type="submit"][data-confirm]');
@@ -141,10 +354,6 @@ function initializeConfirmations() {
     });
 }
 
-/**
- * Hàm: confirmWithCenterModal
- * Mô tả: Hiển thị modal xác nhận trung tâm
- */
 async function confirmWithCenterModal(message) {
     const backdrop = document.getElementById('center-modal-backdrop');
     const content = document.getElementById('center-modal-content');
@@ -167,13 +376,8 @@ async function confirmWithCenterModal(message) {
     });
 }
 
-/**
- * Hàm: initializeSearch
- * Mô tả: Chức năng tìm kiếm realtime (lọc danh sách theo input)
- */
 function initializeSearch() {
-    const searchInputs = document.querySelectorAll('.search-input');
-    searchInputs.forEach(input => {
+    document.querySelectorAll('.search-input').forEach(input => {
         input.addEventListener('input', debounce(function() {
             const searchTerm = this.value.toLowerCase();
             const targetSelector = this.dataset.target;
@@ -186,10 +390,6 @@ function initializeSearch() {
     });
 }
 
-/**
- * Hàm: initializeScrollAnimations
- * Mô tả: Hiệu ứng xuất hiện khi scroll
- */
 function initializeScrollAnimations() {
     const observer = new IntersectionObserver(entries => {
         entries.forEach(entry => {
@@ -199,10 +399,6 @@ function initializeScrollAnimations() {
     document.querySelectorAll('.card, .hero-section').forEach(el => observer.observe(el));
 }
 
-/**
- * Hàm: debounce
- * Mô tả: Hàm tiện ích debounce (chống spam sự kiện input)
- */
 function debounce(func, wait) {
     let timeout;
     return function(...args) {
@@ -211,10 +407,6 @@ function debounce(func, wait) {
     };
 }
 
-/**
- * Hàm: showToast
- * Mô tả: Hiển thị toast notification (thông báo nổi Bootstrap)
- */
 function showToast(message, type = 'info') {
     const toastContainer = document.getElementById('toast-container') || createToastContainer();
     const toast = document.createElement('div');
@@ -232,10 +424,6 @@ function showToast(message, type = 'info') {
     toast.addEventListener('hidden.bs.toast', () => toast.remove());
 }
 
-/**
- * Hàm: createToastContainer
- * Mô tả: Tạo container cho toast nếu chưa có
- */
 function createToastContainer() {
     const container = document.createElement('div');
     container.id = 'toast-container';
@@ -245,19 +433,11 @@ function createToastContainer() {
     return container;
 }
 
-/**
- * Hàm: getToastIcon
- * Mô tả: Icon phù hợp theo loại thông báo
- */
 function getToastIcon(type) {
     const icons = { success: 'check-circle', danger: 'exclamation-triangle', warning: 'exclamation-circle', info: 'info-circle' };
     return icons[type] || 'info-circle';
 }
 
-/**
- * Hàm: fetchWithLoading
- * Mô tả: Hàm hỗ trợ fetch API có hiển thị lỗi/toast
- */
 async function fetchWithLoading(url, options = {}) {
     const defaultOptions = { headers: { 'Content-Type': 'application/json', ...options.headers } };
     try {
@@ -271,10 +451,6 @@ async function fetchWithLoading(url, options = {}) {
     }
 }
 
-/**
- * Hàm: copyToClipboard
- * Mô tả: Sao chép mã voucher vào clipboard
- */
 function copyToClipboard(text) {
     if (navigator.clipboard) {
         navigator.clipboard.writeText(text)
@@ -283,10 +459,6 @@ function copyToClipboard(text) {
     } else fallbackCopyTextToClipboard(text);
 }
 
-/**
- * Hàm: fallbackCopyTextToClipboard
- * Mô tả: Dự phòng copy nếu trình duyệt cũ không hỗ trợ navigator.clipboard
- */
 function fallbackCopyTextToClipboard(text) {
     const textArea = document.createElement('textarea');
     textArea.value = text;
@@ -310,37 +482,6 @@ document.addEventListener('click', function(event) {
     }
 });
 
-/**
- * Hàm: animateProgressBars
- * Mô tả: Hiệu ứng thanh tiến trình (progress bar)
- */
-function animateProgressBars() {
-    const progressBars = document.querySelectorAll('.progress-bar');
-    progressBars.forEach(bar => {
-        const width = bar.style.width;
-        bar.style.width = '0%';
-        setTimeout(() => {
-            bar.style.transition = 'width 1s ease-in-out';
-            bar.style.width = width;
-        }, 100);
-    });
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(animateProgressBars, 500);
-});
-
-window.VoucherSystem = {
-    showToast,
-    copyToClipboard,
-    fetchWithLoading,
-    debounce
-};
-
-/**
- * Hàm: initializeAuthForms
- * Mô tả: Xử lý form đăng nhập/đăng ký với AJAX
- */
 function initializeAuthForms() {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
@@ -364,10 +505,6 @@ function initializeAuthForms() {
     }
 }
 
-/**
- * Hàm: handleAuthFormSubmit
- * Mô tả: Xử lý submit form đăng nhập/đăng ký
- */
 async function handleAuthFormSubmit(form, url, tabType) {
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
@@ -383,7 +520,6 @@ async function handleAuthFormSubmit(form, url, tabType) {
             credentials: 'same-origin',
             redirect: 'follow'
         });
-
         const finalUrl = response.url;
         if (response.ok && finalUrl && finalUrl !== window.location.href) {
             if (!finalUrl.includes('/auth')) {
@@ -403,10 +539,6 @@ async function handleAuthFormSubmit(form, url, tabType) {
     }
 }
 
-/**
- * Hàm: initializeCenterModal
- * Mô tả: Khởi tạo modal popup trung tâm (custom)
- */
 function initializeCenterModal() {
     const backdrop = document.getElementById('center-modal-backdrop');
     const modal = document.getElementById('center-modal');
@@ -421,10 +553,6 @@ function initializeCenterModal() {
     });
 }
 
-/**
- * Hàm: openCenterModal
- * Mô tả: Mở modal trung tâm với nội dung HTML
- */
 function openCenterModal(html) {
     const backdrop = document.getElementById('center-modal-backdrop');
     const content = document.getElementById('center-modal-content');
@@ -434,10 +562,6 @@ function openCenterModal(html) {
     document.body.style.overflow = 'hidden';
 }
 
-/**
- * Hàm: closeCenterModal
- * Mô tả: Đóng modal trung tâm
- */
 function closeCenterModal() {
     const backdrop = document.getElementById('center-modal-backdrop');
     const content = document.getElementById('center-modal-content');
@@ -447,189 +571,9 @@ function closeCenterModal() {
     document.body.style.overflow = '';
 }
 
-/**
- * Hàm: initializeLocationQuickView
- * Mô tả: Xem nhanh địa điểm (quick view)
- */
-function initializeLocationQuickView() {
-    document.addEventListener('click', async function(e) {
-        const trigger = e.target.closest('[data-location-id][data-action="quick-view"]');
-        if (!trigger) return;
-        e.preventDefault();
-        const id = trigger.getAttribute('data-location-id');
-        if (!id) return;
-        try {
-            const data = await fetchWithLoading(`/locations/${id}/summary`);
-            const html = renderLocationQuickView(data);
-            openCenterModal(html);
-            // Gắn slider sau khi modal mở
-            const sliderEl = document.querySelector('#center-modal-content .lv-slider');
-            if (sliderEl) attachSimpleSlider(sliderEl);
-        } catch {}
-    });
-}
-
-/**
- * Hàm: renderLocationQuickView
- * Mô tả: Render HTML cho quick view địa điểm
- */
-function renderLocationQuickView(data) {
-    if (!data || !data.location) return '<div class="p-3">Không có dữ liệu</div>';
-    const loc = data.location;
-    const reviews = data.reviews || [];
-
-    // Ảnh của chủ
-    const ownerImages = Array.isArray(loc.images) && loc.images.length ? loc.images : (loc.imageUrl ? [loc.imageUrl] : []);
-    // Ảnh của user lấy từ reviews (nếu có)
-    const userImageEntries = [];
-    reviews.forEach(r => {
-        const imgs = extractReviewImages(r);
-        if (imgs && imgs.length) {
-            imgs.forEach(src => userImageEntries.push({
-                src,
-                username: (r.user && r.user.username) || 'Ẩn danh',
-                rating: r.rating || 0,
-                comment: r.comment || ''
-            }));
-        }
-    });
-
-    const slidesHtml = [
-        ...ownerImages.map(src => `
-            <div class="lv-slide" style="min-width:100%;height:100%;position:relative;">
-                <img src="${src}" alt="${loc.name}" style="width:100%;height:100%;object-fit:cover;">
-            </div>`),
-        ...userImageEntries.map(u => `
-            <div class="lv-slide" style="min-width:100%;height:100%;position:relative;">
-                <img src="${u.src}" alt="${loc.name}" style="width:100%;height:100%;object-fit:cover;">
-                <div class="lv-overlay" style="position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,0.45);color:#fff;padding:6px 8px;border-radius:6px;max-width:85%;">
-                    <div class="small fw-semibold">${u.username} • ${'★'.repeat(u.rating)}${'☆'.repeat(Math.max(0, 5 - u.rating))}</div>
-                    <div class="small" style="opacity:.9;">${escapeHtml(truncateText(u.comment, 60))}</div>
-                </div>
-            </div>`)
-    ].join('');
-
-    const hasAnyImage = slidesHtml.trim().length > 0;
-
-    return `
-        <div style="max-width:680px;">
-            <div class="lv-slider" style="position:relative;overflow:hidden;width:100%;height:220px;${hasAnyImage ? '' : 'display:none;'}">
-                <div class="lv-track" style="display:flex;height:100%;will-change:transform;transition:transform .3s ease;">
-                    ${slidesHtml}
-                </div>
-                <button type="button" class="lv-prev" aria-label="Prev" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.45);border:none;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;">‹</button>
-                <button type="button" class="lv-next" aria-label="Next" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.45);border:none;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;">›</button>
-            </div>
-            <div class="p-3" style="padding-top:10px !important;">
-                <h5 class="mb-1">${loc.name}</h5>
-                <div class="text-muted small mb-2"><i class="fas fa-map-marker-alt me-1"></i>${loc.address || ''}</div>
-                <div class="mb-0"><span class="badge bg-secondary">${loc.type || ''}</span>
-                <span class="ms-2 text-warning">${data.averageRating || 0} ★</span></div>
-                <div class="mt-3 d-flex gap-2">
-                    <a class="btn btn-primary flex-fill" href="/locations/${loc.id || loc._id || ''}">Xem chi tiết</a>
-                    <button type="button" class="btn btn-outline-secondary flex-fill" onclick="(${closeCenterModal.toString()})()">Đóng</button>
-                </div>
-            </div>
-        </div>`;
-}
-
-// Tiện ích: rút gọn chuỗi
-function truncateText(text, maxLen) {
-    const t = (text || '').toString();
-    return t.length > maxLen ? t.slice(0, maxLen - 1) + '…' : t;
-}
-
-// Tiện ích: escape HTML đơn giản
-function escapeHtml(str) {
-    return (str || '').replace(/[&<>"]/g, function(c) {
-        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] || c;
-    });
-}
-
-// Lấy ảnh từ review với nhiều khả năng key khác nhau
-function extractReviewImages(review) {
-    if (!review) return [];
-    const candidates = [];
-    if (Array.isArray(review.media)) {
-        review.media.forEach(item => {
-            if (item && item.type === 'image' && item.url) {
-                candidates.push(item.url);
-            }
-        });
-    }
-    if (Array.isArray(review.images)) candidates.push(...review.images);
-    if (Array.isArray(review.photos)) candidates.push(...review.photos);
-    if (Array.isArray(review.photoUrls)) candidates.push(...review.photoUrls);
-    if (review.imageUrl) candidates.push(review.imageUrl);
-    return candidates.filter(Boolean);
-}
-
-// Slider đơn giản: hỗ trợ click và vuốt
-function attachSimpleSlider(sliderEl) {
-    const track = sliderEl.querySelector('.lv-track');
-    const slides = sliderEl.querySelectorAll('.lv-slide');
-    const prevBtn = sliderEl.querySelector('.lv-prev');
-    const nextBtn = sliderEl.querySelector('.lv-next');
-    if (!track || !slides.length) return;
-    let index = 0;
-    let startX = 0;
-    let currentX = 0;
-    let isDragging = false;
-
-    const update = () => {
-        const offsetPct = -index * 100;
-        track.style.transition = 'transform .3s ease';
-        track.style.transform = `translateX(${offsetPct}%)`;
-        prevBtn && (prevBtn.style.display = index === 0 ? 'none' : 'flex');
-        nextBtn && (nextBtn.style.display = index === slides.length - 1 ? 'none' : 'flex');
-    };
-
-    const go = (i) => {
-        index = Math.max(0, Math.min(slides.length - 1, i));
-        update();
-    };
-
-    const onTouchStart = (x) => {
-        isDragging = true;
-        startX = x;
-        currentX = x;
-        track.style.transition = 'none';
-    };
-    const onTouchMove = (x) => {
-        if (!isDragging) return;
-        currentX = x;
-        const dx = currentX - startX;
-        const width = sliderEl.clientWidth || 1;
-        const deltaPct = (dx / width) * 100;
-        const offsetPct = -index * 100 + deltaPct;
-        track.style.transform = `translateX(${offsetPct}%)`;
-    };
-    const onTouchEnd = () => {
-        if (!isDragging) return;
-        isDragging = false;
-        const dx = currentX - startX;
-        const threshold = (sliderEl.clientWidth || 300) * 0.2;
-        if (dx > threshold) go(index - 1);
-        else if (dx < -threshold) go(index + 1);
-        else update();
-    };
-
-    // Mouse
-    sliderEl.addEventListener('mousedown', (e) => {
-        onTouchStart(e.clientX);
-        e.preventDefault();
-    });
-    window.addEventListener('mousemove', (e) => onTouchMove(e.clientX));
-    window.addEventListener('mouseup', onTouchEnd);
-
-    // Touch
-    sliderEl.addEventListener('touchstart', (e) => onTouchStart(e.touches[0].clientX), { passive: true });
-    sliderEl.addEventListener('touchmove', (e) => onTouchMove(e.touches[0].clientX), { passive: true });
-    sliderEl.addEventListener('touchend', onTouchEnd);
-
-    prevBtn && prevBtn.addEventListener('click', () => go(index - 1));
-    nextBtn && nextBtn.addEventListener('click', () => go(index + 1));
-
-    // Khởi tạo
-    update();
-}
+window.VoucherSystem = {
+    showToast,
+    copyToClipboard,
+    fetchWithLoading,
+    debounce
+};

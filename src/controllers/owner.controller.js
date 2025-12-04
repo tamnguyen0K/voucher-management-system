@@ -1,3 +1,16 @@
+/**
+ * File: controllers/owner.controller.js
+ * 
+ * Mô tả: Controller xử lý các thao tác dành cho chủ sở hữu (Owner)
+ * - Hiển thị dashboard với thống kê (số lượng locations, vouchers, reviews)
+ * - Quản lý danh sách địa điểm của owner
+ * 
+ * Công nghệ sử dụng:
+ * - Express.js: Framework web server
+ * - Mongoose: ODM cho MongoDB
+ * - EJS: Template engine để render views
+ */
+
 const Location = require('../models/location.model');
 const Voucher = require('../models/voucher.model');
 const Review = require('../models/review.model');
@@ -42,7 +55,7 @@ const renderDashboard = async (req, res) => {
     });
   } catch (error) {
     console.error('Owner dashboard error:', error);
-    req.flash('error', 'Co loi xay ra khi tai dashboard');
+    req.flash('error', 'Có lỗi xảy ra khi tải dashboard');
     res.redirect('/');
   }
 };
@@ -53,12 +66,12 @@ const listLocations = async (req, res) => {
     const locations = await Location.find({ owner: ownerId }).sort({ createdAt: -1 });
 
     res.render('owner/manage_location', {
-      title: 'Quan ly dia diem',
+      title: 'Quản lý địa điểm',
       locations
     });
   } catch (error) {
     console.error('Owner locations error:', error);
-    req.flash('error', 'Co loi xay ra khi tai danh sach dia diem');
+    req.flash('error', 'Có lỗi xảy ra khi tải danh sách địa điểm');
     res.redirect('/owner/dashboard');
   }
 };

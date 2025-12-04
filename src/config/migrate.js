@@ -1,14 +1,21 @@
-// =======================================
-//  File: scripts/migrateUsers.js
-//  Mục đích: Migration cập nhật user cũ — thêm phoneNumber và idName
-// =======================================
+/**
+ * File: config/migrate.js
+ * 
+ * Mô tả: Script migration để cập nhật user cũ
+ * - Thêm phoneNumber và idName cho các user chưa có
+ * - Tự động generate phoneNumber ngẫu nhiên nếu thiếu
+ * - Set idName = username nếu thiếu
+ * 
+ * Công nghệ sử dụng:
+ * - Mongoose: MongoDB ODM
+ * - MongoDB: Database operations (find, updateOne)
+ * - Dotenv: Quản lý biến môi trường
+ */
 
 require('dotenv').config({ path: './src/config/dotenv' });
 const mongoose = require('mongoose');
 const User = require('../models/user.model');
 
-// Hàm: connectDB
-// Chức năng: Kết nối đến MongoDB
 const connectDB = async () => {
   try {
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/voucher_system';
@@ -20,12 +27,9 @@ const connectDB = async () => {
   }
 };
 
-// Hàm: migrateDatabase
-// Chức năng: Cập nhật các user chưa có phoneNumber hoặc idName
 const migrateDatabase = async () => {
   try {
     console.log('Starting migration...');
-
     const usersToUpdate = await User.find({
       $or: [
         { phoneNumber: { $exists: false } },
@@ -48,26 +52,21 @@ const migrateDatabase = async () => {
     let updatedCount = 0;
     for (const user of usersToUpdate) {
       const updates = {};
-
       if (!user.idName && user.username) {
         updates.idName = user.username;
       }
-
       if (!user.phoneNumber) {
         const randomPhone = `09${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`;
         let phoneExists = await User.findOne({ phoneNumber: randomPhone });
         let finalPhone = randomPhone;
         let counter = 0;
-
         while (phoneExists && counter < 100) {
           finalPhone = `09${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`;
           phoneExists = await User.findOne({ phoneNumber: finalPhone });
           counter++;
         }
-
         updates.phoneNumber = finalPhone;
       }
-
       if (Object.keys(updates).length > 0) {
         await User.updateOne({ _id: user._id }, { $set: updates });
         console.log(`Updated user: ${user.username}`);
@@ -85,7 +84,6 @@ const migrateDatabase = async () => {
   }
 };
 
-// Chạy migration
 (async () => {
   await connectDB();
   await migrateDatabase();

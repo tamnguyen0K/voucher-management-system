@@ -1,14 +1,28 @@
-/* ========================================
-   HỆ THỐNG QUẢN LÝ VOUCHER - CSS CHÍNH
-   File này chứa toàn bộ CSS tùy chỉnh cho hệ thống
-   ======================================== */
+/**
+ * File: public/css/style.css
+ * 
+ * Mô tả: CSS chính cho Voucher Management System
+ * - CSS Variables: Định nghĩa màu sắc, gradients, shadows, radius
+ * - Global styles: Typography, body background
+ * - Navigation: Navbar styling với gradient
+ * - Components: Cards, buttons, forms, alerts, tables, badges
+ * - Floating chat widget: Chatbot UI với scroll button
+ * - Center modal: Custom popup trung tâm
+ * - Animations: Fade-in, slide-in effects
+ * - Responsive design: Media queries cho mobile
+ * - Print styles: Ẩn elements không cần khi in
+ * 
+ * Công nghệ sử dụng:
+ * - CSS3: Variables, gradients, animations, transitions
+ * - Flexbox & Grid: Layout systems
+ * - Media queries: Responsive design
+ * - Custom properties: CSS variables
+ */
 
-/* ========================================
-   BIẾN CSS - Định nghĩa màu sắc và giá trị chung
-   ======================================== */
 :root {
     --primary: #2563eb;
     --primary-dark: #1d4ed8;
+    --secondary: #6c757d;
     --success: #10b981;
     --danger: #ef4444;
     --warning: #f59e0b;
@@ -18,30 +32,14 @@
     --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     --radius: 12px;
-    
-    /* Giữ lại các biến cũ để tương thích */
-    --primary-color: var(--primary);
-    --secondary-color: #6c757d;
-    --success-color: var(--success);
-    --danger-color: var(--danger);
-    --warning-color: var(--warning);
-    --info-color: var(--info);
-    --light-color: var(--light);
-    --dark-color: var(--dark);
 }
 
-/* ========================================
-   STYLE TOÀN CỤC - Áp dụng cho toàn bộ trang
-   ======================================== */
 body {
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     min-height: 100vh;
 }
 
-/* ========================================
-   THANH ĐIỀU HƯỚNG - Navigation bar
-   ======================================== */
 .navbar {
     background: var(--gradient);
     box-shadow: var(--shadow);
@@ -65,9 +63,6 @@ body {
     transform: translateY(-1px);
 }
 
-/* ========================================
-   PHẦN HERO - Phần giới thiệu chính ở đầu trang
-   ======================================== */
 .hero-section {
     background: var(--gradient);
     border-radius: var(--radius);
@@ -81,10 +76,7 @@ body {
 .hero-section::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
     opacity: 0.3;
 }
@@ -103,9 +95,6 @@ body {
     margin-bottom: 2rem;
 }
 
-/* ========================================
-   THẺ CARD - Thẻ hiển thị nội dung
-   ======================================== */
 .card {
     border: none;
     border-radius: var(--radius);
@@ -127,9 +116,6 @@ body {
     font-weight: 600;
 }
 
-/* ========================================
-   NÚT BẤM - Buttons
-   ======================================== */
 .btn {
     border-radius: var(--radius);
     font-weight: 600;
@@ -159,40 +145,12 @@ body {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
-.btn-primary {
-    background: var(--gradient);
-    color: white;
-}
+.btn-primary { background: var(--gradient); color: white; }
+.btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+.btn-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+.btn-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
+.btn-info { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white; }
 
-.btn-success {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-}
-
-.btn-warning {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    color: white;
-}
-
-.btn-danger {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    color: white;
-}
-
-.btn-info {
-    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-    color: white;
-}
-
-/* Nút cố định ở cuối popup */
-.button_popup {
-    position: absolute;
-    bottom: 0.5em;
-    left: 0.5em;
-    right: 0.5em;
-}
-
-/* Nút với kích thước cố định, không bị co lại */
 .fixed-btn {
     font-size: 0.95rem;
     padding: 0.5rem 1rem;
@@ -200,9 +158,6 @@ body {
     flex-shrink: 0;
 }
 
-/* ========================================
-   SAO ĐÁNH GIÁ - Rating stars
-   ======================================== */
 .rating {
     display: flex;
     align-items: center;
@@ -223,9 +178,6 @@ body {
     color: #d1d5db;
 }
 
-/* ========================================
-   THẺ VOUCHER - Voucher cards
-   ======================================== */
 .voucher-item {
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     border: 2px solid var(--success);
@@ -251,9 +203,6 @@ body {
     transform: translateY(-5px);
 }
 
-/* ========================================
-   THANH TIẾN TRÌNH - Progress bars
-   ======================================== */
 .progress {
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.3);
@@ -267,9 +216,6 @@ body {
     transition: width 0.6s ease;
 }
 
-/* ========================================
-   ICON TÍNH NĂNG - Feature icons
-   ======================================== */
 .feature-icon {
     transition: transform 0.3s ease;
 }
@@ -278,9 +224,6 @@ body {
     transform: scale(1.1);
 }
 
-/* ========================================
-   FORM - Biểu mẫu nhập liệu
-   ======================================== */
 .form-control, .form-select {
     border: 2px solid #e2e8f0;
     border-radius: var(--radius);
@@ -301,9 +244,6 @@ body {
     margin-bottom: 8px;
 }
 
-/* ========================================
-   THÔNG BÁO - Alerts
-   ======================================== */
 .alert {
     border-radius: var(--radius);
     border: none;
@@ -312,29 +252,11 @@ body {
     font-weight: 500;
 }
 
-.alert-success {
-    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-    color: #065f46;
-}
+.alert-success { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); color: #065f46; }
+.alert-danger { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #991b1b; }
+.alert-warning { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e; }
+.alert-info { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); color: #1e40af; }
 
-.alert-danger {
-    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-    color: #991b1b;
-}
-
-.alert-warning {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    color: #92400e;
-}
-
-.alert-info {
-    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-    color: #1e40af;
-}
-
-/* ========================================
-   BẢNG - Tables
-   ======================================== */
 .table {
     border-radius: var(--radius);
     overflow: hidden;
@@ -369,9 +291,6 @@ body {
     border-bottom: 1px solid #f1f5f9;
 }
 
-/* ========================================
-   NHÃN - Badges
-   ======================================== */
 .badge {
     border-radius: 20px;
     padding: 8px 16px;
@@ -381,29 +300,112 @@ body {
     letter-spacing: 0.5px;
 }
 
-.badge-primary {
+.badge-primary { background: var(--gradient); color: white; }
+.badge-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+.badge-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+.badge-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
+
+.floating-message-btn {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
     background: var(--gradient);
-    color: white;
+    color: #fff;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    border: none;
 }
 
-.badge-success {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
+.floating-message-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
 }
 
-.badge-warning {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    color: white;
+.floating-chat-panel {
+    position: fixed;
+    right: 16px;
+    bottom: 80px;
+    width: 420px;
+    max-height: 60vh;
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: none;
+    flex-direction: column;
+    z-index: 2000;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
 }
 
-.badge-danger {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    color: white;
+.floating-chat-panel.open { display: flex; }
+
+.floating-chat-header {
+    background: #7D5FFF;
+    color: #fff;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    border-top-left-radius: var(--radius);
+    border-top-right-radius: var(--radius);
 }
 
-/* ========================================
-   HỘP THOẠI MODAL - Modal dialogs
-   ======================================== */
+.floating-chat-body {
+    padding: 12px 12px 8px;
+    overflow-y: auto;
+    flex: 1 1 auto;
+}
+
+.floating-chat-form {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    padding: 12px;
+    border-top: 1px solid #e2e8f0;
+    flex: 0 0 auto;
+}
+
+.floating-chat-input {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.floating-chat-scroll-btn {
+    position: absolute;
+    right: 18px;
+    bottom: 120px;
+    display: none;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    color: #111827;
+    border: 1px solid #e5e7eb;
+    padding: 6px 10px;
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+}
+
+.floating-chat-scroll-btn.show { display: flex; }
+
+.chat-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.chat-row-bot { justify-content: flex-start; }
+.chat-row-user { justify-content: flex-end; }
+.chat-avatar-bot { width: 28px; height: 28px; background:#7D5FFF; color:#fff; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:14px; }
+.chat-bubble { max-width: 80%; padding: 10px 12px; border-radius: 12px; font-size: 0.95rem; line-height: 1.4; }
+.chat-bubble-bot { background: #F2F2F2; color: #333; border-top-left-radius: 6px; }
+.chat-bubble-user { background: #7D5FFF; color: #fff; border-top-right-radius: 6px; }
+.chat-send-btn { width: 38px; height: 38px; border-radius: 50%; background:#7D5FFF; color:#fff; border:none; display:flex; align-items:center; justify-content:center; box-shadow: 0 6px 14px rgba(125,95,255,0.3); }
+.chat-send-btn:active { transform: translateY(1px); }
+
 .modal-content {
     border-radius: var(--radius);
     border: none;
@@ -432,9 +434,6 @@ body {
     padding: 20px;
 }
 
-/* ========================================
-   THẺ THỐNG KÊ - Stats cards
-   ======================================== */
 .stats-card {
     background: white;
     border-radius: var(--radius);
@@ -475,73 +474,28 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* ========================================
-   CHÂN TRANG - Footer
-   ======================================== */
 footer {
     margin-top: auto;
 }
 
-/* ========================================
-   THIẾT KẾ ĐÁP ỨNG - Responsive design cho màn hình nhỏ
-   ======================================== */
 @media (max-width: 768px) {
-    .hero-section h1 {
-        font-size: 2.5rem;
-    }
-    
-    .hero-section .lead {
-        font-size: 1.125rem;
-    }
-    
-    .card {
-        margin-bottom: 1.5rem;
-    }
-    
-    .btn {
-        width: 100%;
-        margin-bottom: 0.5rem;
-    }
-    
-    .btn-group {
-        flex-direction: column;
-    }
-    
-    .btn-group .btn {
-        margin-bottom: 0.25rem;
-    }
-
-    .fixed-btn {
-        width: auto;
-        padding: 0.45rem 0.9rem;
-    }
-
-    .stats-card {
-        margin-bottom: 1rem;
-    }
+    .hero-section h1 { font-size: 2.5rem; }
+    .hero-section .lead { font-size: 1.125rem; }
+    .card { margin-bottom: 1.5rem; }
+    .btn { width: 100%; margin-bottom: 0.5rem; }
+    .btn-group { flex-direction: column; }
+    .btn-group .btn { margin-bottom: 0.25rem; }
+    .fixed-btn { width: auto; padding: 0.45rem 0.9rem; }
+    .stats-card { margin-bottom: 1rem; }
 }
 
 @media (max-width: 576px) {
-    .hero-section {
-        padding: 2rem 1rem;
-    }
-    
-    .hero-section h1 {
-        font-size: 2rem;
-    }
-    
-    .card-body {
-        padding: 1.5rem;
-    }
-    
-    .modal-body {
-        padding: 1.5rem;
-    }
+    .hero-section { padding: 2rem 1rem; }
+    .hero-section h1 { font-size: 2rem; }
+    .card-body { padding: 1.5rem; }
+    .modal-body { padding: 1.5rem; }
 }
 
-/* ========================================
-   HIỆU ỨNG LOADING - Animation khi đang tải
-   ======================================== */
 .loading {
     display: inline-block;
     width: 20px;
@@ -556,9 +510,6 @@ footer {
     to { transform: rotate(360deg); }
 }
 
-/* ========================================
-   THANH CUỘN TÙY CHỈNH - Custom scrollbar
-   ======================================== */
 ::-webkit-scrollbar {
     width: 8px;
 }
@@ -577,9 +528,6 @@ footer {
     background: var(--primary-dark);
 }
 
-/* ========================================
-   SAO ĐÁNH GIÁ - Star rating có thể click
-   ======================================== */
 .star-rating {
     cursor: pointer;
     font-size: 1.5rem;
@@ -591,9 +539,6 @@ footer {
     transform: scale(1.1);
 }
 
-/* ========================================
-   HIỆU ỨNG ANIMATION - Các lớp animation cho phần tử
-   ======================================== */
 .fade-in {
     animation: fadeIn 0.5s ease-in;
 }
@@ -622,31 +567,14 @@ footer {
 }
 
 @keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-fadeInUp {
-    animation: fadeInUp 0.6s ease-out;
-}
+.animate-fadeInUp { animation: fadeInUp 0.6s ease-out; }
+.animate-slideInLeft { animation: slideInLeft 0.6s ease-out; }
+.animate-slideInRight { animation: slideInRight 0.6s ease-out; }
 
-.animate-slideInLeft {
-    animation: slideInLeft 0.6s ease-out;
-}
-
-.animate-slideInRight {
-    animation: slideInRight 0.6s ease-out;
-}
-
-/* ========================================
-   LỚP TIỆN ÍCH - Utility classes
-   ======================================== */
 .text-gradient {
     background: var(--gradient);
     -webkit-background-clip: text;
@@ -660,8 +588,7 @@ footer {
 
 .border-gradient {
     border: 2px solid transparent;
-    background: linear-gradient(white, white) padding-box,
-                var(--gradient) border-box;
+    background: linear-gradient(white, white) padding-box, var(--gradient) border-box;
 }
 
 .glass-effect {
@@ -670,29 +597,20 @@ footer {
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* ========================================
-   KIỂU IN - Print styles ẩn các phần không cần khi in
-   ======================================== */
 @media print {
     .navbar, .btn, .modal, footer, .hero-section {
         display: none;
     }
-    
     .card {
         box-shadow: none;
         border: 1px solid #e2e8f0;
         break-inside: avoid;
     }
-    
     body {
         background: white;
     }
 }
 
-/* ========================================
-   MODAL POPUP TRUNG TÂM - Cửa sổ popup hình vuông ở giữa màn hình
-   ======================================== */
-/* Nền mờ phía sau modal */
 .center-modal-backdrop {
     position: fixed;
     inset: 0;
@@ -705,24 +623,21 @@ footer {
     z-index: 1055;
 }
 
-/* Khung modal hình vuông, kích thước dựa trên cạnh nhỏ hơn của màn hình */
 .center-modal {
     position: relative;
-    display: inline-block; /* hoặc block tùy layout mong muốn */
+    display: inline-block;
     background: #ffffff;
     border-radius: 16px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
-    overflow: hidden; /* giữ ảnh gọn trong khung */
-    max-width: 90vw;  /* vẫn giới hạn nếu nội dung quá lớn */
-    max-height: 90vh; /* tương tự */
+    overflow: hidden;
+    max-width: 90vw;
+    max-height: 90vh;
 }
 
-/* Nội dung bên trong modal */
 .center-modal-content {
     padding: 16px;
 }
 
-/* Nút đóng modal ở góc phải trên */
 .center-modal-close {
     position: absolute;
     top: 8px;

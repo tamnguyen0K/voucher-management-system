@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n:1.121.3
+    
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - '5678:5678'
+
+    # --- QUAN TRỌNG: QUYỀN TRUY CẬP ---
+    # Các bản n8n v1.x chạy user 'node' (uid 1000).
+    # Cần set root để tránh lỗi không ghi được dữ liệu vào ổ cứng máy bạn.
+    user: root
+    # ----------------------------------
+
+    # --- KẾT NỐI MẠNG (Để gọi MongoDB Local) ---
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # -------------------------------------------
+
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678
+      - N8N_EDITOR_BASE_URL=http://localhost:5678
+      
+      # Tắt secure cookie để login được trên localhost
+      - N8N_SECURE_COOKIE=false
+      
+      - N8N_ENCRYPTION_KEY=change_me_to_a_strong_random_key
+      - TZ=Asia/Ho_Chi_Minh
+      
+      # Biến kết nối DB (Tùy chọn)
+      - DB_CONNECTION=mongodb://host.docker.internal:27017
+
+    volumes:
+      - ./n8n_data:/home/node/.n8n

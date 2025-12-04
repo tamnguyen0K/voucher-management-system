@@ -1,8 +1,19 @@
-<!-- ========================= -->
-<!-- ADMIN DASHBOARD - GIAO DIỆN TỔNG QUAN -->
-<!-- ========================= -->
+<!--
+  File: views/admin/dashboard.ejs
+  
+  Mô tả: Trang dashboard dành cho admin
+  - Hiển thị thống kê tổng quan: users, locations, vouchers, reviews
+  - Hiển thị biểu đồ tăng trưởng users và locations (6 tháng gần nhất)
+  - Hiển thị thống kê voucher (active, expired)
+  - Hiển thị danh sách users, locations, vouchers mới nhất
+  
+  Công nghệ sử dụng:
+  - EJS: Template engine để render HTML
+  - Bootstrap 5: Framework CSS cho UI
+  - Chart.js: Thư viện vẽ biểu đồ (line chart, bar chart)
+  - Font Awesome: Icons
+-->
 
-<!-- Header: Tiêu đề và ngày hiện tại -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h2">
         <i class="fas fa-tachometer-alt text-primary me-2"></i>
@@ -14,9 +25,7 @@
     </div>
 </div>
 
-<!-- THỐNG KÊ TỔNG QUÁT (TỔNG USERS / LOCATIONS / VOUCHERS / REVIEWS) -->
 <div class="row mb-5">
-    <!-- Tổng người dùng -->
     <div class="col-md-3 mb-3">
         <div class="card bg-primary text-white">
             <div class="card-body d-flex justify-content-between">
@@ -28,8 +37,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Tổng địa điểm -->
     <div class="col-md-3 mb-3">
         <div class="card bg-success text-white">
             <div class="card-body d-flex justify-content-between">
@@ -41,8 +48,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Tổng voucher -->
     <div class="col-md-3 mb-3">
         <div class="card bg-warning text-white">
             <div class="card-body d-flex justify-content-between">
@@ -54,8 +59,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Tổng review -->
     <div class="col-md-3 mb-3">
         <div class="card bg-info text-white">
             <div class="card-body d-flex justify-content-between">
@@ -69,9 +72,7 @@
     </div>
 </div>
 
-<!-- THỐNG KÊ VOUCHER VÀ LIÊN KẾT QUẢN LÝ NHANH -->
 <div class="row mb-5">
-    <!-- Biểu đồ trạng thái voucher -->
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
@@ -91,8 +92,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Liên kết nhanh đến các trang quản lý -->
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
@@ -108,49 +107,36 @@
     </div>
 </div>
 
-<!-- BIỂU ĐỒ TĂNG TRƯỞNG (USERS + LOCATIONS 6 THÁNG GẦN NHẤT) -->
 <div class="row mb-5">
-    <!-- Biểu đồ người dùng -->
     <div class="col-md-6">
         <div class="card">
             <div class="card-header"><h5 class="mb-0"><i class="fas fa-user-chart me-2"></i>Tăng trưởng người dùng</h5></div>
             <div class="card-body"><canvas id="userGrowthChart" height="140"></canvas></div>
         </div>
     </div>
-
-    <!-- Biểu đồ địa điểm -->
     <div class="col-md-6">
         <div class="card">
             <div class="card-header"><h5 class="mb-0"><i class="fas fa-map me-2"></i>Tăng trưởng địa điểm</h5></div>
             <div class="card-body"><canvas id="locationGrowthChart" height="140"></canvas></div>
         </div>
     </div>
-
-    <!-- Script Chart.js hiển thị biểu đồ tăng trưởng -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         try {
-            // Dữ liệu biểu đồ truyền từ server
             const labels = <%- JSON.stringify(growthData?.labels || []) %>;
             const userData = <%- JSON.stringify(growthData?.users || []) %>;
             const locationData = <%- JSON.stringify(growthData?.locations || []) %>;
-
-            // Cấu hình chung cho biểu đồ
             const options = {
                 responsive: true,
                 scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
                 plugins: { legend: { display: false } }
             };
-
-            // Biểu đồ người dùng (line chart)
             new Chart(document.getElementById('userGrowthChart'), {
                 type: 'line',
                 data: { labels, datasets: [{ data: userData, borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.15)', tension: 0.25, fill: true }] },
                 options
             });
-
-            // Biểu đồ địa điểm (bar chart)
             new Chart(document.getElementById('locationGrowthChart'), {
                 type: 'bar',
                 data: { labels, datasets: [{ data: locationData, backgroundColor: '#20c997' }] },
@@ -163,11 +149,7 @@
     </script>
 </div>
 
-<!-- ========================= -->
-<!-- HOẠT ĐỘNG GẦN ĐÂY (USERS / LOCATIONS / VOUCHERS) -->
-<!-- ========================= -->
 <div class="row">
-    <!-- Người dùng mới -->
     <div class="col-md-4">
         <div class="card">
             <div class="card-header"><h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>Users mới</h5></div>
@@ -188,8 +170,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Địa điểm mới -->
     <div class="col-md-4">
         <div class="card">
             <div class="card-header"><h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Địa điểm mới</h5></div>
@@ -210,8 +190,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Voucher mới -->
     <div class="col-md-4">
         <div class="card">
             <div class="card-header"><h5 class="mb-0"><i class="fas fa-percent me-2"></i>Voucher mới</h5></div>

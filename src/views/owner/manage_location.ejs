@@ -1,3 +1,20 @@
+<!--
+  File: views/owner/manage_location.ejs
+  
+  Mô tả: Trang quản lý địa điểm dành cho owner
+  - Hiển thị danh sách locations của owner với thông tin: name, type, rating, address
+  - Tạo location mới (modal với form đầy đủ: name, type, city, address, description, priceLevel, features, menuHighlights, images)
+  - Chỉnh sửa location (modal với form tương tự)
+  - Xóa location (có confirmation)
+  - Image picker component: hỗ trợ thêm ảnh qua URL, upload file, hoặc drag & drop
+  
+  Công nghệ sử dụng:
+  - EJS: Template engine để render HTML
+  - Bootstrap 5: Framework CSS cho UI và modals
+  - Font Awesome: Icons
+  - JavaScript: Image picker component với drag & drop, file upload, URL input
+  - DataTransfer API: Quản lý files trong drag & drop
+-->
 
 <% const featureOptions = (locationMeta && locationMeta.FEATURE_LIBRARY) || [
     { value: 'View đẹp', hint: 'Rooftop, hướng biển, sông' },
@@ -27,7 +44,6 @@
     </button>
 </div>
 
-<!-- Locations Table -->
 <div class="card">
     <div class="card-header">
         <h5 class="mb-0">
@@ -105,7 +121,6 @@
     </div>
 </div>
 
-<!-- Create Location Modal -->
 <div class="modal fade" id="createLocationModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -180,39 +195,6 @@
                         <textarea class="form-control" id="description" name="description" rows="4" minlength="<%= descriptionMin %>" required></textarea>
                         <small class="text-muted">Tối thiểu <%= descriptionMin %> ký tự, mô tả rõ view, không gian và thực đơn nổi bật.</small>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="city_<%= location._id %>" class="form-label">Thành phố / Tỉnh *</label>
-                                <input type="text" class="form-control" id="city_<%= location._id %>" name="city" value="<%= cityValue %>" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="priceLevel_<%= location._id %>" class="form-label">Mức giá trung bình *</label>
-                                <select class="form-select" id="priceLevel_<%= location._id %>" name="priceLevel" required>
-                                    <option value="">Chọn mức giá</option>
-                                    <% priceLevelOptions.forEach(option => { %>
-                                        <option value="<%= option.value %>" <%= location.priceLevel === option.value ? 'selected' : '' %>><%= option.label %></option>
-                                    <% }) %>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="priceMin_<%= location._id %>" class="form-label">Giá tối thiểu (VND)</label>
-                                <input type="number" class="form-control" id="priceMin_<%= location._id %>" name="priceMin" min="0" value="<%= priceInfo.min || '' %>">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="priceMax_<%= location._id %>" class="form-label">Giá tối đa (VND)</label>
-                                <input type="number" class="form-control" id="priceMax_<%= location._id %>" name="priceMax" min="0" value="<%= priceInfo.max || '' %>">
-                            </div>
-                        </div>
-                    </div>
                     <div class="mb-3">
                         <label class="form-label">Đặc điểm nổi bật *</label>
                         <small class="text-muted d-block">Chọn tối thiểu <%= featureMin %> đặc điểm hoặc bổ sung trong phần mô tả.</small>
@@ -277,7 +259,6 @@
     </div>
 </div>
 
-<!-- Edit Location Modals -->
 <% if (locations && locations.length > 0) { %>
     <% locations.forEach(location => {
         const selectedFeatures = location.features || [];
@@ -312,6 +293,39 @@
                                             <option value="cafe" <%= location.type === 'cafe' ? 'selected' : '' %>>Cafe</option>
                                             <option value="tourist_spot" <%= location.type === 'tourist_spot' ? 'selected' : '' %>>Điểm du lịch</option>
                                         </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="city_<%= location._id %>" class="form-label">Thành phố / Tỉnh *</label>
+                                        <input type="text" class="form-control" id="city_<%= location._id %>" name="city" value="<%= cityValue %>" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="priceLevel_<%= location._id %>" class="form-label">Mức giá trung bình *</label>
+                                        <select class="form-select" id="priceLevel_<%= location._id %>" name="priceLevel" required>
+                                            <option value="">Chọn mức giá</option>
+                                            <% priceLevelOptions.forEach(option => { %>
+                                                <option value="<%= option.value %>" <%= location.priceLevel === option.value ? 'selected' : '' %>><%= option.label %></option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="priceMin_<%= location._id %>" class="form-label">Giá tối thiểu (VND)</label>
+                                        <input type="number" class="form-control" id="priceMin_<%= location._id %>" name="priceMin" min="0" value="<%= priceInfo.min || '' %>">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="priceMax_<%= location._id %>" class="form-label">Giá tối đa (VND)</label>
+                                        <input type="number" class="form-control" id="priceMax_<%= location._id %>" name="priceMax" min="0" value="<%= priceInfo.max || '' %>">
                                     </div>
                                 </div>
                             </div>
