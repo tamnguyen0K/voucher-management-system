@@ -1,6 +1,6 @@
 # Voucher Management System
 
-Nền tảng web giúp quản trị voucher và địa điểm ăn uống/giải trí. Ứng dụng monolith Node.js + Express, render giao diện bằng EJS, lưu trữ dữ liệu trên MongoDB và phục vụ ba nhóm người dùng: khách thường, chủ địa điểm và admin.
+Nền tảng web cho phép quản trị voucher và địa điểm ăn uống/giải trí. Ứng dụng dạng monolith xây dựng bằng Node.js + Express, render giao diện với EJS, lưu trữ dữ liệu trên MongoDB và phục vụ ba nhóm người dùng: **khách thường**, **chủ địa điểm** và **admin**. README này hướng dẫn chi tiết cách chuẩn bị môi trường, chạy thử, hiểu cấu trúc mã nguồn và khắc phục lỗi thường gặp.
 
 ---
 
@@ -14,9 +14,10 @@ Nền tảng web giúp quản trị voucher và địa điểm ăn uống/giải
 7. [Chạy project & scripts hữu ích](#-chạy-project--scripts-hữu-ích)
 8. [Cấu trúc thư mục](#-cấu-trúc-thư-mục)
 9. [Luồng người dùng tiêu biểu](#-luồng-người-dùng-tiêu-biểu)
-10. [Troubleshooting](#-troubleshooting)
-11. [Triển khai production](#-triển-khai-production)
-12. [Đóng góp](#-đóng-góp)
+10. [Dòng chảy request chính](#-dòng-chảy-request-chính)
+11. [Troubleshooting](#-troubleshooting)
+12. [Triển khai production](#-triển-khai-production)
+13. [Đóng góp & kiểm thử](#-đóng-góp--kiểm-thử)
 
 ---
 
@@ -32,6 +33,8 @@ Năng lực chung:
 - Session-based auth + RBAC (user / owner / admin)
 - Review giới hạn 1 review/user/location, hỗ trợ upload media
 - Flash message nhất quán, giao diện responsive Bootstrap 5
+- Phân tách route + controller rõ ràng giúp mở rộng dễ dàng
+- Seed sẵn dữ liệu và tài khoản mẫu để trải nghiệm full luồng ngay sau khi cài đặt
 
 ---
 
@@ -57,51 +60,22 @@ Năng lực chung:
 
 ---
 
-## ⚙️ Hướng dẫn cài đặt nhanh
-```bash
-# 1. Clone code
-git clone <repository-url>
-cd voucher-management-system
-
-# 2. Cài dependencies
-npm install
-
-# 3. Tạo file môi trường
-cp src/config/.env.example src/config/.env  # hoặc tạo thủ công (xem phần .env)
-
-# 4. Khởi động MongoDB
-# Windows:  net start MongoDB
-# macOS:    brew services start mongodb/brew/mongodb-community
-# Ubuntu:   sudo systemctl start mongod
-
-# 5. Seed dữ liệu mẫu
-npm run seed
-
-# 6. Khởi chạy
-npm run dev   # Dev mode dùng nodemon
-# hoặc
-npm start     # Production mode
-```
-Truy cập `http://localhost:3000`.
-
----
-
 ## 🧾 .env mẫu & giải thích
 Tạo `src/config/.env`:
-```
-NODE_ENV=development          # development | production
-PORT=3000                     # Cổng Express
+NODE_ENV=development # development | production
+PORT=3000 # Cổng Express
 MONGODB_URI=mongodb://localhost:27017/voucher_system
 SESSION_SECRET=change-me-please-very-long
-```
+
 > Gợi ý tạo secret mạnh: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`.
+
+Mẹo: Khi deploy, đặt `NODE_ENV=production`, dùng URI MongoDB trên cloud và bật `cookie.secure=true` trong config session.
 
 ---
 
 ## 🌱 Seed dữ liệu & tài khoản demo
-```
 npm run seed
-```
+
 Script tạo:
 - 1 admin (`admin@example.com` / `admin123`)
 - 2 owner (`owner1@example.com`, `owner2@example.com` / `owner123`)
@@ -122,31 +96,39 @@ Script tạo:
 | `npm run enrich:locations` | Chuẩn hóa metadata location hiện có |
 | `npm run enrich:locations:dry` | Enrich ở chế độ xem trước (không ghi DB) |
 
-Luôn chắc chắn MongoDB đang chạy trước khi dùng các script thao tác DB.
+Luôn chắc chắn MongoDB đang chạy trước khi dùng các script thao tác DB. Với môi trường production, cân nhắc bật process manager (PM2, systemd) để auto restart.
 
 ---
 
 ## 📁 Cấu trúc thư mục
 ```
 src/
-├── app.js                # Bootstrap Express, mount middleware & routes
-├── config/               # db helper, dotenv loader, seed/enrich/migrate scripts
-├── controllers/          # Business logic (location, voucher, review, user, owner)
-├── middleware/           # auth guards, upload handler
-├── models/               # User, Location, Voucher, Review schemas
-├── public/               # CSS/JS/static assets
-├── routes/               # user/location/voucher/owner/admin router
-├── uploads/              # Media upload (gitignored)
-├── utils/                # location metadata helper
-└── views/                # EJS layout + pages (pages/admin/owner)
+├── app.js # Bootstrap Express, mount middleware & routes
+├── config/ # db helper, dotenv loader, seed/enrich/migrate scripts
+├── controllers/ # Business logic (location, voucher, review, user, owner)
+├── middleware/ # auth guards, upload handler
+├── models/ # User, Location, Voucher, Review schemas
+├── public/ # CSS/JS/static assets
+├── routes/ # user/location/voucher/owner/admin router
+├── uploads/ # Media upload (gitignored)
+├── utils/ # location metadata helper
+└── views/ # EJS layout + pages (pages/admin/owner)
 ```
 
 ---
 
 ## 🔄 Luồng người dùng tiêu biểu
-1. **User**: đăng nhập → duyệt `/locations` → xem chi tiết → claim voucher (`POST /vouchers/:id/claim`) → voucher ghi vào hồ sơ cá nhân.
+1. **User**: đăng nhập → duyệt `/locations` → xem chi tiết → claim voucher (`POST /vouchers/:id/claim`) → voucher ghi vào hồ sơ cá nhân. Người dùng có thể thêm review kèm hình ảnh cho địa điểm.
 2. **Owner**: vào `/owner/dashboard` → tạo/cập nhật địa điểm & voucher → theo dõi review/claim thuộc địa điểm của mình.
 3. **Admin**: vào `/admin/dashboard` → xem thống kê → quản lý users/locations/vouchers/reviews để duyệt hoặc xử lý vi phạm.
+
+---
+
+## 🔁 Dòng chảy request chính
+- **Auth**: form login gửi `POST /login` → middleware `authController.handleLogin` tạo session → redirect về dashboard phù hợp theo role.
+- **Claim voucher**: user mở chi tiết voucher → nhấn claim (POST `/vouchers/:id/claim`) → controller ghi nhận claim + flash message → render hồ sơ cá nhân với danh sách voucher.
+- **Tạo review**: user submit review (form multipart) → middleware upload lưu file vào `src/uploads/reviews/<userId>` → controller lưu link media vào Review document → trang địa điểm hiển thị review mới nhất.
+- **Owner CRUD địa điểm/voucher**: owner gửi request qua router `/owner/*` → middleware `ensureOwner` chặn truy cập trái phép → controller thao tác trên collection Location/Voucher.
 
 ---
 
@@ -157,6 +139,9 @@ src/
 | `listen EADDRINUSE :::3000` | Port 3000 đã dùng → đổi `PORT` trong `.env` hoặc kill process đang chạy |
 | `Cannot find module ...` | Thiếu dependency → chạy lại `npm install` |
 | Warning `connect.session() MemoryStore` | Chỉ xuất hiện khi dev; production nên dùng Mongo store (app đã config `connect-mongo`) |
+| Upload lỗi `LIMIT_FILE_SIZE` | File > giới hạn của multer → kiểm tra middleware upload trong `middleware/upload.js` |
+
+Nếu cần reset sạch database để test lại, có thể drop database `voucher_system` rồi chạy lại `npm run seed`.
 
 ---
 
@@ -165,14 +150,16 @@ src/
 - **Process manager**: dùng PM2 hoặc systemd để tự restart + log rotation.
 - **Static assets**: có thể phục vụ qua Express hoặc reverse proxy (Nginx) + cache.
 - **Security khuyến nghị**:
-  - đặt `SESSION_SECRET` mạnh, bật HTTPS và `cookie.secure=true`
-  - khóa port MongoDB, chỉ cho phép app server truy cập
-  - backup định kỳ MongoDB và thư mục `src/uploads`
+ - đặt `SESSION_SECRET` mạnh, bật HTTPS và `cookie.secure=true`
+ - khóa port MongoDB, chỉ cho phép app server truy cập
+ - backup định kỳ MongoDB và thư mục `src/uploads`
 - **Monitoring**: tích hợp logger (Winston/Pino) và central log/metrics nếu triển khai thực tế.
 
 ---
 
-## 🤝 Đóng góp
+## 🤝 Đóng góp & kiểm thử
 1. Fork repo & tạo branch feature/bugfix.
-2. Mô tả rõ issue/feature trong PR.
-3. Chạy lại `npm run seed` + smoke test nhanh các flow chính trước khi gửi PR
+2. Mô tả rõ issue/feature trong PR, kèm checklist kiểm thử.
+3. Chạy `npm run seed` (nếu cần dữ liệu mẫu), sau đó smoke test các flow: login, claim voucher, tạo review, CRUD owner.
+4. Format code theo phong cách hiện hữu, tránh thêm try/catch quanh import.
+5. Gửi PR, mô tả bước tái hiện và ảnh chụp màn hình (nếu thay đổi UI).
