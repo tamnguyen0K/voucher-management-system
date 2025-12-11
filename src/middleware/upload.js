@@ -21,7 +21,17 @@ const ensureDirectory = (dirPath) => {
   if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
 };
 
-const sanitizeFilename = (name) => name.replace(/[^a-zA-Z0-9-_]/g, '_');
+const sanitizeFilename = (name) => {
+  // Giữ nguyên ký tự tiếng Việt và các ký tự Unicode hợp lệ
+  // Chỉ loại bỏ các ký tự đặc biệt nguy hiểm cho filesystem
+  return name
+    .replace(/[<>:"|?*\x00-\x1F]/g, '_') // Loại bỏ ký tự đặc biệt nguy hiểm
+    .replace(/\.\./g, '_') // Loại bỏ path traversal
+    .replace(/^\.+|\.+$/g, '_') // Loại bỏ dấu chấm ở đầu/cuối
+    .replace(/\s+/g, '_') // Thay khoảng trắng bằng dấu gạch dưới
+    .replace(/_+/g, '_') // Gộp nhiều dấu gạch dưới thành một
+    .replace(/^_|_$/g, ''); // Loại bỏ dấu gạch dưới ở đầu/cuối
+};
 
 const reviewStorage = multer.diskStorage({
   destination: (req, file, cb) => {
