@@ -86,6 +86,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.set('layout', 'layout');
 app.locals.locationMeta = locationMeta;
+app.locals.googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY || '';
 
 app.use('/', homeRoutes);
 app.use('/', userRoutes);

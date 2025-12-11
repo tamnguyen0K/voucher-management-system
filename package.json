@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
+    "seed": "node src/config/seed.js",
     "migrate": "node src/config/migrate.js",
     "migrate:review-index": "node src/config/migrate_review_index.js",
     "enrich:locations": "node src/config/enrich_locations.js",
