@@ -44,7 +44,27 @@
                 </div>
                 <p class="card-text"><%= location.description %></p>
                 <h6><i class="fas fa-map-marker-alt me-2"></i>Địa chỉ:</h6>
-                <p class="text-muted"><%= location.address %></p>
+                <p class="text-muted mb-2"><%= location.address %></p>
+                
+                <!-- Google Maps Button -->
+                <div class="d-flex gap-2 mb-3">
+                    <a href="https://www.google.com/maps/search/?api=1&query=<%= encodeURIComponent(location.address + ', ' + (location.city || 'Việt Nam')) %>" 
+                       target="_blank" 
+                       class="btn btn-primary btn-sm">
+                        <i class="fas fa-map-marked-alt me-1"></i>
+                        Xem trên Google Maps
+                    </a>
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=<%= encodeURIComponent(location.address + ', ' + (location.city || 'Việt Nam')) %>" 
+                       target="_blank" 
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-directions me-1"></i>
+                        Chỉ đường
+                    </a>
+                </div>
+
+                <!-- Embedded Google Map -->
+                <div id="map" style="width: 100%; height: 300px; border-radius: 10px; margin-bottom: 15px;"></div>
+                <div id="distance-info"></div>
             </div>
         </div>
 
@@ -357,3 +377,112 @@ document.addEventListener('DOMContentLoaded', function() {
     backdrop-filter: blur(6px);
 }
 </style>
+
+<% if (googleMapsApiKey) { %>
+<script>
+// Google Maps Integration
+function initMap() {
+    const locationAddress = '<%= location.address %>, <%= location.city || "Việt Nam" %>';
+    const locationName = '<%= location.name.replace(/'/g, "\\'") %>';
+    
+    // Tạo map với tọa độ mặc định (Sài Gòn)
+    const map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 15,
+        center: { lat: 10.8231, lng: 106.6297 },
+        mapTypeControl: true,
+        streetViewControl: true,
+        fullscreenControl: true
+    });
+
+    // Geocode địa chỉ
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: locationAddress }, (results, status) => {
+        if (status === 'OK') {
+            const location = results[0].geometry.location;
+            map.setCenter(location);
+
+            // Tạo marker
+            const marker = new google.maps.Marker({
+                map: map,
+                position: location,
+                title: locationName,
+                animation: google.maps.Animation.DROP
+            });
+
+            // Tạo InfoWindow
+            const infoWindow = new google.maps.InfoWindow({
+                content: `
+                    <div style="padding: 10px; max-width: 250px;">
+                        <h6 style="margin: 0 0 8px 0; font-weight: bold; color: #2563eb;">
+                            <i class="fas fa-map-marker-alt" style="color: #ef4444;"></i>
+                            ${locationName}
+                        </h6>
+                        <p style="margin: 0; font-size: 13px; color: #666;">
+                            <i class="fas fa-location-arrow" style="color: #10b981;"></i>
+                            <%= location.address %>
+                        </p>
+                        <% if (location.city) { %>
+                        <p style="margin: 5px 0 0 0; font-size: 12px; color: #888;">
+                            <i class="fas fa-city"></i> <%= location.city %>
+                        </p>
+                        <% } %>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(locationAddress)}" 
+                           target="_blank" 
+                           style="display: inline-block; margin-top: 8px; color: #2563eb; text-decoration: none; font-size: 12px;">
+                            <i class="fas fa-directions"></i> Chỉ đường →
+                        </a>
+                    </div>
+                `
+            });
+
+            // Click marker để mở InfoWindow
+            marker.addListener('click', () => {
+                infoWindow.open(map, marker);
+            });
+
+            // Tự động mở InfoWindow
+            setTimeout(() => {
+                infoWindow.open(map, marker);
+            }, 500);
+
+            // Tính khoảng cách từ vị trí hiện tại
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const origin = new google.maps.LatLng(
+                        position.coords.latitude,
+                        position.coords.longitude
+                    );
+
+                    const service = new google.maps.DistanceMatrixService();
+                    service.getDistanceMatrix({
+                        origins: [origin],
+                        destinations: [location],
+                        travelMode: 'DRIVING'
+                    }, (response, status) => {
+                        if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
+                            const distance = response.rows[0].elements[0].distance.text;
+                            const duration = response.rows[0].elements[0].duration.text;
+                            
+                            document.getElementById('distance-info').innerHTML = `
+                                <div class="alert alert-info">
+                                    <i class="fas fa-route"></i> 
+                                    <strong>Khoảng cách:</strong> ${distance} 
+                                    <span class="text-muted">(${duration} bằng xe)</span>
+                                </div>
+                            `;
+                        }
+                    });
+                });
+            }
+        } else {
+            console.error('Geocode không thành công:', status);
+        }
+    });
+}
+</script>
+
+<!-- Load Google Maps API -->
+<script async defer 
+    src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&callback=initMap">
+</script>
+<% } %>
