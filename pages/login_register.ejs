@@ -1,0 +1,120 @@
+<!--
+  File: views/pages/login_register.ejs
+  
+  Mô tả: Trang đăng nhập và đăng ký
+  - Tab đăng nhập: form với email và password
+  - Tab đăng ký: form với username, role, phoneNumber, email, password, confirmPassword
+  - Hiển thị thông tin tài khoản demo (admin, owner, user)
+  
+  Công nghệ sử dụng:
+  - EJS: Template engine để render HTML
+  - Bootstrap 5: Framework CSS cho UI và tabs
+  - Font Awesome: Icons
+-->
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0 text-center">
+                    <i class="fas fa-user-circle me-2"></i>
+                    Đăng nhập / Đăng ký
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <ul class="nav nav-tabs mb-4" id="authTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link <%= activeTab === 'login' ? 'active' : '' %>" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">
+                            <i class="fas fa-sign-in-alt me-1"></i>Đăng nhập
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link <%= activeTab === 'register' ? 'active' : '' %>" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab">
+                            <i class="fas fa-user-plus me-1"></i>Đăng ký
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="authTabContent">
+                    <div class="tab-pane fade <%= activeTab === 'login' ? 'show active' : '' %>" id="login" role="tabpanel">
+                        <form id="loginForm" action="/login" method="POST">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">
+                                    <i class="fas fa-envelope me-1"></i>Email
+                                </label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">
+                                    <i class="fas fa-lock me-1"></i>Mật khẩu
+                                </label>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-sign-in-alt me-1"></i>Đăng nhập
+                            </button>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade <%= activeTab === 'register' ? 'show active' : '' %>" id="register" role="tabpanel">
+                        <form id="registerForm" action="/register" method="POST">
+                            <div class="mb-3">
+                                <div class="row g-2">
+                                    <div class="col-8">
+                                        <label for="reg_username" class="form-label">
+                                            <i class="fas fa-user me-1"></i>Tên đăng nhập
+                                        </label>
+                                        <input type="text" class="form-control" id="reg_username" name="username"
+                                            required minlength="4" pattern="[A-Za-z0-9_]{4,20}"
+                                            title="Tên đăng nhập chỉ gồm chữ, số, hoặc dấu gạch dưới (4-20 ký tự)">
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="reg_role" class="form-label d-block">
+                                            <i class="fas fa-user-tag me-1"></i>Vai trò
+                                        </label>
+                                        <select class="form-select" id="reg_role" name="role" required>
+                                            <option value="user" selected>Người dùng</option>
+                                            <option value="owner">Chủ địa điểm</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>Bạn muốn đăng ký với vai trò nào?
+                            </small>
+                            <div class="mb-3">
+                                <label for="reg_phone_number" class="form-label">
+                                <i class="fas fa-phone me-1"></i>Số điện thoại
+                                </label>
+                                <input type="tel" class="form-control" id="reg_phone_number" name="phonenumber"
+                                    required pattern="[0-9]{9,11}"
+                                    title="Số điện thoại chỉ chứa 9-11 chữ số">
+                            </div>
+                            <div class="mb-3">
+                                <label for="reg_email" class="form-label">
+                                <i class="fas fa-envelope me-1"></i>Email
+                                </label>
+                                <input type="email" class="form-control" id="reg_email" name="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="reg_password" class="form-label">
+                                <i class="fas fa-lock me-1"></i>Mật khẩu
+                                </label>
+                                <input type="password" class="form-control" id="reg_password" name="password"
+                                    required minlength="6"
+                                    title="Mật khẩu phải có ít nhất 6 ký tự">
+                            </div>
+                            <div class="mb-3">
+                                <label for="confirm_password" class="form-label">
+                                <i class="fas fa-lock me-1"></i>Xác nhận mật khẩu
+                                </label>
+                                <input type="password" class="form-control" id="confirm_password" name="confirmPassword" required>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-user-plus me-1"></i>Đăng ký
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
